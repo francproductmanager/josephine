@@ -1,5 +1,4 @@
 // helpers/localization.js
-
 const axios = require('axios');
 
 const countryLanguageMap = {
@@ -59,7 +58,6 @@ const translationCache = {};
 async function getLocalizedMessage(messageKey, langObj, context) {
   const englishMessage = systemMessages[messageKey];
   
-  // If language is English, just return the English message.
   if (langObj.code === 'en') {
     return englishMessage;
   }
@@ -69,7 +67,6 @@ async function getLocalizedMessage(messageKey, langObj, context) {
     return translationCache[cacheKey];
   }
   
-  // Use the language name directly from the langObj
   const languageName = langObj.name;
   
   try {
@@ -107,14 +104,6 @@ async function getLocalizedMessage(messageKey, langObj, context) {
   }
 }
 
-module.exports = {
-  getLocalizedMessage,
-  detectCountryCode,
-  getUserLanguage,
-  exceedsWordLimit
-};
-
-
 function detectCountryCode(phoneNumber) {
   const number = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
   for (let i = 3; i > 0; i--) {
@@ -141,3 +130,4 @@ module.exports = {
   getUserLanguage,
   exceedsWordLimit
 };
+
