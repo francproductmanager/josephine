@@ -56,21 +56,21 @@ const systemMessages = {
 
 const translationCache = {};
 
-async function getLocalizedMessage(messageKey, langCode, context) {
+async function getLocalizedMessage(messageKey, langObj, context) {
   const englishMessage = systemMessages[messageKey];
   
-  if (langCode === 'en') {
+  // If language is English, just return the English message.
+  if (langObj.code === 'en') {
     return englishMessage;
   }
   
-  const cacheKey = `${messageKey}_${langCode}`;
+  const cacheKey = `${messageKey}_${langObj.code}`;
   if (translationCache[cacheKey]) {
     return translationCache[cacheKey];
   }
   
-  // Determine language name for translation
-  const countryCode = detectCountryCode(langCode);
-  const languageName = (countryLanguageMap[countryCode] || countryLanguageMap[langCode] || countryLanguageMap['default']).name;
+  // Use the language name directly from the langObj
+  const languageName = langObj.name;
   
   try {
     const response = await axios.post(
@@ -97,14 +97,23 @@ async function getLocalizedMessage(messageKey, langCode, context) {
         }
       }
     );
+    
     const translation = response.data.choices[0].message.content.trim();
     translationCache[cacheKey] = translation;
     return translation;
   } catch (error) {
-    console.error(`Translation error for ${langCode}:`, error);
+    console.error(`Translation error for ${langObj.code}:`, error);
     return englishMessage;
   }
 }
+
+module.exports = {
+  getLocalizedMessage,
+  detectCountryCode,
+  getUserLanguage,
+  exceedsWordLimit
+};
+
 
 function detectCountryCode(phoneNumber) {
   const number = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
