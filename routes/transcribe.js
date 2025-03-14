@@ -6,7 +6,7 @@ const FormData = require('form-data');
 const Twilio = require('twilio');
 
 // Import helper functions from your helpers
-const { getLocalizedMessage, detectCountryCode, getUserLanguage, exceedsWordLimit } = require('../helpers/localization');
+const { getLocalizedMessage, getUserLanguage, exceedsWordLimit } = require('../helpers/localization');
 const { generateSummary } = require('../helpers/transcription');
 
 router.post('/', async (req, res) => {
@@ -73,20 +73,19 @@ router.post('/', async (req, res) => {
           const summary = await generateSummary(transcribedText, userLang, context);
           const longMessage = await getLocalizedMessage('longMessage', userLang, context);
           const transMessage = await getLocalizedMessage('transcription', userLang, context);
-
           messageBody = `${longMessage}${summary}\n\n${transMessage}${transcribedText}`;
         } else {
-          const transMessage = await getLocalizedMessage('transcription', userLang.code, context);
+          const transMessage = await getLocalizedMessage('transcription', userLang, context);
           messageBody = `${transMessage}${transcribedText}`;
         }
 
         return res.json({ success: true, message: messageBody });
       } else {
-        const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang.code, context);
+        const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang, context);
         return res.json({ success: false, message: sendAudioMessage });
       }
     } else {
-      const welcomeMessage = await getLocalizedMessage('welcome', userLang.code, context);
+      const welcomeMessage = await getLocalizedMessage('welcome', userLang, context);
       return res.json({ success: true, message: welcomeMessage });
     }
   } catch (error) {
