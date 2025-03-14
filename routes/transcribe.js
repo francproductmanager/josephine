@@ -71,8 +71,9 @@ router.post('/', async (req, res) => {
 
         if (exceedsWordLimit(transcribedText)) {
           const summary = await generateSummary(transcribedText, userLang, context);
-          const longMessage = await getLocalizedMessage('longMessage', userLang.code, context);
-          const transMessage = await getLocalizedMessage('transcription', userLang.code, context);
+          const longMessage = await getLocalizedMessage('longMessage', userLang, context);
+          const transMessage = await getLocalizedMessage('transcription', userLang, context);
+
           messageBody = `${longMessage}${summary}\n\n${transMessage}${transcribedText}`;
         } else {
           const transMessage = await getLocalizedMessage('transcription', userLang.code, context);
