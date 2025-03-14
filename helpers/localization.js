@@ -56,6 +56,11 @@ const systemMessages = {
 const translationCache = {};
 
 async function getLocalizedMessage(messageKey, langObj, context) {
+  // Handle null language object case
+  if (!langObj || !langObj.code) {
+    return systemMessages[messageKey] || "Message not found";
+  }
+
   const englishMessage = systemMessages[messageKey];
   
   if (langObj.code === 'en') {
@@ -105,13 +110,25 @@ async function getLocalizedMessage(messageKey, langObj, context) {
 }
 
 function detectCountryCode(phoneNumber) {
+  // Handle null/undefined phone number case
+  if (!phoneNumber) {
+    console.warn("Phone number is undefined or null");
+    return 'default';
+  }
+
+  // Remove the '+' if present
   const number = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
+  
+  // Check for various country code lengths (1-3 digits is typical)
   for (let i = 3; i > 0; i--) {
-    const potentialCode = number.substring(0, i);
-    if (countryLanguageMap[potentialCode]) {
-      return potentialCode;
+    if (number.length >= i) {
+      const potentialCode = number.substring(0, i);
+      if (countryLanguageMap[potentialCode]) {
+        return potentialCode;
+      }
     }
   }
+  
   return 'default';
 }
 
@@ -121,6 +138,7 @@ function getUserLanguage(phoneNumber) {
 }
 
 function exceedsWordLimit(text, limit = 150) {
+  if (!text) return false;
   return text.split(/\s+/).length > limit;
 }
 
@@ -130,4 +148,3 @@ module.exports = {
   getUserLanguage,
   exceedsWordLimit
 };
-
