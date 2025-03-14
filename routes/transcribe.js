@@ -9,8 +9,20 @@ const Twilio = require('twilio');
 const { getLocalizedMessage, getUserLanguage, exceedsWordLimit } = require('../helpers/localization');
 const { generateSummary } = require('../helpers/transcription');
 
+// Debug middleware - log all requests
+router.use((req, res, next) => {
+  console.log('Received request:', {
+    body: req.body,
+    headers: req.headers,
+    method: req.method,
+    path: req.path
+  });
+  next();
+});
+
 router.post('/', async (req, res) => {
-  const event = req.body;
+  const event = req.body || {};
+  console.log('Processing request with body:', event);
 
   // Initialize Twilio client
   const twilioClient = new Twilio(
@@ -26,11 +38,37 @@ router.post('/', async (req, res) => {
   };
 
   try {
-    const userPhone = event.From;
+    // Validate required parameters for Twilio requests
+    const userPhone = event.From || 'unknown';
+    const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
+    
+    if (!toPhone) {
+      console.error('No destination phone number available');
+      return res.status(400).send('Missing destination phone number');
+    }
+
     const userLang = getUserLanguage(userPhone);
     console.log(`Detected language for ${userPhone}: ${userLang.name} (${userLang.code})`);
 
     const numMedia = parseInt(event.NumMedia || 0);
+    
+    // For testing purposes: If this is not a Twilio request but a regular API test
+    const isTwilioRequest = event.MessageSid !== undefined;
+    
+    if (!isTwilioRequest) {
+      console.log('Detected non-Twilio test request');
+      return res.json({ 
+        status: 'success', 
+        message: 'API endpoint is working. This is a test response.',
+        expected_params: {
+          From: '+1234567890 (sender phone)',
+          To: '+0987654321 (your Twilio number)',
+          NumMedia: '1 (if sending media)',
+          MediaContentType0: 'audio/ogg (for voice notes)',
+          MediaUrl0: 'https://... (URL to media file)'
+        }
+      });
+    }
     
     if (numMedia > 0) {
       const mediaContentType = event.MediaContentType0;
@@ -42,7 +80,7 @@ router.post('/', async (req, res) => {
         const processingMessage = await getLocalizedMessage('processing', userLang, context);
         await twilioClient.messages.create({
           body: processingMessage,
-          from: event.To,
+          from: toPhone,
           to: userPhone
         });
 
@@ -101,7 +139,7 @@ router.post('/', async (req, res) => {
             // Send response to user
             await twilioClient.messages.create({
               body: `${longMessage}${summary}\n\n${transMessage}${transcribedText}`,
-              from: event.To,
+              from: toPhone,
               to: userPhone
             });
           } else {
@@ -109,7 +147,7 @@ router.post('/', async (req, res) => {
             const transMessage = await getLocalizedMessage('transcription', userLang, context);
             await twilioClient.messages.create({
               body: `${transMessage}${transcribedText}`,
-              from: event.To,
+              from: toPhone,
               to: userPhone
             });
           }
@@ -117,7 +155,7 @@ router.post('/', async (req, res) => {
           const transMessage = await getLocalizedMessage('transcription', userLang, context);
           await twilioClient.messages.create({
             body: `${transMessage}${transcribedText}`,
-            from: event.To,
+            from: toPhone,
             to: userPhone
           });
         }
@@ -129,7 +167,7 @@ router.post('/', async (req, res) => {
         const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang, context);
         await twilioClient.messages.create({
           body: sendAudioMessage,
-          from: event.To,
+          from: toPhone,
           to: userPhone
         });
         return res.status(200).send('OK');
@@ -139,7 +177,7 @@ router.post('/', async (req, res) => {
       const welcomeMessage = await getLocalizedMessage('welcome', userLang, context);
       await twilioClient.messages.create({
         body: welcomeMessage,
-        from: event.To,
+        from: toPhone,
         to: userPhone
       });
       return res.status(200).send('OK');
@@ -151,12 +189,14 @@ router.post('/', async (req, res) => {
     // Try to send error message to user if possible
     try {
       const userPhone = event.From;
-      if (userPhone) {
+      const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
+      
+      if (userPhone && toPhone) {
         const userLang = getUserLanguage(userPhone);
         const errorMessage = await getLocalizedMessage('error', userLang, context);
         await twilioClient.messages.create({
           body: errorMessage,
-          from: event.To,
+          from: toPhone,
           to: userPhone
         });
       }
