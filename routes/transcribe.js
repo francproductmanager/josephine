@@ -340,19 +340,14 @@ router.post('/', async (req, res) => {
           logDetails('Summary generated', { summary });
         }
 
-        const openAICost = estimatedSeconds / 60 * 0.006;
-        const twilioCost = 0.005;
+        // Calcolo migliorato dei costi OpenAI
+        const openAICost = estimatedSeconds / 60 * 0.006; // £0.006 per minuto per Whisper API
+        
+        // Calcolo migliorato dei costi Twilio
+        const inboundTwilioCost = 0.005; // Costo per ricevere il messaggio audio
+        const outboundBaseCost = 0.005; // Costo base per invio di un messaggio
 
-        logDetails('Recording transcription in database');
-        await db.recordTranscription(
-          userPhone,
-          estimatedSeconds,
-          transcription.split(/\s+/).length,
-          openAICost,
-          twilioCost
-        );
-        logDetails('Transcription recorded in database');
-
+        // Prepara il messaggio finale per calcolare le parti
         let finalMessage = '';
         if (summary) {
           const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
@@ -366,9 +361,34 @@ router.post('/', async (req, res) => {
           finalMessage += creditWarning;
         }
 
+        // Calcola quante parti di messaggio verranno inviate
+        const messageParts = splitLongMessage(finalMessage);
+        const estimatedParts = messageParts.length;
+        
+        // Calcola il costo totale Twilio (entrata + uscita)
+        const outboundTwilioCost = outboundBaseCost * estimatedParts;
+        const twilioCost = inboundTwilioCost + outboundTwilioCost;
+
+        // Aggiungi un log per debugging
+        logDetails('Twilio cost calculation', {
+          inboundCost: inboundTwilioCost,
+          outboundCost: outboundTwilioCost,
+          totalParts: estimatedParts,
+          totalCost: twilioCost
+        });
+
+        logDetails('Recording transcription in database');
+        await db.recordTranscription(
+          userPhone,
+          estimatedSeconds,
+          transcription.split(/\s+/).length,
+          openAICost,
+          twilioCost
+        );
+        logDetails('Transcription recorded in database');
+
         logDetails('Sending transcription message to user');
         if (twilioClient) {
-          const messageParts = splitLongMessage(finalMessage);
           logDetails(`Message will be split into ${messageParts.length} parts`);
           
           for (const [index, part] of messageParts.entries()) {
