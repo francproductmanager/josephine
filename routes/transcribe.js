@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
   }
   console.log('====================================');
 
-  // Handle cases where Twilio sends a nested payload
+  // Handle cases where Twilio sends a nested Payload
   let event = req.body || {};
   if (event.Payload) {
     try {
@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
   }
   console.log('Processing request body:', JSON.stringify(event));
 
-  // Create a context object if needed
+  // Create context object for passing environment variables if needed
   const context = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ACCOUNT_SID: process.env.ACCOUNT_SID,
@@ -55,14 +55,12 @@ router.post('/', async (req, res) => {
       console.error('No destination phone number available');
       return res.status(400).json({ error: 'Missing destination phone number' });
     }
-
     const userLang = getUserLanguage(userPhone);
     console.log(`Detected language for ${userPhone}: ${userLang.name} (${userLang.code})`);
 
-    // Ensure we get the media parameters from the parsed event
+    // Ensure we get media parameters from the parsed event
     const numMedia = parseInt(event.NumMedia || 0);
     if (numMedia === 0) {
-      // No media – send a welcome/instruction message
       const welcomeMessage = await getLocalizedMessage('welcome', userLang, context);
       return res.json({ status: 'success', message: welcomeMessage, language: userLang });
     }
@@ -91,17 +89,12 @@ router.post('/', async (req, res) => {
 
       // Download the audio file from Twilio's media URL
       logDetails(`Starting audio download from: ${mediaUrl}`);
-      // If Twilio's media URL requires basic auth, you might need to include it here:
       const audioResponse = await axios({
         method: 'get',
         url: mediaUrl,
         responseType: 'arraybuffer',
         timeout: 15000,
-        headers: { 
-          'User-Agent': 'WhatsAppTranscriptionService/1.0'
-          // You can add Twilio basic auth here if needed:
-          // 'Authorization': 'Basic ' + Buffer.from(`${process.env.ACCOUNT_SID}:${process.env.AUTH_TOKEN}`).toString('base64')
-        }
+        headers: { 'User-Agent': 'WhatsAppTranscriptionService/1.0' }
       });
       logDetails('Audio download complete', {
         contentType: mediaContentType,
@@ -110,4 +103,13 @@ router.post('/', async (req, res) => {
       });
 
       // Create FormData for the Whisper API request
-     
+      const formData = new FormData();
+      logDetails('Creating form data for Whisper API');
+      formData.append('file', Buffer.from(audioResponse.data), {
+        filename: 'audio.ogg',
+        contentType: mediaContentType
+      });
+      formData.append('model', 'whisper-1');
+      formData.append('response_format', 'json');
+
+      // Merge form-data headers wit
