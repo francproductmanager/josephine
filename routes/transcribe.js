@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
   }
   console.log('Processing request body:', JSON.stringify(event));
 
-  // Create context object for passing environment variables if needed
+  // Create context object if needed
   const context = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ACCOUNT_SID: process.env.ACCOUNT_SID,
@@ -58,10 +58,26 @@ router.post('/', async (req, res) => {
     const userLang = getUserLanguage(userPhone);
     console.log(`Detected language for ${userPhone}: ${userLang.name} (${userLang.code})`);
 
-    // Ensure we get media parameters from the parsed event
+    // Check for media parameters
     const numMedia = parseInt(event.NumMedia || 0);
     if (numMedia === 0) {
       const welcomeMessage = await getLocalizedMessage('welcome', userLang, context);
+      // For non-media requests from Twilio, respond with TwiML as well
+      if (event.MessageSid) {
+        let twilioClient = null;
+        if (process.env.ACCOUNT_SID && process.env.AUTH_TOKEN) {
+          twilioClient = new Twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
+        }
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: welcomeMessage,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml');
+          return res.send('<Response></Response>');
+        }
+      }
       return res.json({ status: 'success', message: welcomeMessage, language: userLang });
     }
 
@@ -112,4 +128,96 @@ router.post('/', async (req, res) => {
       formData.append('model', 'whisper-1');
       formData.append('response_format', 'json');
 
-      // Merge form-data headers wit
+      // Merge form-data headers with Authorization header
+      const formHeaders = formData.getHeaders();
+      formHeaders.Authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+      logDetails('Final request headers', formHeaders);
+
+      // Send the request to the Whisper API
+      logDetails('Sending request to OpenAI Whisper API...');
+      const whisperResponse = await axios.post(
+        'https://api.openai.com/v1/audio/transcriptions',
+        formData,
+        {
+          headers: formHeaders,
+          timeout: 30000
+        }
+      );
+      logDetails('Received response from Whisper API', {
+        status: whisperResponse.status,
+        hasText: !!whisperResponse.data.text
+      });
+      let transcription = whisperResponse.data.text.trim();
+      logDetails(`Transcription result: ${transcription.substring(0, 50)}...`);
+
+      let summary = null;
+      const audioLengthBytes = audioResponse.headers['content-length'] || 0;
+      const estimatedSeconds = Math.ceil(audioLengthBytes / 16000);
+      if (exceedsWordLimit(transcription, 150)) {
+        logDetails('Generating summary for long transcription');
+        summary = await generateSummary(transcription, userLang, context);
+        logDetails('Summary generated', { summary });
+      }
+
+      // Example cost calculations
+      const openAICost = estimatedSeconds / 60 * 0.006;
+      const twilioCost = 0.005;
+
+      logDetails('Recording transcription in database');
+      await db.recordTranscription(
+        userPhone,
+        estimatedSeconds,
+        transcription.split(/\s+/).length,
+        openAICost,
+        twilioCost
+      );
+
+      // Build the final message
+      let finalMessage = '';
+      if (summary) {
+        const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
+        finalMessage += `${summaryLabel}${summary}\n\n`;
+      }
+      const transcriptionLabel = await getLocalizedMessage('transcription', userLang, context);
+      finalMessage += `${transcriptionLabel}${transcription}`;
+
+      // If request is from Twilio, send the transcription via Twilio and respond with valid TwiML
+      if (event.MessageSid) {
+        let twilioClient = null;
+        if (process.env.ACCOUNT_SID && process.env.AUTH_TOKEN) {
+          twilioClient = new Twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
+        }
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: finalMessage,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml');
+          return res.send('<Response></Response>');
+        }
+      }
+      // Otherwise, respond with JSON
+      return res.json({
+        status: 'success',
+        transcription: transcription,
+        summary: summary,
+        message: finalMessage,
+        credits: creditStatus.creditsRemaining
+      });
+    } // End if (numMedia > 0)
+
+    // Fallback for invalid requests
+    return res.status(400).json({ status: 'error', message: 'Invalid request' });
+  } catch (error) {
+    console.error('Error encountered:', error.message);
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
