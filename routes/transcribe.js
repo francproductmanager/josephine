@@ -18,6 +18,17 @@ function logDetails(message, obj = null) {
   }
 }
 
+// Helper function to split long messages for WhatsApp
+function splitLongMessage(message, maxLength = 1500) {
+  if (!message || message.length <= maxLength) return [message];
+  
+  const parts = [];
+  for (let i = 0; i < message.length; i += maxLength) {
+    parts.push(message.substring(i, i + maxLength));
+  }
+  return parts;
+}
+
 // Enhanced debugging middleware
 router.use((req, res, next) => {
   console.log('---- REQUEST DEBUG INFO ----');
@@ -151,10 +162,20 @@ router.post('/', async (req, res) => {
       }
       if (!mediaContentType.startsWith('audio/')) {
         const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang, context);
-        return res.status(400).json({
-          status: 'error',
-          message: sendAudioMessage
-        });
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: sendAudioMessage,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml');
+          return res.send('<Response></Response>');
+        } else {
+          return res.status(400).json({
+            status: 'error',
+            message: sendAudioMessage
+          });
+        }
       }
 
       logDetails('Processing voice note...');
@@ -190,117 +211,202 @@ router.post('/', async (req, res) => {
         creditWarning = `\n\n❗ ATTENTION: Only ${creditStatus.creditsRemaining} credits left. Add more soon to continue using the service.`;
       }
 
-      // Download the audio file from Twilio with Basic Auth
-      const authHeader = 'Basic ' + Buffer.from(`${process.env.ACCOUNT_SID}:${process.env.AUTH_TOKEN}`).toString('base64');
-      logDetails(`Starting audio download from: ${mediaUrl}`);
-      const audioResponse = await axios({
-        method: 'get',
-        url: mediaUrl,
-        responseType: 'arraybuffer',
-        timeout: 15000,
-        headers: {
-          'User-Agent': 'WhatsAppTranscriptionService/1.0',
-          'Authorization': authHeader
+      try {
+        // Download the audio file from Twilio with Basic Auth if credentials available
+        const headers = {
+          'User-Agent': 'WhatsAppTranscriptionService/1.0'
+        };
+        
+        if (process.env.ACCOUNT_SID && process.env.AUTH_TOKEN) {
+          const authHeader = 'Basic ' + Buffer.from(`${process.env.ACCOUNT_SID}:${process.env.AUTH_TOKEN}`).toString('base64');
+          headers['Authorization'] = authHeader;
         }
-      });
-      logDetails('Audio download complete', {
-        contentType: mediaContentType,
-        size: audioResponse.data.length,
-        responseSizeBytes: audioResponse.headers['content-length']
-      });
+        
+        logDetails(`Starting audio download from: ${mediaUrl}`);
+        const audioResponse = await axios({
+          method: 'get',
+          url: mediaUrl,
+          responseType: 'arraybuffer',
+          timeout: 15000,
+          headers: headers
+        });
+        
+        logDetails('Audio download complete', {
+          contentType: mediaContentType,
+          size: audioResponse.data.length,
+          responseSizeBytes: audioResponse.headers['content-length']
+        });
 
-      // Create FormData for the Whisper API request
-      const formData = new FormData();
-      logDetails('Creating form data for Whisper API');
-      formData.append('file', Buffer.from(audioResponse.data), {
-        filename: 'audio.ogg',
-        contentType: mediaContentType
-      });
-      formData.append('model', 'whisper-1');
-      formData.append('response_format', 'json');
+        // Create FormData for the Whisper API request
+        const formData = new FormData();
+        logDetails('Creating form data for Whisper API');
+        formData.append('file', Buffer.from(audioResponse.data), {
+          filename: 'audio.ogg',
+          contentType: mediaContentType
+        });
+        formData.append('model', 'whisper-1');
+        formData.append('response_format', 'json');
 
-      // Merge form-data headers with Authorization header for OpenAI
-      const formHeaders = formData.getHeaders();
-      formHeaders.Authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
-      logDetails('Final request headers', formHeaders);
+        // Merge form-data headers with Authorization header for OpenAI
+        const formHeaders = formData.getHeaders();
+        formHeaders.Authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+        logDetails('Preparing to call Whisper API with payload', {
+          model: 'whisper-1',
+          fileSize: audioResponse.data.length,
+          fileType: mediaContentType
+        });
 
-      logDetails('Sending request to OpenAI Whisper API...');
-      const whisperResponse = await axios.post(
-        'https://api.openai.com/v1/audio/transcriptions',
-        formData,
-        {
-          headers: formHeaders,
-          timeout: 30000
+        logDetails('Sending request to OpenAI Whisper API...');
+        const whisperResponse = await axios.post(
+          'https://api.openai.com/v1/audio/transcriptions',
+          formData,
+          {
+            headers: formHeaders,
+            timeout: 30000
+          }
+        );
+        
+        logDetails('Received response from Whisper API', {
+          status: whisperResponse.status,
+          hasText: !!whisperResponse.data.text
+        });
+        
+        let transcription = whisperResponse.data.text.trim();
+        logDetails(`Transcription result: ${transcription.substring(0, 50)}...`);
+
+        let summary = null;
+        const audioLengthBytes = audioResponse.headers['content-length'] || 0;
+        const estimatedSeconds = Math.ceil(audioLengthBytes / 16000);
+        
+        if (exceedsWordLimit(transcription, 150)) {
+          logDetails('Generating summary for long transcription');
+          summary = await generateSummary(transcription, userLang, context);
+          logDetails('Summary generated', { summary });
         }
-      );
-      logDetails('Received response from Whisper API', {
-        status: whisperResponse.status,
-        hasText: !!whisperResponse.data.text
-      });
-      let transcription = whisperResponse.data.text.trim();
-      logDetails(`Transcription result: ${transcription.substring(0, 50)}...`);
 
-      let summary = null;
-      const audioLengthBytes = audioResponse.headers['content-length'] || 0;
-      const estimatedSeconds = Math.ceil(audioLengthBytes / 16000);
-      if (exceedsWordLimit(transcription, 150)) {
-        logDetails('Generating summary for long transcription');
-        summary = await generateSummary(transcription, userLang, context);
-        logDetails('Summary generated', { summary });
-      }
+        const openAICost = estimatedSeconds / 60 * 0.006;
+        const twilioCost = 0.005;
 
-      const openAICost = estimatedSeconds / 60 * 0.006;
-      const twilioCost = 0.005;
+        logDetails('Recording transcription in database');
+        await db.recordTranscription(
+          userPhone,
+          estimatedSeconds,
+          transcription.split(/\s+/).length,
+          openAICost,
+          twilioCost
+        );
+        logDetails('Transcription recorded in database');
 
-      logDetails('Recording transcription in database');
-      await db.recordTranscription(
-        userPhone,
-        estimatedSeconds,
-        transcription.split(/\s+/).length,
-        openAICost,
-        twilioCost
-      );
-      logDetails('Transcription recorded in database');
+        let finalMessage = '';
+        if (summary) {
+          const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
+          finalMessage += `${summaryLabel}${summary}\n\n`;
+        }
+        
+        const transcriptionLabel = await getLocalizedMessage('transcription', userLang, context);
+        finalMessage += `${transcriptionLabel}${transcription}`;
+        
+        if (creditWarning) {
+          finalMessage += creditWarning;
+        }
 
-      let finalMessage = '';
-      if (summary) {
-        const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
-        finalMessage += `${summaryLabel}${summary}\n\n`;
-      }
-      const transcriptionLabel = await getLocalizedMessage('transcription', userLang, context);
-      finalMessage += `${transcriptionLabel}${transcription}`;
-      if (creditWarning) {
-        finalMessage += creditWarning;
-      }
-
-      logDetails('Sending transcription message to user');
-      if (twilioClient) {
-        await twilioClient.messages.create({
-          body: finalMessage,
-          from: toPhone,
-          to: userPhone
-        });
-        logDetails('Transcription sent successfully');
-        res.set('Content-Type', 'text/xml');
-        return res.send('<Response></Response>');
-      } else {
-        logDetails('No Twilio client - returning JSON response');
-        return res.json({
-          status: 'success',
-          summary: summary,
-          transcription: transcription,
-          message: finalMessage,
-          credits: creditStatus.creditsRemaining
-        });
+        logDetails('Sending transcription message to user');
+        if (twilioClient) {
+          const messageParts = splitLongMessage(finalMessage);
+          logDetails(`Message will be split into ${messageParts.length} parts`);
+          
+          for (const [index, part] of messageParts.entries()) {
+            await twilioClient.messages.create({
+              body: messageParts.length > 1 ? `Part ${index+1}/${messageParts.length}: ${part}` : part,
+              from: toPhone,
+              to: userPhone
+            });
+            
+            // Add a small delay between messages to maintain order
+            if (messageParts.length > 1 && index < messageParts.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+          
+          logDetails(`Transcription sent successfully in ${messageParts.length} parts`);
+          res.set('Content-Type', 'text/xml');
+          return res.send('<Response></Response>');
+        } else {
+          logDetails('No Twilio client - returning JSON response');
+          return res.json({
+            status: 'success',
+            summary: summary,
+            transcription: transcription,
+            message: finalMessage,
+            credits: creditStatus.creditsRemaining
+          });
+        }
+      } catch (audioError) {
+        logDetails('ERROR PROCESSING AUDIO:');
+        logDetails(`Error name: ${audioError.name}`);
+        logDetails(`Error message: ${audioError.message}`);
+        
+        // Check if this is a network error
+        if (audioError.code) {
+          logDetails(`Network error code: ${audioError.code}`);
+        }
+        
+        // If there's a response from the API with error details
+        if (audioError.response) {
+          logDetails(`API Response status: ${audioError.response.status}`);
+          logDetails('API Response data:', audioError.response.data);
+          
+          // For 401 errors, log more details about authorization
+          if (audioError.response.status === 401) {
+            logDetails('Authentication failed with OpenAI API. Verify your API key is correct and has access to the Whisper API.');
+          }
+          // For 400 errors, log more details about request format
+          else if (audioError.response.status === 400) {
+            logDetails('Bad request to OpenAI API. Check audio format and request parameters.');
+          }
+        } else {
+          logDetails('No response object available, likely a network or timeout error');
+        }
+        
+        // Determine specific error type
+        let errorMessage;
+        
+        if (audioError.response && audioError.response.status === 429) {
+          errorMessage = await getLocalizedMessage('rateLimited', userLang, context);
+        } else if (audioError.code === 'ECONNABORTED' || audioError.message.includes('timeout')) {
+          errorMessage = await getLocalizedMessage('processingTimeout', userLang, context);
+        } else {
+          errorMessage = await getLocalizedMessage('apiError', userLang, context);
+        }
+        
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: errorMessage,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml'); 
+          return res.send('<Response></Response>');
+        } else {
+          return res.status(500).json({
+            status: 'error',
+            message: errorMessage,
+            error: audioError.message
+          });
+        }
       }
     }
+    
+    // Should never get here, but just in case
     return res.status(400).json({
       status: 'error',
       message: 'Invalid request'
     });
+    
   } catch (error) {
     console.error('Error encountered:', error.message);
     console.error('Error stack:', error.stack);
+    
     return res.status(500).json({
       status: 'error',
       message: 'Internal server error',
