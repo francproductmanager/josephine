@@ -1,8 +1,8 @@
 // helpers/localization.js
 const axios = require('axios');
+const translations = require('./languages.json');
 
 const countryLanguageMap = {
-  // Europe
   '43': { code: 'de', name: 'German' },
   '32': { code: 'fr', name: 'French' },
   '359': { code: 'bg', name: 'Bulgarian' },
@@ -29,53 +29,24 @@ const countryLanguageMap = {
   '34': { code: 'es', name: 'Spanish' },
   '46': { code: 'sv', name: 'Swedish' },
   '44': { code: 'en', name: 'English' },
-  // Other regions
   '1': { code: 'en', name: 'English' },
   '52': { code: 'es', name: 'Spanish' },
   '55': { code: 'pt', name: 'Portuguese' },
   '86': { code: 'zh', name: 'Chinese' },
   '91': { code: 'hi', name: 'Hindi' },
   '81': { code: 'ja', name: 'Japanese' },
-  // Default fallback
   'default': { code: 'en', name: 'English' }
 };
 
-const systemMessages = {
-  welcome: "Hello! I'm Josephine, your voice note transcription assistant. Send me a voice note, and I'll transcribe it for you!",
-  processing: "I'm transcribing your voice note. This will take a moment...",
-  error: "Sorry, I encountered an error while processing your voice note. Please try again later.",
-  longMessage: "📝 Quick Summary (long voice note):\n",
-  transcription: "🤖 Transcription:\n\n",
-  sendAudio: "Please send a voice note for transcription.",
-  fileTooBig: "This voice note is too large to process. Please send a shorter message (under 45 seconds).",
-  processingTimeout: "This voice note is taking too long to process. Please try a shorter message or try again later.",
-  rateLimited: "Our service is experiencing high demand. Please try again in a few minutes.",
-  apiError: "Sorry, there's a temporary issue with our service. Our team has been notified.",
-  needCredits: "You've used all your free transcriptions. To continue using Josephine, please send £2 to [payment details] to get 50 more transcriptions.",
-
-};
-
-const translationCache = {};
-
 async function getLocalizedMessage(messageKey, langObj, context) {
-  // Handle null language object case
-  if (!langObj || !langObj.code) {
-    return systemMessages[messageKey] || "Message not found";
+  const langCode = (langObj && langObj.code) ? langObj.code : 'en';
+  // Return hardcoded translation if available
+  if (translations[langCode] && translations[langCode][messageKey]) {
+    return translations[langCode][messageKey];
   }
-
-  const englishMessage = systemMessages[messageKey];
-  
-  if (langObj.code === 'en') {
-    return englishMessage;
-  }
-  
-  const cacheKey = `${messageKey}_${langObj.code}`;
-  if (translationCache[cacheKey]) {
-    return translationCache[cacheKey];
-  }
-  
-  const languageName = langObj.name;
-  
+  // Fallback to English message
+  const englishMessage = translations.en[messageKey] || "Message not found";
+  // Use OpenAI translation as a last resort
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -84,11 +55,11 @@ async function getLocalizedMessage(messageKey, langObj, context) {
         messages: [
           {
             role: "system",
-            content: `You are a professional translator. Translate the text to ${languageName} accurately. Provide ONLY the translation, no other text.`
+            content: `You are a professional translator. Translate the following text into ${langObj ? langObj.name : 'the target language'} accurately. Provide ONLY the translation, no additional text.`
           },
           {
             role: "user",
-            content: `Translate this to ${languageName}: ${englishMessage}`
+            content: `Translate this to ${langObj ? langObj.name : 'the target language'}: ${englishMessage}`
           }
         ],
         max_tokens: 150,
@@ -96,32 +67,25 @@ async function getLocalizedMessage(messageKey, langObj, context) {
       },
       {
         headers: {
-'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-  'Content-Type': 'application/json'
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
         }
       }
     );
-    
     const translation = response.data.choices[0].message.content.trim();
-    translationCache[cacheKey] = translation;
     return translation;
   } catch (error) {
-    console.error(`Translation error for ${langObj.code}:`, error);
+    console.error(`Translation error for ${langCode}:`, error);
     return englishMessage;
   }
 }
 
 function detectCountryCode(phoneNumber) {
-  // Handle null/undefined phone number case
   if (!phoneNumber) {
     console.warn("Phone number is undefined or null");
     return 'default';
   }
-
-  // Remove the '+' if present
   const number = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
-  
-  // Check for various country code lengths (1-3 digits is typical)
   for (let i = 3; i > 0; i--) {
     if (number.length >= i) {
       const potentialCode = number.substring(0, i);
@@ -130,7 +94,6 @@ function detectCountryCode(phoneNumber) {
       }
     }
   }
-  
   return 'default';
 }
 
