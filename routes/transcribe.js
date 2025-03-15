@@ -10,6 +10,14 @@ const db = require('../helpers/database');
 const { getLocalizedMessage, getUserLanguage, exceedsWordLimit } = require('../helpers/localization');
 const { generateSummary } = require('../helpers/transcription');
 
+// Helper function for enhanced logging
+function logDetails(message, obj = null) {
+  console.log(`[${new Date().toISOString()}] ${message}`);
+  if (obj) {
+    console.log(JSON.stringify(obj, null, 2));
+  }
+}
+
 // Enhanced debugging middleware
 router.use((req, res, next) => {
   console.log('---- REQUEST DEBUG INFO ----');
@@ -120,7 +128,8 @@ router.post('/', async (req, res) => {
           from: toPhone,
           to: userPhone
         });
-        res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
+        res.set('Content-Type', 'text/xml'); 
+        return res.send('<Response></Response>');
       } else {
         // Otherwise just return the message
         return res.json({
@@ -144,12 +153,14 @@ router.post('/', async (req, res) => {
       }
       
       if (mediaContentType.startsWith('audio/')) {
-        console.log('Processing voice note...');
+        logDetails('Processing voice note...');
         
         // Check if user has available credits
         const creditStatus = await db.checkUserCredits(userPhone);
+        logDetails('Credit status check result', creditStatus);
+        
         if (!creditStatus.canProceed) {
-          console.log(`User ${userPhone} has no credits left`);
+          logDetails(`User ${userPhone} has no credits left`);
           
           // Get payment message in user's language
           const paymentMessage = await getLocalizedMessage('needCredits', userLang, context) || 
@@ -161,7 +172,8 @@ router.post('/', async (req, res) => {
               from: toPhone,
               to: userPhone
             });
-            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
+            res.set('Content-Type', 'text/xml'); 
+            return res.send('<Response></Response>');
           } else {
             return res.json({
               status: 'error',
@@ -189,39 +201,83 @@ router.post('/', async (req, res) => {
           });
         }
         
+        // ENHANCED DEBUGGING STARTS HERE
         try {
+          // Log OpenAI API key format validation (without revealing the key)
+          logDetails('OpenAI API Key check', {
+            exists: !!process.env.OPENAI_API_KEY,
+            format: process.env.OPENAI_API_KEY ? `${process.env.OPENAI_API_KEY.substring(0, 5)}...${process.env.OPENAI_API_KEY.substring(process.env.OPENAI_API_KEY.length - 4)}` : 'missing',
+            length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0
+          });
+
+          // Log starting to download audio
+          logDetails(`Starting audio download from: ${mediaUrl}`);
+          
           // Download the audio file
           const audioResponse = await axios({
             method: 'get',
             url: mediaUrl,
-            responseType: 'arraybuffer'
+            responseType: 'arraybuffer',
+            timeout: 15000, // Set a timeout for the request
+            headers: {
+              'User-Agent': 'WhatsAppTranscriptionService/1.0'
+            }
+          });
+          
+          logDetails(`Audio download complete`, {
+            contentType: mediaContentType,
+            size: audioResponse.data.length,
+            responseSizeBytes: audioResponse.headers['content-length']
           });
           
           // Prepare the audio data for OpenAI
           const formData = new FormData();
+          
+          // Add debug for form data
+          logDetails('Creating form data for Whisper API');
+          
           formData.append('file', Buffer.from(audioResponse.data), {
             filename: 'audio.ogg',
             contentType: mediaContentType
           });
-          formData.append('model', 'whisper-1');
           
-          // Auto-detect language - don't force it
-          // If you want to force language, you can add this based on userLang:
-          // formData.append('language', userLang.code);
+          // Try the updated model name
+          formData.append('model', 'whisper-1');
+          // Add response format explicitly
+          formData.append('response_format', 'json');
+          
+          logDetails('Preparing to call Whisper API with payload', {
+            model: 'whisper-1',
+            fileSize: audioResponse.data.length,
+            fileType: mediaContentType
+          });
+          
+          // Log the actual API key being used (first and last few characters only)
+          const apiKeyPreview = `${process.env.OPENAI_API_KEY.substring(0, 5)}...${process.env.OPENAI_API_KEY.substring(process.env.OPENAI_API_KEY.length - 4)}`;
+          logDetails(`Using API key: ${apiKeyPreview}`);
           
           // Transcribe with OpenAI Whisper API
+          logDetails('Sending request to OpenAI Whisper API...');
           const whisperResponse = await axios.post(
             'https://api.openai.com/v1/audio/transcriptions',
             formData,
             {
               headers: {
-                'Authorization': `Bearer ${context.OPENAI_API_KEY}`,
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
                 ...formData.getHeaders()
-              }
+              },
+              timeout: 30000 // 30-second timeout
             }
           );
           
+          logDetails('Received successful response from Whisper API', {
+            status: whisperResponse.status,
+            hasText: !!whisperResponse.data.text
+          });
+          
           let transcription = whisperResponse.data.text.trim();
+          logDetails(`Transcription result: ${transcription.substring(0, 50)}...`);
+          
           let summary = null;
           
           // Calculate audio length in seconds (estimate if not available)
@@ -231,7 +287,9 @@ router.post('/', async (req, res) => {
           
           // Generate summary for long transcripts
           if (exceedsWordLimit(transcription, 150)) {
+            logDetails('Generating summary for long transcription');
             summary = await generateSummary(transcription, userLang, context);
+            logDetails('Summary generated', { summary });
           }
           
           // Calculate costs
@@ -239,6 +297,7 @@ router.post('/', async (req, res) => {
           const twilioCost = 0.005; // Fixed cost assumption
           
           // Record the transcription in the database
+          logDetails('Recording transcription in database');
           await db.recordTranscription(
             userPhone,
             estimatedSeconds,
@@ -246,6 +305,7 @@ router.post('/', async (req, res) => {
             openAICost,
             twilioCost
           );
+          logDetails('Transcription recorded in database');
           
           // Format the final message
           let finalMessage = '';
@@ -264,14 +324,18 @@ router.post('/', async (req, res) => {
           }
           
           // Send the transcription
+          logDetails('Sending transcription message to user');
           if (twilioClient) {
             await twilioClient.messages.create({
               body: finalMessage,
               from: toPhone,
               to: userPhone
             });
-            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
+            logDetails('Transcription sent successfully');
+            res.set('Content-Type', 'text/xml'); 
+            return res.send('<Response></Response>');
           } else {
+            logDetails('No Twilio client - returning JSON response');
             return res.json({
               status: 'success',
               summary: summary,
@@ -282,7 +346,31 @@ router.post('/', async (req, res) => {
           }
           
         } catch (audioError) {
-          console.error('Error processing audio:', audioError);
+          logDetails('ERROR PROCESSING AUDIO:');
+          logDetails(`Error name: ${audioError.name}`);
+          logDetails(`Error message: ${audioError.message}`);
+          
+          // Check if this is a network error
+          if (audioError.code) {
+            logDetails(`Network error code: ${audioError.code}`);
+          }
+          
+          // If there's a response from the API with error details
+          if (audioError.response) {
+            logDetails(`API Response status: ${audioError.response.status}`);
+            logDetails('API Response data:', audioError.response.data);
+            
+            // For 401 errors, log more details about authorization
+            if (audioError.response.status === 401) {
+              logDetails('Authentication failed with OpenAI API. Verify your API key is correct and has access to the Whisper API.');
+            }
+            // For 400 errors, log more details about request format
+            else if (audioError.response.status === 400) {
+              logDetails('Bad request to OpenAI API. Check audio format and request parameters.');
+            }
+          } else {
+            logDetails('No response object available, likely a network or timeout error');
+          }
           
           // Determine specific error type
           let errorMessage;
@@ -301,7 +389,8 @@ router.post('/', async (req, res) => {
               from: toPhone,
               to: userPhone
             });
-            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
+            res.set('Content-Type', 'text/xml'); 
+            return res.send('<Response></Response>');
           } else {
             return res.status(500).json({
               status: 'error',
@@ -320,7 +409,8 @@ router.post('/', async (req, res) => {
             from: toPhone,
             to: userPhone
           });
-          res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
+          res.set('Content-Type', 'text/xml'); 
+          return res.send('<Response></Response>');
         } else {
           return res.status(400).json({
             status: 'error',
