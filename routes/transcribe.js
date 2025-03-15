@@ -232,11 +232,60 @@ router.post('/', async (req, res) => {
         }
       }
 
+      // Check if this is the last credit (new logic for the final credit warning)
       let creditWarning = '';
-      if (creditStatus.warningLevel === 'warning') {
-        creditWarning = `\n\n⚠️ You have ${creditStatus.creditsRemaining} credits remaining.`;
-      } else if (creditStatus.warningLevel === 'urgent') {
-        creditWarning = `\n\n❗ ATTENTION: Only ${creditStatus.creditsRemaining} credits left. Add more soon to continue using the service.`;
+      if (creditStatus.creditsRemaining === 1) {
+        try {
+          // Get user statistics
+          const userStats = await db.getUserStats(userPhone);
+          const totalSecondsFormatted = Math.round(userStats.totalSeconds);
+          const totalWordsFormatted = Math.round(userStats.totalWords);
+          const totalTranscriptionsFormatted = userStats.totalTranscriptions;
+          
+          // Generate the friendly last-credit warning message
+          creditWarning = `\n\n❗ Hi! Josephine here with a little heads-up 👋 We've been through ${totalTranscriptionsFormatted} voice notes together - can you believe it? That's about ${totalWordsFormatted} words I've transcribed for you, saving you over ${totalSecondsFormatted} seconds of listening time! Just so you know, you have one more free transcription left. After this one, I'll ask for a small contribution - the equivalent of a croissant - to keep our lovely arrangement going. I've really enjoyed being your transcription assistant and hope we can keep this going!`;
+          
+          // If the user's language is not English, we'll need to translate this message
+          if (userLang.code !== 'en') {
+            try {
+              // Use OpenAI to translate the message
+              const translationResponse = await axios.post(
+                'https://api.openai.com/v1/chat/completions',
+                {
+                  model: "gpt-3.5-turbo",
+                  messages: [
+                    {
+                      role: "system",
+                      content: `You are a professional translator. Translate the following text into ${userLang.name} accurately. Preserve emojis and formatting.`
+                    },
+                    {
+                      role: "user",
+                      content: `Translate this to ${userLang.name}: ${creditWarning}`
+                    }
+                  ],
+                  max_tokens: 400,
+                  temperature: 0.3
+                },
+                {
+                  headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              const translatedWarning = translationResponse.data.choices[0].message.content.trim();
+              creditWarning = translatedWarning;
+              logDetails('Translated credit warning message', { original: creditWarning, translated: translatedWarning });
+            } catch (translationError) {
+              logDetails('Error translating credit warning message', translationError);
+              // Continue with English warning if translation fails
+            }
+          }
+        } catch (statsError) {
+          logDetails('Error getting user stats for credit warning', statsError);
+          // If there's an error getting stats, don't show any warning
+          creditWarning = '';
+        }
       }
 
       try {
