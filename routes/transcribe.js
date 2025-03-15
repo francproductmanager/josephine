@@ -146,15 +146,187 @@ router.post('/', async (req, res) => {
       if (mediaContentType.startsWith('audio/')) {
         console.log('Processing voice note...');
         
-        // Rest of your transcription logic goes here...
-        // ...
+        // Check if user has available credits
+        const creditStatus = await db.checkUserCredits(userPhone);
+        if (!creditStatus.canProceed) {
+          console.log(`User ${userPhone} has no credits left`);
+          
+          // Get payment message in user's language
+          const paymentMessage = await getLocalizedMessage('needCredits', userLang, context) || 
+            "You've used all your free transcriptions. To continue using Josephine, please send £2 to purchase 50 more transcriptions.";
+          
+          if (twilioClient) {
+            await twilioClient.messages.create({
+              body: paymentMessage,
+              from: toPhone,
+              to: userPhone
+            });
+            return res.status(200).send('OK');
+          } else {
+            return res.json({
+              status: 'error',
+              message: paymentMessage,
+              credits: creditStatus
+            });
+          }
+        }
+
+        // Prepare credit warning if needed
+        let creditWarning = '';
+        if (creditStatus.warningLevel === 'warning') {
+          creditWarning = `\n\n⚠️ You have ${creditStatus.creditsRemaining} credits remaining.`;
+        } else if (creditStatus.warningLevel === 'urgent') {
+          creditWarning = `\n\n❗ ATTENTION: Only ${creditStatus.creditsRemaining} credits left. Add more soon to continue using the service.`;
+        }
         
-        return res.status(200).send('Processing audio');
+        // Send processing message
+        const processingMessage = await getLocalizedMessage('processing', userLang, context);
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: processingMessage,
+            from: toPhone,
+            to: userPhone
+          });
+        }
+        
+        try {
+          // Download the audio file
+          const audioResponse = await axios({
+            method: 'get',
+            url: mediaUrl,
+            responseType: 'arraybuffer'
+          });
+          
+          // Prepare the audio data for OpenAI
+          const formData = new FormData();
+          formData.append('file', Buffer.from(audioResponse.data), {
+            filename: 'audio.ogg',
+            contentType: mediaContentType
+          });
+          formData.append('model', 'whisper-1');
+          
+          // Auto-detect language - don't force it
+          // If you want to force language, you can add this based on userLang:
+          // formData.append('language', userLang.code);
+          
+          // Transcribe with OpenAI Whisper API
+          const whisperResponse = await axios.post(
+            'https://api.openai.com/v1/audio/transcriptions',
+            formData,
+            {
+              headers: {
+                'Authorization': `Bearer ${context.OPENAI_API_KEY}`,
+                ...formData.getHeaders()
+              }
+            }
+          );
+          
+          let transcription = whisperResponse.data.text.trim();
+          let summary = null;
+          
+          // Calculate audio length in seconds (estimate if not available)
+          // This would need to be replaced with actual audio length calculation
+          const audioLengthBytes = audioResponse.headers['content-length'] || 0;
+          const estimatedSeconds = Math.ceil(audioLengthBytes / 16000); // rough estimate
+          
+          // Generate summary for long transcripts
+          if (exceedsWordLimit(transcription, 150)) {
+            summary = await generateSummary(transcription, userLang, context);
+          }
+          
+          // Calculate costs
+          const openAICost = estimatedSeconds / 60 * 0.006; // £0.006 per minute for Whisper API
+          const twilioCost = 0.005; // Fixed cost assumption
+          
+          // Record the transcription in the database
+          await db.recordTranscription(
+            userPhone,
+            estimatedSeconds,
+            transcription.split(/\s+/).length, // Count words
+            openAICost,
+            twilioCost
+          );
+          
+          // Format the final message
+          let finalMessage = '';
+          
+          if (summary) {
+            const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
+            finalMessage += `${summaryLabel}${summary}\n\n`;
+          }
+          
+          const transcriptionLabel = await getLocalizedMessage('transcription', userLang, context);
+          finalMessage += `${transcriptionLabel}${transcription}`;
+          
+          // Add credit warning if needed
+          if (creditWarning) {
+            finalMessage += creditWarning;
+          }
+          
+          // Send the transcription
+          if (twilioClient) {
+            await twilioClient.messages.create({
+              body: finalMessage,
+              from: toPhone,
+              to: userPhone
+            });
+            return res.status(200).send('OK');
+          } else {
+            return res.json({
+              status: 'success',
+              summary: summary,
+              transcription: transcription,
+              message: finalMessage,
+              credits: creditStatus.creditsRemaining
+            });
+          }
+          
+        } catch (audioError) {
+          console.error('Error processing audio:', audioError);
+          
+          // Determine specific error type
+          let errorMessage;
+          
+          if (audioError.response && audioError.response.status === 429) {
+            errorMessage = await getLocalizedMessage('rateLimited', userLang, context);
+          } else if (audioError.code === 'ECONNABORTED' || audioError.message.includes('timeout')) {
+            errorMessage = await getLocalizedMessage('processingTimeout', userLang, context);
+          } else {
+            errorMessage = await getLocalizedMessage('apiError', userLang, context);
+          }
+          
+          if (twilioClient) {
+            await twilioClient.messages.create({
+              body: errorMessage,
+              from: toPhone,
+              to: userPhone
+            });
+            return res.status(200).send('OK');
+          } else {
+            return res.status(500).json({
+              status: 'error',
+              message: errorMessage,
+              error: audioError.message
+            });
+          }
+        }
       } else {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Not an audio file'
-        });
+        // Not an audio file
+        const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang, context);
+        
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: sendAudioMessage,
+            from: toPhone,
+            to: userPhone
+          });
+          return res.status(200).send('OK');
+        } else {
+          return res.status(400).json({
+            status: 'error',
+            message: sendAudioMessage
+          });
+        }
       }
     }
     
