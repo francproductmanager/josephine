@@ -40,7 +40,7 @@ async function findOrCreateUser(phoneNumber) {
 
     // Check if user exists
     let result = await client.query(
-      'SELECT * FROM Users WHERE phone_number = $1',
+      'SELECT * FROM users WHERE phone_number = $1',
       [normalizedPhone]
     );
     
@@ -49,12 +49,12 @@ async function findOrCreateUser(phoneNumber) {
       return { user: result.rows[0], created: false };
     }
     
-    // Create new user
+    // Create new user with has_seen_intro = false
     console.log(`Creating new user: ${normalizedPhone}`);
     result = await client.query(
-      `INSERT INTO Users 
-       (phone_number, country_code, credits_remaining, free_trial_used) 
-       VALUES ($1, $2, 50, false) 
+      `INSERT INTO users 
+       (phone_number, country_code, credits_remaining, free_trial_used, has_seen_intro) 
+       VALUES ($1, $2, 50, false, false) 
        RETURNING *`,
       [normalizedPhone, countryCode]
     );
@@ -144,7 +144,7 @@ async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, o
     
     // Update user stats
     const userUpdateResult = await client.query(
-      `UPDATE Users
+      `UPDATE users
        SET usage_count = usage_count + 1,
            total_seconds = total_seconds + $1,
            credits_remaining = credits_remaining - 1,
@@ -189,7 +189,7 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
     
     // Update user credits
     const userUpdateResult = await client.query(
-      `UPDATE Users
+      `UPDATE users
        SET credits_remaining = credits_remaining + $1
        WHERE id = $2
        RETURNING *`,
@@ -210,10 +210,27 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
   }
 }
 
+// NEW: markUserIntroAsSeen - sets has_seen_intro to true
+async function markUserIntroAsSeen(userId) {
+  const client = await pool.connect();
+  try {
+    await client.query(
+      'UPDATE users SET has_seen_intro = true WHERE id = $1',
+      [userId]
+    );
+  } catch (error) {
+    console.error('Error in markUserIntroAsSeen:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   findOrCreateUser,
   checkUserCredits,
   recordTranscription,
   addCredits,
-  getUserStats
+  getUserStats,
+  markUserIntroAsSeen  // Export the new function
 };
