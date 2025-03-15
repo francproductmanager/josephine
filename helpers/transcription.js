@@ -22,8 +22,8 @@ async function generateSummary(text, language, context) {
       },
       {
         headers: {
-          'Authorization': `Bearer ${context.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
+'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+  'Content-Type': 'application/json'
         }
       }
     );
