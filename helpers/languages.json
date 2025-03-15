@@ -10,7 +10,7 @@
     "processingTimeout": "This voice note is taking too long to process. Please try a shorter message or try again later.",
     "rateLimited": "Our service is experiencing high demand. Please try again in a few minutes.",
     "apiError": "Sorry, there's a temporary issue with our service. Our team has been notified.",
-    "needCredits": "You've used all your free transcriptions. To continue using Josephine, please send £2 to [payment details] to get 50 more transcriptions.",
+    "needCredits": "Oops! Your free transcriptions have now been used up. To unlock 50 more transcriptions, just send £2 to [payment details]. Quick and easy! I'll be right here ready to continue helping with your voice notes as soon as you do. Thanks for letting me help you.\nJosephine."
     "contentViolation": "We're unable to process this voice note as it contains content that violates our usage policies. Please review our Terms of Service for more information on acceptable content."
   },
   "de": {
