@@ -10,20 +10,20 @@ async function generateSummary(text, language, context) {
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that summarizes text in ${language.name}. Provide a single sentence summary.`
+            content: `You are a helpful assistant that summarizes text in ${language.name}. Transform the transcription into a brief, clear summary that starts with the main objective. Use gender-neutral language (avoid personal pronouns like 'he' or 'she'), remove superfluous details, and keep it concise. The summary should clearly state the core purpose or request of the note right away.`
           },
           {
             role: "user",
-            content: `Summarize this in ONE sentence in ${language.name}: ${text}`
+            content: `Summarize this in ${language.name}: ${text}`
           }
         ],
-        max_tokens: 100,
+        max_tokens: 150,
         temperature: 0.7
       },
       {
         headers: {
-'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-  'Content-Type': 'application/json'
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
         }
       }
     );
