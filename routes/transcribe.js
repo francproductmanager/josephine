@@ -4,6 +4,7 @@ const router = express.Router();
 const axios = require('axios');
 const FormData = require('form-data');
 const Twilio = require('twilio');
+const db = require('../helpers/database');
 
 // Import helper functions from your helpers
 const { getLocalizedMessage, getUserLanguage, exceedsWordLimit } = require('../helpers/localization');
