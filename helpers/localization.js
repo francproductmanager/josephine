@@ -85,10 +85,22 @@ function detectCountryCode(phoneNumber) {
     console.warn("Phone number is undefined or null");
     return 'default';
   }
-  const number = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
+  
+  // Remove 'whatsapp:' prefix if present
+  let cleanNumber = phoneNumber;
+  if (cleanNumber.startsWith('whatsapp:')) {
+    cleanNumber = cleanNumber.substring('whatsapp:'.length);
+  }
+  
+  // Now handle the plus sign
+  const number = cleanNumber.startsWith('+') ? cleanNumber.substring(1) : cleanNumber;
+  
+  console.log(`Debug - Original: ${phoneNumber}, Cleaned: ${cleanNumber}, Without +: ${number}`);
+  
   for (let i = 3; i > 0; i--) {
     if (number.length >= i) {
       const potentialCode = number.substring(0, i);
+      console.log(`Debug - Testing code: ${potentialCode}, Valid: ${!!countryLanguageMap[potentialCode]}`);
       if (countryLanguageMap[potentialCode]) {
         return potentialCode;
       }
@@ -96,7 +108,6 @@ function detectCountryCode(phoneNumber) {
   }
   return 'default';
 }
-
 function getUserLanguage(phoneNumber) {
   const countryCode = detectCountryCode(phoneNumber);
   return countryLanguageMap[countryCode] || countryLanguageMap['default'];
