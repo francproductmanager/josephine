@@ -29,6 +29,17 @@ router.use((req, res, next) => {
 });
 
 router.post('/', async (req, res) => {
+  console.log('========== API KEY DEBUG ============');
+const apiKey = process.env.OPENAI_API_KEY;
+console.log('API Key exists:', !!apiKey);
+if (apiKey) {
+  console.log('API Key length:', apiKey.length);
+  console.log('API Key starts with:', apiKey.substring(0, 7));
+  console.log('API Key format check:', apiKey.startsWith('sk-'));
+  console.log('API Key spaces check:', apiKey.includes(' '));
+  console.log('API Key newline check:', apiKey.includes('\n'));
+}
+console.log('====================================');
   const event = req.body || {};
   console.log('Processing request body:', JSON.stringify(event));
 
