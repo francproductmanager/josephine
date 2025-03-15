@@ -377,39 +377,63 @@ router.post('/', async (req, res) => {
           totalCost: twilioCost
         });
 
-        logDetails('Recording transcription in database');
-        await db.recordTranscription(
-          userPhone,
-          estimatedSeconds,
-          transcription.split(/\s+/).length,
-          openAICost,
-          twilioCost
-        );
-        logDetails('Transcription recorded in database');
-
+        // INVERSIONE DELL'ORDINE: Prima invia il messaggio, poi aggiorna il database
         logDetails('Sending transcription message to user');
         if (twilioClient) {
-          logDetails(`Message will be split into ${messageParts.length} parts`);
-          
-          for (const [index, part] of messageParts.entries()) {
-            // Send the message without part numbering
-            await twilioClient.messages.create({
-              body: part,
-              from: toPhone,
-              to: userPhone
-            });
+          try {
+            logDetails(`Message will be split into ${messageParts.length} parts`);
             
-            // Add a small delay between messages to maintain order
-            if (messageParts.length > 1 && index < messageParts.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500));
+            for (const [index, part] of messageParts.entries()) {
+              // Send the message without part numbering
+              await twilioClient.messages.create({
+                body: part,
+                from: toPhone,
+                to: userPhone
+              });
+              
+              // Add a small delay between messages to maintain order
+              if (messageParts.length > 1 && index < messageParts.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
             }
+            
+            logDetails(`Transcription sent successfully in ${messageParts.length} parts`);
+            
+            // Solo dopo che l'invio è riuscito, aggiorna il database
+            logDetails('Recording transcription in database');
+            await db.recordTranscription(
+              userPhone,
+              estimatedSeconds,
+              transcription.split(/\s+/).length,
+              openAICost,
+              twilioCost
+            );
+            logDetails('Transcription recorded in database');
+            
+            res.set('Content-Type', 'text/xml');
+            return res.send('<Response></Response>');
+          } catch (twilioError) {
+            logDetails('Error sending message via Twilio:', twilioError);
+            return res.status(500).json({
+              status: 'error',
+              message: 'Failed to send transcription',
+              error: twilioError.message
+            });
           }
-          
-          logDetails(`Transcription sent successfully in ${messageParts.length} parts`);
-          res.set('Content-Type', 'text/xml');
-          return res.send('<Response></Response>');
         } else {
           logDetails('No Twilio client - returning JSON response');
+          
+          // Per la versione API, ancora registriamo la trascrizione
+          logDetails('Recording transcription in database');
+          await db.recordTranscription(
+            userPhone,
+            estimatedSeconds,
+            transcription.split(/\s+/).length,
+            openAICost,
+            twilioCost
+          );
+          logDetails('Transcription recorded in database');
+          
           return res.json({
             status: 'success',
             summary: summary,
