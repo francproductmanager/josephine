@@ -104,19 +104,26 @@ router.post('/', async (req, res) => {
       }
 
       // Download the audio file from Twilio's media URL
-      logDetails(`Starting audio download from: ${mediaUrl}`);
-      const audioResponse = await axios({
-        method: 'get',
-        url: mediaUrl,
-        responseType: 'arraybuffer',
-        timeout: 15000,
-        headers: { 'User-Agent': 'WhatsAppTranscriptionService/1.0' }
-      });
-      logDetails('Audio download complete', {
-        contentType: mediaContentType,
-        size: audioResponse.data.length,
-        responseSizeBytes: audioResponse.headers['content-length']
-      });
+     // Build Basic Auth header for Twilio using your Twilio Account SID and Auth Token
+const authHeader = 'Basic ' + Buffer.from(`${process.env.ACCOUNT_SID}:${process.env.AUTH_TOKEN}`).toString('base64');
+
+logDetails(`Starting audio download from: ${mediaUrl}`);
+const audioResponse = await axios({
+  method: 'get',
+  url: mediaUrl,
+  responseType: 'arraybuffer',
+  timeout: 15000,
+  headers: {
+    'User-Agent': 'WhatsAppTranscriptionService/1.0',
+    'Authorization': authHeader
+  }
+});
+logDetails('Audio download complete', {
+  contentType: mediaContentType,
+  size: audioResponse.data.length,
+  responseSizeBytes: audioResponse.headers['content-length']
+});
+
 
       // Create FormData for the Whisper API request
       const formData = new FormData();
