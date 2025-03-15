@@ -13,10 +13,20 @@ const pool = new Pool({
 async function findOrCreateUser(phoneNumber) {
   const client = await pool.connect();
   try {
-    // Extract country code from phone number
+    // Normalize the phone number - store the full WhatsApp format
+    let normalizedPhone = phoneNumber;
+    
+    // Extract country code from phone number (after removing whatsapp: prefix if present)
     let countryCode = 'default';
-    if (phoneNumber.startsWith('+')) {
-      const number = phoneNumber.substring(1);
+    let phoneForCountryCode = phoneNumber;
+    
+    // Remove 'whatsapp:' prefix for country code detection
+    if (phoneForCountryCode.startsWith('whatsapp:')) {
+      phoneForCountryCode = phoneForCountryCode.substring('whatsapp:'.length);
+    }
+    
+    if (phoneForCountryCode.startsWith('+')) {
+      const number = phoneForCountryCode.substring(1);
       // Try to extract country code (1-3 digits)
       for (let i = 3; i > 0; i--) {
         if (number.length >= i) {
@@ -26,26 +36,33 @@ async function findOrCreateUser(phoneNumber) {
       }
     }
 
+    console.log(`Looking for user with phone: ${normalizedPhone}, country code: ${countryCode}`);
+
     // Check if user exists
     let result = await client.query(
       'SELECT * FROM Users WHERE phone_number = $1',
-      [phoneNumber]
+      [normalizedPhone]
     );
     
     if (result.rows.length > 0) {
+      console.log(`User found: ${normalizedPhone}`);
       return { user: result.rows[0], created: false };
     }
     
     // Create new user
+    console.log(`Creating new user: ${normalizedPhone}`);
     result = await client.query(
       `INSERT INTO Users 
        (phone_number, country_code, credits_remaining, free_trial_used) 
        VALUES ($1, $2, 50, false) 
        RETURNING *`,
-      [phoneNumber, countryCode]
+      [normalizedPhone, countryCode]
     );
     
     return { user: result.rows[0], created: true };
+  } catch (error) {
+    console.error('Error in findOrCreateUser:', error);
+    throw error;
   } finally {
     client.release();
   }
