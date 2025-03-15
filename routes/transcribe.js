@@ -120,7 +120,7 @@ router.post('/', async (req, res) => {
           from: toPhone,
           to: userPhone
         });
-        return res.status(200).send('OK');
+        res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
       } else {
         // Otherwise just return the message
         return res.json({
@@ -161,7 +161,7 @@ router.post('/', async (req, res) => {
               from: toPhone,
               to: userPhone
             });
-            return res.status(200).send('OK');
+            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
           } else {
             return res.json({
               status: 'error',
@@ -270,7 +270,7 @@ router.post('/', async (req, res) => {
               from: toPhone,
               to: userPhone
             });
-            return res.status(200).send('OK');
+            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
           } else {
             return res.json({
               status: 'success',
@@ -301,7 +301,7 @@ router.post('/', async (req, res) => {
               from: toPhone,
               to: userPhone
             });
-            return res.status(200).send('OK');
+            res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
           } else {
             return res.status(500).json({
               status: 'error',
@@ -320,7 +320,7 @@ router.post('/', async (req, res) => {
             from: toPhone,
             to: userPhone
           });
-          return res.status(200).send('OK');
+          res.set('Content-Type', 'text/xml'); return res.send('<Response></Response>');
         } else {
           return res.status(400).json({
             status: 'error',
