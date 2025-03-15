@@ -300,11 +300,11 @@ router.post('/', async (req, res) => {
         let finalMessage = '';
         if (summary) {
           const summaryLabel = await getLocalizedMessage('longMessage', userLang, context);
-          finalMessage += `${summaryLabel}${summary}\n\n`;
+          finalMessage += `✏️ ${summaryLabel.trim()} ${summary}\n\n`;
         }
         
         const transcriptionLabel = await getLocalizedMessage('transcription', userLang, context);
-        finalMessage += `${transcriptionLabel}${transcription}`;
+        finalMessage += `🤖 ${transcriptionLabel.trim()}\n\n${transcription}`;
         
         if (creditWarning) {
           finalMessage += creditWarning;
@@ -316,8 +316,9 @@ router.post('/', async (req, res) => {
           logDetails(`Message will be split into ${messageParts.length} parts`);
           
           for (const [index, part] of messageParts.entries()) {
+            // Send the message without part numbering
             await twilioClient.messages.create({
-              body: messageParts.length > 1 ? `Part ${index+1}/${messageParts.length}: ${part}` : part,
+              body: part,
               from: toPhone,
               to: userPhone
             });
