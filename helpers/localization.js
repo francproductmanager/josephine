@@ -50,7 +50,9 @@ const systemMessages = {
   fileTooBig: "This voice note is too large to process. Please send a shorter message (under 45 seconds).",
   processingTimeout: "This voice note is taking too long to process. Please try a shorter message or try again later.",
   rateLimited: "Our service is experiencing high demand. Please try again in a few minutes.",
-  apiError: "Sorry, there's a temporary issue with our service. Our team has been notified."
+  apiError: "Sorry, there's a temporary issue with our service. Our team has been notified.",
+  needCredits: "You've used all your free transcriptions. To continue using Josephine, please send £2 to [payment details] to get 50 more transcriptions.",
+
 };
 
 const translationCache = {};
