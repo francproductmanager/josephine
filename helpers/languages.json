@@ -10,7 +10,8 @@
     "processingTimeout": "This voice note is taking too long to process. Please try a shorter message or try again later.",
     "rateLimited": "Our service is experiencing high demand. Please try again in a few minutes.",
     "apiError": "Sorry, there's a temporary issue with our service. Our team has been notified.",
-    "needCredits": "You've used all your free transcriptions. To continue using Josephine, please send £2 to [payment details] to get 50 more transcriptions."
+    "needCredits": "You've used all your free transcriptions. To continue using Josephine, please send £2 to [payment details] to get 50 more transcriptions.",
+    "contentViolation": "We're unable to process this voice note as it contains content that violates our usage policies. Please review our Terms of Service for more information on acceptable content."
   },
   "de": {
     "welcome": "Hallo! Ich bin Josephine, dein Transkriptionsassistent für Sprachnotizen. Schicke mir eine Sprachnotiz und ich transkribiere sie für dich!",
@@ -23,7 +24,8 @@
     "processingTimeout": "Diese Sprachnotiz dauert zu lange zur Verarbeitung. Bitte versuche es mit einer kürzeren Nachricht oder später erneut.",
     "rateLimited": "Unser Service ist derzeit stark ausgelastet. Bitte versuche es in ein paar Minuten erneut.",
     "apiError": "Entschuldigung, es gibt ein temporäres Problem mit unserem Service. Unser Team wurde benachrichtigt.",
-    "needCredits": "Du hast alle deine kostenlosen Transkriptionen verbraucht. Sende bitte £2 an [Zahlungsdetails], um 50 weitere Transkriptionen zu erhalten."
+    "needCredits": "Du hast alle deine kostenlosen Transkriptionen verbraucht. Sende bitte £2 an [Zahlungsdetails], um 50 weitere Transkriptionen zu erhalten.",
+    "contentViolation": "Wir können diese Sprachnotiz nicht verarbeiten, da sie Inhalte enthält, die gegen unsere Nutzungsrichtlinien verstoßen. Bitte lesen Sie unsere Nutzungsbedingungen für weitere Informationen zu akzeptablen Inhalten."
   },
   "fr": {
     "welcome": "Bonjour! Je suis Josephine, votre assistante de transcription de messages vocaux. Envoyez-moi un message vocal et je le transcrirai pour vous!",
@@ -36,7 +38,8 @@
     "processingTimeout": "Le traitement de ce message vocal prend trop de temps. Veuillez essayer avec un message plus court ou réessayer plus tard.",
     "rateLimited": "Notre service est fortement sollicité. Veuillez réessayer dans quelques minutes.",
     "apiError": "Désolé, il y a un problème temporaire avec notre service. Notre équipe a été alertée.",
-    "needCredits": "Vous avez épuisé vos transcriptions gratuites. Pour continuer à utiliser Josephine, veuillez envoyer 2£ à [détails de paiement] pour obtenir 50 transcriptions supplémentaires."
+    "needCredits": "Vous avez épuisé vos transcriptions gratuites. Pour continuer à utiliser Josephine, veuillez envoyer 2£ à [détails de paiement] pour obtenir 50 transcriptions supplémentaires.",
+    "contentViolation": "Nous ne pouvons pas traiter cette note vocale car elle contient du contenu qui viole nos politiques d'utilisation. Veuillez consulter nos Conditions d'utilisation pour plus d'informations sur le contenu acceptable."
   },
   "it": {
     "welcome": "Ciao! Sono Josephine, la tua assistente per la trascrizione di messaggi vocali. Inviami un messaggio vocale e lo trascriverò per te!",
@@ -49,7 +52,8 @@
     "processingTimeout": "Il trattamento di questo messaggio vocale richiede troppo tempo. Prova con un messaggio più breve o riprova più tardi.",
     "rateLimited": "Il nostro servizio è molto richiesto. Riprova tra qualche minuto.",
     "apiError": "Spiacente, c'è un problema temporaneo con il nostro servizio. Il nostro team è stato avvisato.",
-    "needCredits": "Hai esaurito le trascrizioni gratuite. Per continuare a utilizzare Josephine, invia 2£ a [dettagli di pagamento] per ottenere 50 trascrizioni aggiuntive."
+    "needCredits": "Hai esaurito le trascrizioni gratuite. Per continuare a utilizzare Josephine, invia 2£ a [dettagli di pagamento] per ottenere 50 trascrizioni aggiuntive.",
+    "contentViolation": "Non possiamo elaborare questa nota vocale in quanto contiene contenuti che violano le nostre politiche di utilizzo. Si prega di consultare i nostri Termini di servizio per ulteriori informazioni sui contenuti accettabili."
   },
   "es": {
     "welcome": "¡Hola! Soy Josephine, tu asistente de transcripción de notas de voz. Envíame una nota de voz y te la transcribiré.",
@@ -62,7 +66,8 @@
     "processingTimeout": "El procesamiento de esta nota de voz está tardando demasiado. Por favor, intenta con un mensaje más corto o vuelve a intentarlo más tarde.",
     "rateLimited": "Nuestro servicio está experimentando una alta demanda. Por favor, inténtalo de nuevo en unos minutos.",
     "apiError": "Lo siento, hay un problema temporal con nuestro servicio. Nuestro equipo ha sido notificado.",
-    "needCredits": "Has agotado tus transcripciones gratuitas. Para continuar usando Josephine, envía 2£ a [detalles de pago] para obtener 50 transcripciones adicionales."
+    "needCredits": "Has agotado tus transcripciones gratuitas. Para continuar usando Josephine, envía 2£ a [detalles de pago] para obtener 50 transcripciones adicionales.",
+    "contentViolation": "No podemos procesar esta nota de voz ya que contiene contenido que viola nuestras políticas de uso. Por favor, revisa nuestros Términos de Servicio para obtener más información sobre el contenido aceptable."
   },
   "pl": {
     "welcome": "Cześć! Jestem Josephine, twoja asystentka do transkrypcji wiadomości głosowych. Wyślij mi wiadomość głosową, a ja ją przetranskrybuję!",
@@ -75,7 +80,8 @@
     "processingTimeout": "Przetwarzanie tej wiadomości głosowej trwa zbyt długo. Spróbuj krótszej wiadomości lub ponownie później.",
     "rateLimited": "Nasz serwis jest obecnie przeciążony. Spróbuj ponownie za kilka minut.",
     "apiError": "Przepraszam, wystąpił tymczasowy problem z naszym serwisem. Nasz zespół został powiadomiony.",
-    "needCredits": "Wykończyły ci się darmowe transkrypcje. Aby kontynuować korzystanie z Josephine, wyślij 2£ na [szczegóły płatności] aby otrzymać dodatkowe 50 transkrypcji."
+    "needCredits": "Wykończyły ci się darmowe transkrypcje. Aby kontynuować korzystanie z Josephine, wyślij 2£ na [szczegóły płatności] aby otrzymać dodatkowe 50 transkrypcji.",
+    "contentViolation": "Nie możemy przetworzyć tej wiadomości głosowej, ponieważ zawiera treści naruszające nasze zasady użytkowania. Zapoznaj się z naszym Regulaminem, aby uzyskać więcej informacji na temat akceptowalnych treści."
   },
   "uk": {
     "welcome": "Привіт! Я Джозефін, ваш асистент з транскрипції голосових повідомлень. Надішліть мені голосове повідомлення, і я його транскрибую для вас!",
@@ -88,7 +94,8 @@
     "processingTimeout": "Обробка цього голосового повідомлення займає занадто багато часу. Будь ласка, спробуйте коротше повідомлення або пізніше.",
     "rateLimited": "Наш сервіс зазнає великого навантаження. Будь ласка, спробуйте через кілька хвилин.",
     "apiError": "Вибачте, сталася тимчасова проблема з нашим сервісом. Наша команда повідомлена.",
-    "needCredits": "Ви використали всі безкоштовні транскрипції. Щоб продовжити, надішліть 2£ на [деталі оплати] для отримання ще 50 транскрипцій."
+    "needCredits": "Ви використали всі безкоштовні транскрипції. Щоб продовжити, надішліть 2£ на [деталі оплати] для отримання ще 50 транскрипцій.",
+    "contentViolation": "Ми не можемо обробити цю голосову нотатку, оскільки вона містить вміст, який порушує наші правила користування. Будь ласка, перегляньте наші Умови надання послуг для отримання додаткової інформації про прийнятний вміст."
   },
   "ro": {
     "welcome": "Bună! Sunt Josephine, asistentul tău de transcriere a notelor vocale. Trimite-mi o notă vocală și o voi transcrie pentru tine!",
@@ -101,7 +108,8 @@
     "processingTimeout": "Procesarea acestei note vocale durează prea mult. Te rugăm să încerci cu un mesaj mai scurt sau mai târziu.",
     "rateLimited": "Serviciul nostru este foarte solicitat. Te rugăm să încerci din nou peste câteva minute.",
     "apiError": "Ne pare rău, există o problemă temporară cu serviciul nostru. Echipa noastră a fost notificată.",
-    "needCredits": "Ai folosit toate transcrierile gratuite. Pentru a continua să folosești Josephine, trimite 2£ la [detalii de plată] pentru a primi 50 de transcrieri suplimentare."
+    "needCredits": "Ai folosit toate transcrierile gratuite. Pentru a continua să folosești Josephine, trimite 2£ la [detalii de plată] pentru a primi 50 de transcrieri suplimentare.",
+    "contentViolation": "Nu putem procesa această notă vocală deoarece conține conținut care încalcă politicile noastre de utilizare. Vă rugăm să consultați Termenii noștri de serviciu pentru mai multe informații despre conținutul acceptabil."
   },
   "nl": {
     "welcome": "Hallo! Ik ben Josephine, jouw assistent voor het transcriberen van spraakberichten. Stuur me een spraakbericht en ik zal het voor je transcriberen!",
@@ -114,7 +122,8 @@
     "processingTimeout": "Dit spraakbericht duurt te lang om te verwerken. Probeer een korter bericht of probeer het later opnieuw.",
     "rateLimited": "Onze service ervaart momenteel hoge belasting. Probeer het over een paar minuten opnieuw.",
     "apiError": "Sorry, er is een tijdelijk probleem met onze service. Ons team is geïnformeerd.",
-    "needCredits": "Je hebt al je gratis transcripties gebruikt. Stuur £2 naar [betalingsgegevens] om 50 extra transcripties te ontvangen."
+    "needCredits": "Je hebt al je gratis transcripties gebruikt. Stuur £2 naar [betalingsgegevens] om 50 extra transcripties te ontvangen.",
+    "contentViolation": "We kunnen dit spraakbericht niet verwerken omdat het inhoud bevat die in strijd is met ons gebruiksbeleid. Raadpleeg onze Servicevoorwaarden voor meer informatie over aanvaardbare inhoud."
   },
   "sh": {
     "welcome": "Pozdrav! Ja sam Josephine, tvoj asistent za transkripciju glasovnih poruka. Pošalji mi glasovnu poruku i ja ću je transkribovati za tebe!",
@@ -127,7 +136,8 @@
     "processingTimeout": "Obrada ove glasovne poruke traje predugo. Pokušaj s kraćom porukom ili kasnije.",
     "rateLimited": "Naša usluga je trenutno pod velikim opterećenjem. Pokušaj ponovno za nekoliko minuta.",
     "apiError": "Žao nam je, trenutno postoji privremeni problem s našom uslugom. Naš tim je obaviješten.",
-    "needCredits": "Potrošio si sve besplatne transkripcije. Za nastavak korištenja Josephine, pošalji £2 na [podaci o plaćanju] za dodatnih 50 transkripcija."
+    "needCredits": "Potrošio si sve besplatne transkripcije. Za nastavak korištenja Josephine, pošalji £2 na [podaci o plaćanju] za dodatnih 50 transkripcija.",
+    "contentViolation": "Ne možemo obraditi ovu glasovnu poruku jer sadrži sadržaj koji krši naše politike korištenja. Molimo pregledajte naše Uslove korištenja za više informacija o prihvatljivom sadržaju."
   },
   "tr": {
     "welcome": "Merhaba! Ben Josephine, sesli not transkripsiyon asistanınızım. Bana bir sesli not gönderin, ben de sizin için transkribe olayım!",
@@ -140,7 +150,8 @@
     "processingTimeout": "Bu sesli notun işlenmesi çok uzun sürüyor. Lütfen daha kısa bir mesaj deneyin veya daha sonra tekrar deneyin.",
     "rateLimited": "Servisimiz şu anda yoğun. Lütfen birkaç dakika sonra tekrar deneyin.",
     "apiError": "Üzgünüz, servisimizde geçici bir sorun var. Ekibimiz bilgilendirildi.",
-    "needCredits": "Ücretsiz transkripsiyonlarınızı tükettiniz. Josephine'i kullanmaya devam etmek için lütfen [ödeme bilgileri] ile 2£ gönderin ve 50 ek transkripsiyon alın."
+    "needCredits": "Ücretsiz transkripsiyonlarınızı tükettiniz. Josephine'i kullanmaya devam etmek için lütfen [ödeme bilgileri] ile 2£ gönderin ve 50 ek transkripsiyon alın.",
+    "contentViolation": "Bu sesli notu işleyemiyoruz çünkü kullanım politikalarımızı ihlal eden içerikler içeriyor. Kabul edilebilir içerik hakkında daha fazla bilgi için lütfen Hizmet Şartlarımızı inceleyin."
   },
   "bar": {
     "welcome": "Griaß di! I bin da Josephine, dei Transkription-Assistentin fia Sprachnotizen. Schick ma a Sprachnotiz und i schreib's fia di auf!",
@@ -153,7 +164,8 @@
     "processingTimeout": "Des dauert z'lang zum Verarbeitn. Probiers mit a kloaner Notiz oder spöter.",
     "rateLimited": "Unser Service is grad stark b'schäftigt. Versuch's in a paar Minutn wieder.",
     "apiError": "Entschuldigung, es gibt a temporäres Problem mit unserm Service. Unser Team is informiert.",
-    "needCredits": "Du host de gratis Transkriptionen aufgebraucht. Schick 2£ zu [Zahldetails], dann kriagst no 50 weitere Transkriptionen."
+    "needCredits": "Du host de gratis Transkriptionen aufgebraucht. Schick 2£ zu [Zahldetails], dann kriagst no 50 weitere Transkriptionen.",
+    "contentViolation": "Mia kennan de Sprachnotiz net verarbeitn, weil's Inhalt drin is, der gegn unsare Nutzungsrichtlinien verstoßt. Bitte schau da unsare Nutzungsbedingungen an für mehr Infos üba erlaubte Inhalte."
   },
   "el": {
     "welcome": "Γεια σου! Είμαι η Josephine, η βοηθός μεταγραφής των φωνητικών μηνυμάτων σου. Στείλε μου ένα φωνητικό μήνυμα και θα το μεταγράψω για σένα!",
@@ -166,7 +178,8 @@
     "processingTimeout": "Η επεξεργασία του φωνητικού αυτού μηνύματος διαρκεί πολύ. Δοκίμασε ένα πιο σύντομο μήνυμα ή αργότερα.",
     "rateLimited": "Η υπηρεσία μας αντιμετωπίζει υψηλό φόρτο. Παρακαλώ δοκίμασε ξανά σε λίγα λεπτά.",
     "apiError": "Συγγνώμη, υπάρχει προσωρινό πρόβλημα με την υπηρεσία μας. Η ομάδα μας έχει ενημερωθεί.",
-    "needCredits": "Έχεις εξαντλήσει τις δωρεάν μεταγραφές σου. Για να συνεχίσεις τη χρήση της Josephine, στείλε 2£ στα [στοιχεία πληρωμής] για 50 επιπλέον μεταγραφές."
+    "needCredits": "Έχεις εξαντλήσει τις δωρεάν μεταγραφές σου. Για να συνεχίσεις τη χρήση της Josephine, στείλε 2£ στα [στοιχεία πληρωμής] για 50 επιπλέον μεταγραφές.",
+    "contentViolation": "Δεν μπορούμε να επεξεργαστούμε αυτό το φωνητικό μήνυμα καθώς περιέχει περιεχόμενο που παραβιάζει τις πολιτικές χρήσης μας. Παρακαλούμε ανατρέξτε στους Όρους Υπηρεσίας μας για περισσότερες πληροφορίες σχετικά με το αποδεκτό περιεχόμενο."
   },
   "hu": {
     "welcome": "Helló! Én vagyok Josephine, a hangüzenet-transzkripciós asszisztensed. Küldj egy hangüzenetet, és leírom neked!",
@@ -179,7 +192,8 @@
     "processingTimeout": "Ez a hangüzenet túl sokáig tart a feldolgozásához. Kérlek, próbálj meg egy rövidebb üzenetet vagy később.",
     "rateLimited": "A szolgáltatásunk jelenleg nagy terhelés alatt áll. Kérlek, próbáld meg néhány perc múlva.",
     "apiError": "Sajnálom, ideiglenes probléma adódott a szolgáltatásunkkal. A csapatunk értesítve lett.",
-    "needCredits": "Elfogytak az ingyenes transzkripcióid. A Josephine használatához küldj 2£-t a [fizetési adatok] címre, hogy 50 további transzkripciót kapj."
+    "needCredits": "Elfogytak az ingyenes transzkripcióid. A Josephine használatához küldj 2£-t a [fizetési adatok] címre, hogy 50 további transzkripciót kapj.",
+    "contentViolation": "Nem tudjuk feldolgozni ezt a hangüzenetet, mert olyan tartalmat tartalmaz, amely sérti a használati szabályzatunkat. Kérjük, tekintsd át a Szolgáltatási feltételeinket a megengedett tartalmakról szóló további információkért."
   },
   "sv": {
     "welcome": "Hej! Jag är Josephine, din assistent för transkribering av röstmeddelanden. Skicka ett röstmeddelande så transkriberar jag det åt dig!",
@@ -192,6 +206,7 @@
     "processingTimeout": "Det tar för lång tid att behandla detta röstmeddelande. Försök med ett kortare meddelande eller försök igen senare.",
     "rateLimited": "Vår tjänst är mycket belastad. Försök igen om några minuter.",
     "apiError": "Förlåt, det är ett tillfälligt problem med vår tjänst. Vårt team har blivit underrättat.",
-    "needCredits": "Du har använt upp dina gratis transkriptioner. Skicka 2£ till [betalningsuppgifter] för att få 50 ytterligare transkriptioner."
+    "needCredits": "Du har använt upp dina gratis transkriptioner. Skicka 2£ till [betalningsuppgifter] för att få 50 ytterligare transkriptioner.",
+    "contentViolation": "Vi kan inte bearbeta detta röstmeddelande eftersom det innehåller innehåll som bryter mot våra användningsvillkor. Vänligen se våra Användarvillkor för mer information om godtagbart innehåll."
   }
 }
