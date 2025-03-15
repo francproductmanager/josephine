@@ -29,6 +29,34 @@ function splitLongMessage(message, maxLength = 1500) {
   return parts;
 }
 
+// Content moderation function using OpenAI's moderation API
+async function checkContentModeration(text) {
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/moderations',
+      {
+        input: text
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    return {
+      flagged: response.data.results[0].flagged,
+      categories: response.data.results[0].categories,
+      scores: response.data.results[0].category_scores
+    };
+  } catch (error) {
+    console.error('Error in content moderation:', error);
+    // Default to allowing content if the moderation check fails
+    return { flagged: false };
+  }
+}
+
 // Enhanced debugging middleware
 router.use((req, res, next) => {
   console.log('---- REQUEST DEBUG INFO ----');
@@ -273,6 +301,34 @@ router.post('/', async (req, res) => {
         
         let transcription = whisperResponse.data.text.trim();
         logDetails(`Transcription result: ${transcription.substring(0, 50)}...`);
+
+        // Check for prohibited content
+        const moderationResult = await checkContentModeration(transcription);
+        if (moderationResult.flagged) {
+          logDetails('Content moderation flagged this transcription', moderationResult);
+          
+          // Get a localized message about content violation
+          const contentViolationMessage = await getLocalizedMessage('contentViolation', userLang, context);
+          
+          if (twilioClient) {
+            await twilioClient.messages.create({
+              body: contentViolationMessage,
+              from: toPhone,
+              to: userPhone
+            });
+            res.set('Content-Type', 'text/xml');
+            return res.send('<Response></Response>');
+          } else {
+            return res.json({
+              status: 'error',
+              message: contentViolationMessage,
+              moderation: {
+                flagged: true,
+                categories: moderationResult.categories
+              }
+            });
+          }
+        }
 
         let summary = null;
         const audioLengthBytes = audioResponse.headers['content-length'] || 0;
