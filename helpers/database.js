@@ -87,6 +87,40 @@ async function checkUserCredits(phoneNumber) {
   }
 }
 
+// Ottieni le statistiche complete dell'utente
+async function getUserStats(phoneNumber) {
+  const client = await pool.connect();
+  try {
+    const { user } = await findOrCreateUser(phoneNumber);
+    
+    // Ottieni i secondi totali dalla tabella Users
+    const totalSeconds = user.total_seconds || 0;
+    
+    // Ottieni il conteggio totale delle parole dalle trascrizioni dell'utente
+    const wordCountResult = await client.query(
+      `SELECT SUM(word_count) as total_words 
+       FROM Transcriptions 
+       WHERE user_id = $1`,
+      [user.id]
+    );
+    
+    const totalWords = wordCountResult.rows[0].total_words || 0;
+    
+    // Ottieni il numero totale di trascrizioni
+    const totalTranscriptions = user.usage_count || 0;
+    
+    return {
+      totalSeconds,
+      totalWords,
+      totalTranscriptions,
+      creditsRemaining: user.credits_remaining,
+      freeTrialUsed: user.free_trial_used
+    };
+  } finally {
+    client.release();
+  }
+}
+
 // Record a transcription and update user stats
 async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, openAICost, twilioCost) {
   const client = await pool.connect();
@@ -180,5 +214,6 @@ module.exports = {
   findOrCreateUser,
   checkUserCredits,
   recordTranscription,
-  addCredits
+  addCredits,
+  getUserStats
 };
