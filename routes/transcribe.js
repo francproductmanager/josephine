@@ -117,6 +117,68 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // 1) Check if user is new and hasn't seen intro
+    const { user } = await db.findOrCreateUser(userPhone);
+    if (!user.has_seen_intro) {
+      // User is brand-new or hasn't seen T&C intro
+      if (numMedia > 0 && event.MediaContentType0 && event.MediaContentType0.startsWith('audio/')) {
+        // SCENARIO B: First contact is a voice note
+        // We DO NOT transcribe. Instead, we respond with T&C link and ask them to resend.
+        const messageForVoiceFirst = 
+          `Hey there! I see you sent me a voice note—but before I transcribe, ` +
+          `I want to make sure you've checked my Terms & Conditions: ` +
+          `https://tinyurl.com/josephine-Terms.\n\n` +
+          `By continuing to send audio, you're confirming you've read and agreed. ` +
+          `Please forward your voice note again, and I'll transcribe it right away!`;
+
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: messageForVoiceFirst,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml');
+          res.send('<Response></Response>');
+        } else {
+          // No Twilio client, return JSON
+          return res.json({
+            status: 'intro_sent',
+            message: messageForVoiceFirst
+          });
+        }
+
+      } else {
+        // SCENARIO A: First contact is text or non-audio
+        // We DO NOT transcribe. Instead, we respond with T&C link and invite them to send audio.
+        const messageForTextFirst = 
+          `Hi! I'm Josephine, your friendly transcription assistant. ` +
+          `I turn voice notes into text. Before we begin, please check my Terms & Conditions: ` +
+          `https://tinyurl.com/josephine-Terms.\n\n` +
+          `By sending audio, you confirm you've read and agreed. ` +
+          `Go ahead and forward a voice note, and I'll do the rest!`;
+
+        if (twilioClient) {
+          await twilioClient.messages.create({
+            body: messageForTextFirst,
+            from: toPhone,
+            to: userPhone
+          });
+          res.set('Content-Type', 'text/xml');
+          res.send('<Response></Response>');
+        } else {
+          return res.json({
+            status: 'intro_sent',
+            message: messageForTextFirst
+          });
+        }
+      }
+
+      // Mark the user as having seen intro
+      await db.markUserIntroAsSeen(user.id);
+      // End here so we don't transcribe anything yet
+      return;
+    }
+
     // If no media is provided, send a welcome message
     if (numMedia === 0) {
       logDetails('No media, sending welcome message');
@@ -204,44 +266,14 @@ router.post('/', async (req, res) => {
           const totalWordsFormatted = Math.round(userStats.totalWords);
           const totalTranscriptionsFormatted = userStats.totalTranscriptions;
           
-          creditWarning = `\n\n❗ Hi! Josephine here with a little heads-up 👋 We've been through ${totalTranscriptionsFormatted} voice notes together - can you believe it? That's about ${totalWordsFormatted} words I've transcribed for you, saving you over ${totalSecondsFormatted} seconds of listening time! Just so you know, you have one more free transcription left. After this one, I'll ask for a small contribution - the equivalent of a croissant - to keep our lovely arrangement going. I've really enjoyed being your transcription assistant and hope we can keep this going!`;
+          creditWarning = `\n\n❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
+            `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
+            `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
+            `After that, I'll ask for a small contribution to keep going. Thanks for letting me help!`;
           
-          // Translate the warning if needed
-          if (userLang.code !== 'en') {
-            try {
-              const translationResponse = await axios.post(
-                'https://api.openai.com/v1/chat/completions',
-                {
-                  model: "gpt-3.5-turbo",
-                  messages: [
-                    {
-                      role: "system",
-                      content: `You are a professional translator. Translate the following text into ${userLang.name} accurately. Preserve emojis and formatting.`
-                    },
-                    {
-                      role: "user",
-                      content: `Translate this to ${userLang.name}: ${creditWarning}`
-                    }
-                  ],
-                  max_tokens: 400,
-                  temperature: 0.3
-                },
-                {
-                  headers: {
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
-                  }
-                }
-              );
-              creditWarning = translationResponse.data.choices[0].message.content.trim();
-            } catch (translationError) {
-              logDetails('Error translating credit warning message', translationError);
-              // Continue with English warning if translation fails
-            }
-          }
         } catch (statsError) {
           logDetails('Error getting user stats for credit warning', statsError);
-          // If there's an error getting stats, don't show any warning
+          // If there's an error, skip the warning
           creditWarning = '';
         }
       }
