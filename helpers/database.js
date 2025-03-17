@@ -1,6 +1,6 @@
 // helpers/database.js
 const { Pool } = require('pg');
-
+const { detectCountryCode } = require('./localization');
 // Create a connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -14,27 +14,9 @@ async function findOrCreateUser(phoneNumber) {
   const client = await pool.connect();
   try {
     // Normalize the phone number - store the full WhatsApp format
-    let normalizedPhone = phoneNumber;
-    
-    // Extract country code from phone number (after removing whatsapp: prefix if present)
-    let countryCode = 'default';
-    let phoneForCountryCode = phoneNumber;
-    
-    // Remove 'whatsapp:' prefix for country code detection
-    if (phoneForCountryCode.startsWith('whatsapp:')) {
-      phoneForCountryCode = phoneForCountryCode.substring('whatsapp:'.length);
-    }
-    
-    if (phoneForCountryCode.startsWith('+')) {
-      const number = phoneForCountryCode.substring(1);
-      // Try to extract country code (1-3 digits)
-      for (let i = 3; i > 0; i--) {
-        if (number.length >= i) {
-          countryCode = number.substring(0, i);
-          break;
-        }
-      }
-    }
+  let normalizedPhone = phoneNumber;
+let countryCode = detectCountryCode(phoneNumber);
+
 
     console.log(`Looking for user with phone: ${normalizedPhone}, country code: ${countryCode}`);
 
