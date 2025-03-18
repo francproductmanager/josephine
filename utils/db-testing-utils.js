@@ -81,6 +81,27 @@ const mockUsers = {
   }
 };
 
+// Safely extract a country code from a phone number string
+function extractCountryCode(phoneNumber) {
+  // Ensure we're working with a string
+  const phoneStr = String(phoneNumber || '');
+  
+  // Try to extract based on format
+  if (phoneStr.startsWith('whatsapp:+')) {
+    // Format: "whatsapp:+39123456789"
+    return phoneStr.substring(10, 12);
+  } else if (phoneStr.startsWith('+')) {
+    // Format: "+39123456789"
+    return phoneStr.substring(1, 3);
+  } else if (phoneStr.match(/^\d+/)) {
+    // Format: "39123456789"
+    return phoneStr.substring(0, 2);
+  }
+  
+  // Default to UK if we can't determine
+  return '44';
+}
+
 function getTestUser(phoneNumber) {
   return mockUsers[phoneNumber] || null;
 }
@@ -88,10 +109,13 @@ function getTestUser(phoneNumber) {
 function createTestUser(phoneNumber) {
   // Create a new mock user if it doesn't exist
   if (!mockUsers[phoneNumber]) {
+    // Safely extract country code
+    const countryCode = extractCountryCode(phoneNumber);
+    
     mockUsers[phoneNumber] = {
       id: Math.floor(1000 + Math.random() * 9000),
       phone_number: phoneNumber,
-      country_code: phoneNumber.substring(9, 11) || '44',
+      country_code: countryCode,
       credits_remaining: 50,
       free_trial_used: false,
       has_seen_intro: false,
@@ -208,5 +232,6 @@ module.exports = {
   dbTracker,
   getMockDbResponse,
   getTestUser,
-  createTestUser
+  createTestUser,
+  extractCountryCode
 };
