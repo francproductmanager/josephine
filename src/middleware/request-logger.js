@@ -2,12 +2,17 @@
 /**
  * Middleware to log request details
  */
+const { logDetails } = require('../utils/logging-utils');
+
 function requestLogger(req, res, next) {
-  console.log('---- REQUEST DEBUG INFO ----');
-  console.log('Headers:', JSON.stringify(req.headers));
-  console.log('Body:', JSON.stringify(req.body));
-  console.log('Content-Type:', req.get('Content-Type'));
-  console.log('---------------------------');
+  logDetails('---- REQUEST DEBUG INFO ----');
+  logDetails('URL:', req.originalUrl);
+  logDetails('Method:', req.method);
+  logDetails('Headers:', req.headers);
+  logDetails('Body:', req.body);
+  logDetails('Content-Type:', req.get('Content-Type'));
+  logDetails('Query:', req.query);
+  logDetails('---------------------------');
   next();
 }
 
