@@ -2,11 +2,10 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const { logDetails } = require('../utils/logging-utils');
-const { isTestMode } = require('../utils/testing-utils');
 
 async function downloadAudio(mediaUrl, headers = {}, req = null) {
   // Return mock data for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails(`[TEST MODE] Simulating audio download from: ${mediaUrl}`);
     
     // Return mock audio data

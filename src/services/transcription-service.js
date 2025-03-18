@@ -1,11 +1,10 @@
-// services/transcription-service.js
+// src/services/transcription-service.js
 const axios = require('axios');
 const { logDetails } = require('../utils/logging-utils');
-const { isTestMode } = require('../utils/testing-utils');
 
 async function transcribeAudio(formData, apiKey, req = null) {
   // Return mock data for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Simulating audio transcription');
     
     // Debug the phone number from the request

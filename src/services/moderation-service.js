@@ -1,4 +1,4 @@
-// services/moderation-service.js
+// src/services/moderation-service.js
 const axios = require('axios');
 const { logDetails } = require('../utils/logging-utils');
 
