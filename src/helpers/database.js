@@ -1,8 +1,8 @@
 // helpers/database.js
 const { Pool } = require('pg');
 const { detectCountryCode } = require('./localization');
-const { isTestMode } = require('../utils/testing-utils');
-const { dbTracker, getMockDbResponse } = require('../utils/db-testing-utils');
+const { isTestMode } = require('../utils/testing-utils'); // Will update later
+const { dbTracker, getMockDbResponse } = require('../utils/db-testing-utils'); // Will update later
 const { logDetails } = require('../utils/logging-utils');
 
 // Create a connection pool
