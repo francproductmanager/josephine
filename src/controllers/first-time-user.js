@@ -1,7 +1,7 @@
 // src/controllers/first-time-user.js
 const { getUserLanguage, getLocalizedMessage } = require('../helpers/localization');
 const userService = require('../services/user-service');
-const { formatTestResponse } = require('../utils/response-formatter');
+const { formatTestResponse, formatSuccessResponse } = require('../utils/response-formatter');
 const { logDetails } = require('../utils/logging-utils');
 
 /**
@@ -46,10 +46,8 @@ async function handleFirstTimeUserText(req, res) {
     // For test mode, return test results instead of XML
     if (req.isTestMode) {
       return formatTestResponse(res, {
-        status: 'success',
         flow: 'first_time_text',
-        testResults: twilioClient.getTestResults(),
-        dbOperations: req.testResults.dbOperations
+        testResults: twilioClient.getTestResults()
       });
     } else {
       // Generate XML response for Twilio
@@ -60,8 +58,7 @@ async function handleFirstTimeUserText(req, res) {
   } else {
     // No Twilio client, return JSON
     await userService.markUserIntroAsSeen(req.user.id, req);
-    return res.json({
-      status: 'intro_sent',
+    return formatSuccessResponse(res, {
       flow: 'first_time_text',
       messages: [messageForTextFirst1, messageForTextFirst2]
     });
@@ -110,10 +107,8 @@ async function handleFirstTimeUserVoice(req, res) {
     // For test mode, return test results instead of XML
     if (req.isTestMode) {
       return formatTestResponse(res, {
-        status: 'success',
         flow: 'first_time_voice_note',
-        testResults: twilioClient.getTestResults(),
-        dbOperations: req.testResults.dbOperations
+        testResults: twilioClient.getTestResults()
       });
     } else {
       // Generate XML response for Twilio
@@ -124,8 +119,7 @@ async function handleFirstTimeUserVoice(req, res) {
   } else {
     // No Twilio client, return JSON
     await userService.markUserIntroAsSeen(req.user.id, req);
-    return res.json({
-      status: 'intro_sent',
+    return formatSuccessResponse(res, {
       flow: 'first_time_voice_note',
       messages: [messageForVoiceFirst1, messageForVoiceFirst2]
     });
