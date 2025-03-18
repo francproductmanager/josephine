@@ -2,8 +2,23 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const { logDetails } = require('../utils/logging-utils');
+const { isTestMode } = require('../utils/testing-utils');
 
-async function downloadAudio(mediaUrl, headers = {}) {
+async function downloadAudio(mediaUrl, headers = {}, req = null) {
+  // Return mock data for test mode
+  if (req && isTestMode(req)) {
+    logDetails(`[TEST MODE] Simulating audio download from: ${mediaUrl}`);
+    
+    // Return mock audio data
+    const mockAudioSize = 30000; // ~30KB
+    return {
+      data: Buffer.from(`This is mock audio data for testing purposes. File: ${mediaUrl}`),
+      contentLength: mockAudioSize,
+      mockData: true
+    };
+  }
+  
+  // Normal production code
   try {
     logDetails(`Starting audio download from: ${mediaUrl}`);
     const response = await axios({
