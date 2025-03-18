@@ -140,11 +140,11 @@ router.post('/', async (req, res) => {
       if (numMedia > 0 && event.MediaContentType0 && event.MediaContentType0.startsWith('audio/')) {
         // SCENARIO B: First contact is a voice note
         // We DO NOT transcribe. Instead, we respond with T&C link and ask them to resend.
-        const messageForVoiceFirst1 = 
+        const messageForVoiceFirst1 = await getLocalizedMessage('voiceNoteIntro', userLang, context) || 
           `Hey there! I see you sent me a voice note 👋. ` +
           `Before I transcribe, I want to make sure you've checked my Terms & Conditions.`;
           
-        const messageForVoiceFirst2 = 
+        const messageForVoiceFirst2 = await getLocalizedMessage('voiceNoteTerms', userLang, context) || 
           `By continuing to send audio, you're confirming you've read and agreed to my Terms & Conditions: ` +
           `https://tinyurl.com/josephine-Terms. Please forward your voice note again, and I'll transcribe it right away!`;
 
@@ -196,11 +196,11 @@ router.post('/', async (req, res) => {
       } else {
         // SCENARIO A: First contact is text or non-audio
         // We DO NOT transcribe. Instead, we respond with T&C link and invite them to send audio.
-        const messageForTextFirst1 = 
+        const messageForTextFirst1 = await getLocalizedMessage('welcomeIntro', userLang, context) || 
           `Hi! I'm Josephine, your friendly transcription assistant 👋. ` +
           `I turn voice notes into text so you can read them at your convenience.`;
           
-        const messageForTextFirst2 = 
+        const messageForTextFirst2 = await getLocalizedMessage('termsIntro', userLang, context) || 
           `By sending audio, you confirm you've read and agreed to my Terms & Conditions ` +
           `https://tinyurl.com/josephine-Terms. Forward a voice note, and I'll do the rest!`;
 
