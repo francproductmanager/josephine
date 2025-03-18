@@ -1,8 +1,20 @@
 // services/transcription-service.js
 const axios = require('axios');
 const { logDetails } = require('../utils/logging-utils');
+const { isTestMode } = require('../utils/testing-utils');
 
-async function transcribeAudio(formData, apiKey) {
+async function transcribeAudio(formData, apiKey, req = null) {
+  // Return mock data for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Simulating audio transcription');
+    
+    // Generate sample text based on the file size
+    const mockText = generateMockTranscriptionText(req);
+    
+    return mockText;
+  }
+  
+  // Normal production code
   try {
     logDetails('Sending request to OpenAI Whisper API...');
     
@@ -51,7 +63,37 @@ function calculateCosts(audioLengthBytes, messageParts) {
   };
 }
 
+// Function to generate mock transcription text for testing
+function generateMockTranscriptionText(req) {
+  // Default mock message
+  let mockText = "This is a mock transcription for testing purposes. It would normally contain the actual transcribed content from the audio file.";
+  
+  // If From parameter exists, customize the message by language
+  if (req && req.body && req.body.From) {
+    const phoneNumber = req.body.From;
+    
+    // Check country code-based patterns
+    if (phoneNumber.includes('+33') || phoneNumber.includes('33')) {
+      mockText = "Ceci est une transcription simulée à des fins de test. Elle contiendrait normalement le contenu réel transcrit du fichier audio.";
+    } else if (phoneNumber.includes('+49') || phoneNumber.includes('49')) {
+      mockText = "Dies ist eine simulierte Transkription zu Testzwecken. Normalerweise würde sie den tatsächlichen transkribierten Inhalt der Audiodatei enthalten.";
+    } else if (phoneNumber.includes('+34') || phoneNumber.includes('34')) {
+      mockText = "Esta es una transcripción simulada con fines de prueba. Normalmente contendría el contenido real transcrito del archivo de audio.";
+    } else if (phoneNumber.includes('+39') || phoneNumber.includes('39')) {
+      mockText = "Questa è una trascrizione simulata a scopo di test. Normalmente conterrebbe il contenuto effettivamente trascritto dal file audio.";
+    }
+  }
+  
+  // Add extra text to make it longer if requested
+  if (req && req.body && req.body.longTranscription === 'true') {
+    mockText += " " + mockText.repeat(3);
+  }
+  
+  return mockText;
+}
+
 module.exports = {
   transcribeAudio,
-  calculateCosts
+  calculateCosts,
+  generateMockTranscriptionText
 };
