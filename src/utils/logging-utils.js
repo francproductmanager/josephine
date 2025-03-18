@@ -1,4 +1,4 @@
-// utils/logging-utils.js
+// src/utils/logging-utils.js
 function logDetails(message, obj = null) {
   console.log(`[${new Date().toISOString()}] ${message}`);
   if (obj) {
