@@ -33,8 +33,7 @@ async function handleNonAudioMedia(req, res) {
       return formatTestResponse(res, {
         flow: 'non_audio_media',
         message: sendAudioMessage,
-        testResults: twilioClient.getTestResults(),
-        dbOperations: req.testResults.dbOperations
+        testResults: twilioClient.getTestResults()
       });
     } else {
       // Generate XML response for Twilio
@@ -85,8 +84,7 @@ async function handleVoiceNote(req, res) {
           flow: 'no_credits',
           message: paymentMessage,
           credits: creditStatus,
-          testResults: twilioClient.getTestResults(),
-          dbOperations: req.testResults.dbOperations
+          testResults: twilioClient.getTestResults()
         });
       } else {
         // Generate XML response for Twilio
@@ -164,8 +162,7 @@ async function handleVoiceNote(req, res) {
               flagged: true,
               categories: moderationResult.categories
             },
-            testResults: twilioClient.getTestResults(),
-            dbOperations: req.testResults.dbOperations
+            testResults: twilioClient.getTestResults()
           });
         } else {
           // Generate XML response for Twilio
@@ -240,8 +237,7 @@ async function handleVoiceNote(req, res) {
             message: finalMessage,
             costs: costs,
             credits: creditStatus.creditsRemaining,
-            testResults: twilioClient.getTestResults(),
-            dbOperations: req.testResults.dbOperations
+            testResults: twilioClient.getTestResults()
           });
         } else {
           // Generate XML response for Twilio
@@ -306,8 +302,7 @@ async function handleVoiceNote(req, res) {
           flow: 'processing_error',
           message: errorMessage,
           error: processingError.message,
-          testResults: twilioClient.getTestResults(),
-          dbOperations: req.testResults.dbOperations
+          testResults: twilioClient.getTestResults()
         });
       } else {
         // Generate XML response for Twilio
