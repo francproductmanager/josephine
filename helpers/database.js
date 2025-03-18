@@ -1,6 +1,10 @@
 // helpers/database.js
 const { Pool } = require('pg');
 const { detectCountryCode } = require('./localization');
+const { isTestMode } = require('../utils/testing-utils');
+const { dbTracker, getMockDbResponse } = require('../utils/db-testing-utils');
+const { logDetails } = require('../utils/logging-utils');
+
 // Create a connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,13 +14,22 @@ const pool = new Pool({
 });
 
 // Check if a user exists by phone number, create if not
-async function findOrCreateUser(phoneNumber) {
+async function findOrCreateUser(phoneNumber, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Finding or creating user:', phoneNumber);
+    dbTracker.addOperation('findOrCreateUser', { phoneNumber });
+    
+    // Get mock response
+    return getMockDbResponse('findOrCreateUser', phoneNumber);
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     // Normalize the phone number - store the full WhatsApp format
-  let normalizedPhone = phoneNumber;
-let countryCode = detectCountryCode(phoneNumber);
-
+    let normalizedPhone = phoneNumber;
+    let countryCode = detectCountryCode(phoneNumber);
 
     console.log(`Looking for user with phone: ${normalizedPhone}, country code: ${countryCode}`);
 
@@ -51,7 +64,27 @@ let countryCode = detectCountryCode(phoneNumber);
 }
 
 // Check if user has available credits
-async function checkUserCredits(phoneNumber) {
+async function checkUserCredits(phoneNumber, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Checking credits for user:', phoneNumber);
+    dbTracker.addOperation('checkUserCredits', { phoneNumber });
+    
+    // Handle test overrides
+    const testOverrides = {};
+    if (req.body) {
+      if (req.body.testNoCredits === 'true') {
+        testOverrides.noCredits = true;
+      } else if (req.body.testLowCredits === 'true') {
+        testOverrides.lowCredits = true;
+      }
+    }
+    
+    // Get mock response
+    return getMockDbResponse('checkUserCredits', phoneNumber, { testOverrides });
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     const { user } = await findOrCreateUser(phoneNumber);
@@ -69,16 +102,26 @@ async function checkUserCredits(phoneNumber) {
   }
 }
 
-// Ottieni le statistiche complete dell'utente
-async function getUserStats(phoneNumber) {
+// Get complete user stats
+async function getUserStats(phoneNumber, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Getting stats for user:', phoneNumber);
+    dbTracker.addOperation('getUserStats', { phoneNumber });
+    
+    // Get mock response
+    return getMockDbResponse('getUserStats', phoneNumber);
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     const { user } = await findOrCreateUser(phoneNumber);
     
-    // Ottieni i secondi totali dalla tabella Users
+    // Get total seconds from the users table
     const totalSeconds = user.total_seconds || 0;
     
-    // Ottieni il conteggio totale delle parole dalle trascrizioni dell'utente
+    // Get total word count from user's transcriptions
     const wordCountResult = await client.query(
       `SELECT SUM(word_count) as total_words 
        FROM Transcriptions 
@@ -88,7 +131,7 @@ async function getUserStats(phoneNumber) {
     
     const totalWords = wordCountResult.rows[0].total_words || 0;
     
-    // Ottieni il numero totale di trascrizioni
+    // Get total number of transcriptions
     const totalTranscriptions = user.usage_count || 0;
     
     return {
@@ -104,7 +147,28 @@ async function getUserStats(phoneNumber) {
 }
 
 // Record a transcription and update user stats
-async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, openAICost, twilioCost) {
+async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, openAICost, twilioCost, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Recording transcription for user:', phoneNumber);
+    dbTracker.addOperation('recordTranscription', { 
+      phoneNumber, 
+      audioLengthSeconds, 
+      wordCount, 
+      openAICost, 
+      twilioCost 
+    });
+    
+    // Get mock response
+    return getMockDbResponse('recordTranscription', phoneNumber, {
+      audioLengthSeconds,
+      wordCount,
+      openAICost,
+      twilioCost
+    });
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     // Start transaction
@@ -152,7 +216,28 @@ async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, o
 }
 
 // Add credits after payment
-async function addCredits(phoneNumber, credits, amount, paymentMethod, transactionId) {
+async function addCredits(phoneNumber, credits, amount, paymentMethod, transactionId, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Adding credits for user:', phoneNumber);
+    dbTracker.addOperation('addCredits', { 
+      phoneNumber, 
+      credits,
+      amount,
+      paymentMethod,
+      transactionId
+    });
+    
+    // Get mock response
+    return getMockDbResponse('addCredits', phoneNumber, {
+      credits,
+      amount,
+      paymentMethod,
+      transactionId
+    });
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     // Start transaction
@@ -192,8 +277,18 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
   }
 }
 
-// NEW: markUserIntroAsSeen - sets has_seen_intro to true
-async function markUserIntroAsSeen(userId) {
+// markUserIntroAsSeen - sets has_seen_intro to true
+async function markUserIntroAsSeen(userId, req = null) {
+  // Check for test mode
+  if (req && isTestMode(req)) {
+    logDetails('[TEST MODE] Marking intro as seen for user ID:', userId);
+    dbTracker.addOperation('markUserIntroAsSeen', { userId });
+    
+    // Get mock response
+    return getMockDbResponse('markUserIntroAsSeen', userId);
+  }
+  
+  // Normal production code
   const client = await pool.connect();
   try {
     await client.query(
@@ -208,11 +303,23 @@ async function markUserIntroAsSeen(userId) {
   }
 }
 
+// Get database operations recorded during testing
+function getTestDbOperations() {
+  return dbTracker.getOperations();
+}
+
+// Reset test database operations tracker
+function resetTestDbOperations() {
+  dbTracker.reset();
+}
+
 module.exports = {
   findOrCreateUser,
   checkUserCredits,
   recordTranscription,
   addCredits,
   getUserStats,
-  markUserIntroAsSeen  // Export the new function
+  markUserIntroAsSeen,
+  getTestDbOperations,
+  resetTestDbOperations
 };
