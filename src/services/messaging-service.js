@@ -1,6 +1,5 @@
-// services/messaging-service.js
+// src/services/messaging-service.js
 const { logDetails } = require('../utils/logging-utils');
-const { isTestMode } = require('../utils/testing-utils');
 
 function splitLongMessage(message, maxLength = 1500) {
   if (!message || message.length <= maxLength) return [message];
