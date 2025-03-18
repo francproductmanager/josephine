@@ -19,6 +19,7 @@ const { TwilioClientWrapper } = require('../services/twilio-service');
 
 // Utils
 const { logDetails } = require('../utils/logging-utils');
+const { formatErrorResponse } = require('../utils/response-formatter');
 
 // Apply middleware
 router.use(detectTestMode);
@@ -64,10 +65,7 @@ router.post('/', async (req, res, next) => {
       return await welcomeController.handleWelcomeMessage(req, res);
     } else if (numMedia > 0) {
       if (!event.MediaContentType0 || !event.MediaUrl0) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Missing media content type or URL'
-        });
+        return formatErrorResponse(res, 400, 'Missing media content type or URL');
       }
       
       if (!event.MediaContentType0.startsWith('audio/')) {
@@ -78,10 +76,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Fallback for unexpected cases
-    return res.status(400).json({
-      status: 'error',
-      message: 'Invalid request'
-    });
+    return formatErrorResponse(res, 400, 'Invalid request');
     
   } catch (error) {
     next(error);
