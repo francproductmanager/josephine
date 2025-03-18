@@ -61,8 +61,7 @@ async function handleWelcomeMessage(req, res) {
         flow: 'welcome_message',
         message: welcomeMessage,
         language: userLang,
-        testResults: twilioClient.getTestResults(),
-        dbOperations: req.testResults.dbOperations
+        testResults: twilioClient.getTestResults()
       });
     } else {
       // Generate XML response for Twilio
