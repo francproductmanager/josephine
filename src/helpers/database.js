@@ -1,8 +1,6 @@
-// helpers/database.js
+// src/helpers/database.js
 const { Pool } = require('pg');
 const { detectCountryCode } = require('./localization');
-const { isTestMode } = require('../utils/testing-utils'); // Will update later
-const { dbTracker, getMockDbResponse } = require('../utils/db-testing-utils'); // Will update later
 const { logDetails } = require('../utils/logging-utils');
 
 // Create a connection pool
@@ -16,12 +14,37 @@ const pool = new Pool({
 // Check if a user exists by phone number, create if not
 async function findOrCreateUser(phoneNumber, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Finding or creating user:', phoneNumber);
-    dbTracker.addOperation('findOrCreateUser', { phoneNumber });
     
-    // Get mock response
-    return getMockDbResponse('findOrCreateUser', phoneNumber);
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'findOrCreateUser',
+        timestamp: new Date().toISOString(),
+        details: { phoneNumber }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.findOrCreateUser) {
+      return req.mockDb.findOrCreateUser(phoneNumber, req);
+    }
+    
+    // Default mock response if no mockDb available
+    return { 
+      user: {
+        id: 1001,
+        phone_number: phoneNumber,
+        country_code: detectCountryCode(phoneNumber),
+        credits_remaining: 50,
+        free_trial_used: false,
+        has_seen_intro: false,
+        usage_count: 0,
+        total_seconds: 0
+      }, 
+      created: false 
+    };
   }
   
   // Normal production code
@@ -66,22 +89,44 @@ async function findOrCreateUser(phoneNumber, req = null) {
 // Check if user has available credits
 async function checkUserCredits(phoneNumber, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Checking credits for user:', phoneNumber);
-    dbTracker.addOperation('checkUserCredits', { phoneNumber });
     
-    // Handle test overrides
-    const testOverrides = {};
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'checkUserCredits',
+        timestamp: new Date().toISOString(),
+        details: { phoneNumber }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.checkUserCredits) {
+      return req.mockDb.checkUserCredits(phoneNumber, req);
+    }
+    
+    // Default mock behavior with test overrides
+    let credits = 50;
+    let freeTrialUsed = false;
+    
     if (req.body) {
       if (req.body.testNoCredits === 'true') {
-        testOverrides.noCredits = true;
+        credits = 0;
+        freeTrialUsed = true;
       } else if (req.body.testLowCredits === 'true') {
-        testOverrides.lowCredits = true;
+        credits = 1;
       }
     }
     
-    // Get mock response
-    return getMockDbResponse('checkUserCredits', phoneNumber, { testOverrides });
+    return {
+      canProceed: credits > 0,
+      creditsRemaining: credits,
+      isFreeTrialUsed: freeTrialUsed,
+      warningLevel: credits <= 10 ? 
+                  (credits <= 5 ? 'urgent' : 'warning') 
+                  : 'none'
+    };
   }
   
   // Normal production code
@@ -105,12 +150,31 @@ async function checkUserCredits(phoneNumber, req = null) {
 // Get complete user stats
 async function getUserStats(phoneNumber, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Getting stats for user:', phoneNumber);
-    dbTracker.addOperation('getUserStats', { phoneNumber });
     
-    // Get mock response
-    return getMockDbResponse('getUserStats', phoneNumber);
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'getUserStats',
+        timestamp: new Date().toISOString(),
+        details: { phoneNumber }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.getUserStats) {
+      return req.mockDb.getUserStats(phoneNumber, req);
+    }
+    
+    // Default mock response
+    return {
+      totalSeconds: 120,
+      totalWords: 500,
+      totalTranscriptions: 5,
+      creditsRemaining: 45,
+      freeTrialUsed: false
+    };
   }
   
   // Normal production code
@@ -149,23 +213,59 @@ async function getUserStats(phoneNumber, req = null) {
 // Record a transcription and update user stats
 async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, openAICost, twilioCost, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Recording transcription for user:', phoneNumber);
-    dbTracker.addOperation('recordTranscription', { 
-      phoneNumber, 
-      audioLengthSeconds, 
-      wordCount, 
-      openAICost, 
-      twilioCost 
-    });
     
-    // Get mock response
-    return getMockDbResponse('recordTranscription', phoneNumber, {
-      audioLengthSeconds,
-      wordCount,
-      openAICost,
-      twilioCost
-    });
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'recordTranscription',
+        timestamp: new Date().toISOString(),
+        details: { 
+          phoneNumber, 
+          audioLengthSeconds, 
+          wordCount, 
+          openAICost, 
+          twilioCost 
+        }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.recordTranscription) {
+      return req.mockDb.recordTranscription(
+        phoneNumber, 
+        audioLengthSeconds, 
+        wordCount, 
+        openAICost, 
+        twilioCost, 
+        req
+      );
+    }
+    
+    // Default mock response
+    return { 
+      transcription: {
+        id: 12345,
+        user_id: 1001,
+        audio_length: audioLengthSeconds,
+        word_count: wordCount,
+        openai_cost: openAICost,
+        twilio_cost: twilioCost,
+        total_cost: openAICost + twilioCost,
+        created_at: new Date().toISOString()
+      }, 
+      user: {
+        id: 1001,
+        phone_number: phoneNumber,
+        country_code: detectCountryCode(phoneNumber),
+        credits_remaining: 49,
+        free_trial_used: false,
+        has_seen_intro: true,
+        usage_count: 1,
+        total_seconds: audioLengthSeconds
+      } 
+    };
   }
   
   // Normal production code
@@ -218,23 +318,57 @@ async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, o
 // Add credits after payment
 async function addCredits(phoneNumber, credits, amount, paymentMethod, transactionId, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Adding credits for user:', phoneNumber);
-    dbTracker.addOperation('addCredits', { 
-      phoneNumber, 
-      credits,
-      amount,
-      paymentMethod,
-      transactionId
-    });
     
-    // Get mock response
-    return getMockDbResponse('addCredits', phoneNumber, {
-      credits,
-      amount,
-      paymentMethod,
-      transactionId
-    });
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'addCredits',
+        timestamp: new Date().toISOString(),
+        details: { 
+          phoneNumber, 
+          credits,
+          amount,
+          paymentMethod,
+          transactionId
+        }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.addCredits) {
+      return req.mockDb.addCredits(
+        phoneNumber, 
+        credits, 
+        amount, 
+        paymentMethod, 
+        transactionId, 
+        req
+      );
+    }
+    
+    // Default mock response
+    return { 
+      payment: {
+        id: 54321,
+        user_id: 1001,
+        amount: amount,
+        currency: 'GBP',
+        credits_purchased: credits,
+        payment_method: paymentMethod,
+        transaction_id: transactionId,
+        created_at: new Date().toISOString()
+      }, 
+      user: {
+        id: 1001,
+        phone_number: phoneNumber,
+        country_code: detectCountryCode(phoneNumber),
+        credits_remaining: 50 + credits,
+        free_trial_used: false,
+        has_seen_intro: true
+      } 
+    };
   }
   
   // Normal production code
@@ -280,12 +414,25 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
 // markUserIntroAsSeen - sets has_seen_intro to true
 async function markUserIntroAsSeen(userId, req = null) {
   // Check for test mode
-  if (req && isTestMode(req)) {
+  if (req && req.isTestMode) {
     logDetails('[TEST MODE] Marking intro as seen for user ID:', userId);
-    dbTracker.addOperation('markUserIntroAsSeen', { userId });
     
-    // Get mock response
-    return getMockDbResponse('markUserIntroAsSeen', userId);
+    // Track the operation if we're tracking test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'markUserIntroAsSeen',
+        timestamp: new Date().toISOString(),
+        details: { userId }
+      });
+    }
+    
+    // Use mock DB if available
+    if (req.mockDb && req.mockDb.markUserIntroAsSeen) {
+      return req.mockDb.markUserIntroAsSeen(userId, req);
+    }
+    
+    // Default mock response
+    return true;
   }
   
   // Normal production code
@@ -295,6 +442,7 @@ async function markUserIntroAsSeen(userId, req = null) {
       'UPDATE users SET has_seen_intro = true WHERE id = $1',
       [userId]
     );
+    return true;
   } catch (error) {
     console.error('Error in markUserIntroAsSeen:', error);
     throw error;
@@ -303,23 +451,11 @@ async function markUserIntroAsSeen(userId, req = null) {
   }
 }
 
-// Get database operations recorded during testing
-function getTestDbOperations() {
-  return dbTracker.getOperations();
-}
-
-// Reset test database operations tracker
-function resetTestDbOperations() {
-  dbTracker.reset();
-}
-
 module.exports = {
   findOrCreateUser,
   checkUserCredits,
   recordTranscription,
   addCredits,
   getUserStats,
-  markUserIntroAsSeen,
-  getTestDbOperations,
-  resetTestDbOperations
+  markUserIntroAsSeen
 };
