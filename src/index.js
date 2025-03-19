@@ -1,9 +1,9 @@
-// Root index.js - Initialization with referral system
+// src/index.js
 require('dotenv').config();
 const express = require('express');
-const routes = require('./src/routes');
-const { logDetails } = require('./src/utils/logging-utils');
-const referralService = require('./src/services/referral-service');
+const routes = require('./routes'); // Changed from './src/routes' to './routes'
+const { logDetails } = require('./utils/logging-utils');
+const referralService = require('./services/referral-service'); // Changed path
 
 // Initialize the app
 const app = express();
@@ -43,8 +43,6 @@ app.use((err, req, res, next) => {
     logDetails('Referral system database schema initialized successfully');
   } catch (error) {
     logDetails('Failed to initialize referral system database schema:', error);
-    // Continue application startup even if schema initialization fails
-    // This ensures the app can still run, and we can fix schema issues later
   }
 })();
 
@@ -54,4 +52,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-module.exports = app; // For testing
+module.exports = app;
