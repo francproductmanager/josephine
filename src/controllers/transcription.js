@@ -9,7 +9,7 @@ const { splitLongMessage, sendMessages } = require('../services/messaging-servic
 const { formatTestResponse, formatErrorResponse, formatSuccessResponse } = require('../utils/response-formatter');
 const { logDetails } = require('../utils/logging-utils');
 
-// Import the new credit manager and referral service
+// Import the credit manager and referral service
 const creditManager = require('../services/credit-manager');
 const referralService = require('../services/referral-service');
 
@@ -19,7 +19,7 @@ const referralService = require('../services/referral-service');
 async function handleNonAudioMedia(req, res) {
   const event = req.body || {};
   const userPhone = event.From || 'unknown';
-  const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
+  const toPhone = event.To || process.env.TWILIO_NUMBER;
   const userLang = getUserLanguage(userPhone);
   const twilioClient = req.twilioClient;
   
@@ -58,14 +58,14 @@ async function handleNonAudioMedia(req, res) {
 async function handleVoiceNote(req, res) {
   const event = req.body || {};
   const userPhone = event.From || 'unknown';
-  const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
+  const toPhone = event.To || process.env.TWILIO_NUMBER;
   const userLang = getUserLanguage(userPhone);
   const twilioClient = req.twilioClient;
   const mediaContentType = event.MediaContentType0;
   const mediaUrl = event.MediaUrl0;
   const numMedia = parseInt(event.NumMedia || 0);
   
-  // NEW: Check if this is a text message with a potential referral code
+  // Check if this is a text message with a potential referral code
   if (numMedia === 0 && event.Body) {
     const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
     
@@ -79,6 +79,40 @@ async function handleVoiceNote(req, res) {
           req.user, 
           req
         );
+        
+        // For test mode, clearly indicate the referral was processed
+        if (req.isTestMode) {
+          // Different response format for successful vs failed referrals
+          if (referralResult.success) {
+            return formatTestResponse(res, {
+              flow: 'referral_success',  // Clear flow name for test success
+              message: await getLocalizedMessage('referralSuccess', userLang, {
+                refereeCredits: referralResult.refereeCreditsAdded,
+                referrerCredits: referralResult.referrerCreditsAdded
+              }),
+              referralResult: referralResult,
+              success: true,
+              testResults: twilioClient.getTestResults()
+            });
+          } else {
+            // Determine specific error flow for testing
+            const errorFlows = {
+              'SELF_REFERRAL': 'referral_self_use',
+              'ALREADY_REFERRED': 'referral_already_used',
+              'CODE_MAXED_OUT': 'referral_code_maxed_out',
+              'INVALID_CODE': 'referral_invalid',
+              'REFERRAL_LIMIT_REACHED': 'referral_limit_reached'
+            };
+            
+            return formatTestResponse(res, {
+              flow: errorFlows[referralResult.error] || 'referral_error',
+              error: referralResult.error,
+              message: referralResult.message,
+              success: false,
+              testResults: twilioClient.getTestResults()
+            });
+          }
+        }
         
         if (referralResult.success) {
           logDetails('Referral code processed successfully:', {
@@ -99,26 +133,27 @@ async function handleVoiceNote(req, res) {
         } else {
           logDetails('Referral code processing failed:', referralResult);
           
-// Get the appropriate error message key based on the error type
-const errorKey = 
-  referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
-  referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
-  referralResult.error === 'CODE_MAXED_OUT' ? 'referralCodeMaxedOut' :
-  'referralAlreadyUsed';
+          // Get the appropriate error message key based on the error type
+          const errorKey = 
+            referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
+            referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
+            referralResult.error === 'CODE_MAXED_OUT' ? 'referralCodeMaxedOut' :
+            referralResult.error === 'REFERRAL_LIMIT_REACHED' ? 'referralLimitReached' :
+            'referralAlreadyUsed';
 
-const errorMessage = await getLocalizedMessage(errorKey, userLang);
+          const errorMessage = await getLocalizedMessage(errorKey, userLang);
 
-await twilioClient.sendMessage({
-  body: errorMessage,
-  from: toPhone,
-  to: userPhone
-});
+          await twilioClient.sendMessage({
+            body: errorMessage,
+            from: toPhone,
+            to: userPhone
+          });
         }
         
         // Generate appropriate response based on test mode
         if (req.isTestMode) {
           return formatTestResponse(res, {
-            flow: 'referral_code_processed',
+            flow: referralResult.success ? 'referral_success' : `referral_${referralResult.error.toLowerCase()}`,
             success: referralResult.success,
             result: referralResult,
             testResults: twilioClient.getTestResults()
@@ -308,15 +343,18 @@ await twilioClient.sendMessage({
         );
         logDetails('Transcription recorded in database');
         
-        // NEW: Check if user should get a referral code (4 credits left and on free trial)
         // Get the updated user data from the database operation
         const updatedUserData = dbResult.user;
         
+        // For test mode, expose the user data and referral code for testing
+        let userReferralCode = null;
+        
+        // Check if user should get a referral code (4 credits left and on free trial)
         if (creditManager.shouldGenerateReferralCode(updatedUserData)) {
           try {
             logDetails('Generating referral code for user with 4 credits left');
             // Generate referral code if user doesn't have one
-            await referralService.generateReferralCodeForUser(
+            userReferralCode = await referralService.generateReferralCodeForUser(
               updatedUserData.id, 
               req
             );
@@ -325,17 +363,13 @@ await twilioClient.sendMessage({
           }
         }
         
-        // NEW: Check if user is down to their last credit to send referral info
+        // Check if user is down to their last credit to send referral info
         if (updatedUserData.credits_remaining === 1) {
           try {
             logDetails('User has 1 credit left, sending referral information');
             
             // Get the user's referral code
-            const userReferralCode = updatedUserData.referral_code;
-            
-            // If no code is stored yet (unlikely but possible due to race conditions)
-            // generate one now
-            const referralCode = userReferralCode || 
+            const userReferralCode = updatedUserData.referral_code || 
               await referralService.generateReferralCodeForUser(updatedUserData.id, req);
             
             // Calculate estimated usage
@@ -351,7 +385,7 @@ await twilioClient.sendMessage({
               userPhone,
               toPhone,
               updatedUserData,
-              referralCode,
+              userReferralCode,
               estimatedMonths,
               req
             );
@@ -371,7 +405,13 @@ await twilioClient.sendMessage({
             transcription: transcription,
             message: finalMessage,
             costs: costs,
-            credits: creditStatus.creditsRemaining,
+            credits: updatedUserData.credits_remaining,
+            referralCode: userReferralCode,
+            userInfo: {
+              id: updatedUserData.id,
+              credits_remaining: updatedUserData.credits_remaining,
+              referral_code: userReferralCode || updatedUserData.referral_code
+            },
             testResults: twilioClient.getTestResults()
           });
         } else {
