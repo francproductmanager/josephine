@@ -1,2 +1,2 @@
-// Root index.js - Just requires the actual app entry point
-require('./src/index');
+// Root index.js
+module.exports = require('./src/index');
