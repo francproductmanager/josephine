@@ -67,8 +67,6 @@ async function handleVoiceNote(req, res) {
   
   // Declare userReferralCode at function scope
   let userReferralCode = null;
-  // Flag to check if we should send sequential messages
-  let shouldSendSequentialMessages = false;
   
   // Check if this is a text message with a potential referral code
   if (numMedia === 0 && event.Body) {
@@ -182,10 +180,8 @@ async function handleVoiceNote(req, res) {
   const creditStatus = await userService.checkUserCredits(userPhone, req);
   logDetails('Credit status check result', creditStatus);
   
-  // Check if we should send sequential messages - BEFORE credit deduction
-  // Either the user has exactly 1 credit left, or we're in test mode with testLowCredits
-  shouldSendSequentialMessages = (creditStatus.creditsRemaining === 1) || 
-                                (req.isTestMode && req.body && req.body.testLowCredits === 'true');
+  // Always use sequential messages in test mode with testLowCredits
+  let useSequentialMessages = req.isTestMode && req.body && req.body.testLowCredits === 'true';
   
   if (!creditStatus.canProceed) {
     logDetails(`User ${userPhone} has no credits left`);
@@ -218,28 +214,6 @@ async function handleVoiceNote(req, res) {
         flow: 'no_credits',
         credits: creditStatus
       });
-    }
-  }
-
-  // Check if this is the last credit and prepare warning if needed
- let creditWarning = '';
-if (creditStatus.creditsRemaining === 1) {
-  try {
-    const userStats = await userService.getUserStats(userPhone, req);
-    const totalSecondsFormatted = Math.round(userStats.totalSeconds);
-    const totalWordsFormatted = Math.round(userStats.totalWords);
-    const totalTranscriptionsFormatted = userStats.totalTranscriptions;
-
-   // Instead, save this for later
-    creditWarning = `❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
-      `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
-      `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
-      `But worry not, you have two options to get more:`;
-    
-    } catch (statsError) {
-      logDetails('Error getting user stats for credit warning', statsError);
-      // If there's an error, skip the warning
-      creditWarning = '';
     }
   }
 
@@ -326,9 +300,23 @@ if (creditStatus.creditsRemaining === 1) {
     // Make sure we don't add an extra emoji here - just use what's in the label
     finalMessage += `${transcriptionLabel.trim()}\n${transcription}`;
     
-    // Only append credit warning if we're NOT doing sequential messages
-    if (creditWarning && !shouldSendSequentialMessages) {
-      finalMessage += creditWarning;
+    // Only add credit warning to transcription if we're NOT using sequential messages
+    if (creditStatus.creditsRemaining === 1 && !useSequentialMessages) {
+      try {
+        const userStats = await userService.getUserStats(userPhone, req);
+        const totalSecondsFormatted = Math.round(userStats.totalSeconds);
+        const totalWordsFormatted = Math.round(userStats.totalWords);
+        const totalTranscriptionsFormatted = userStats.totalTranscriptions;
+
+        const creditWarning = `❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
+          `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
+          `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
+          `But worry not, you have two options to get more:`;
+        
+        finalMessage += creditWarning;
+      } catch (statsError) {
+        logDetails('Error getting user stats for credit warning', statsError);
+      }
     }
 
     // Split the message if needed
@@ -337,97 +325,115 @@ if (creditStatus.creditsRemaining === 1) {
     // Calculate costs
     const costs = calculateCosts(contentLength, messageParts.length);
     
-// First send the message, then update database
-if (twilioClient.isAvailable()) {
-  try {
-    // Send the transcription message(s)
-    await sendMessages(twilioClient, messageParts, userPhone, toPhone);
-    
-    // Only after successful send, update the database
-    logDetails('Recording transcription in database');
-    const dbResult = await userService.recordTranscription(
-      userPhone,
-      costs.audioLengthSeconds,
-      transcription.split(/\s+/).length,
-      costs.openAICost,
-      costs.twilioCost,
-      req
-    );
-    logDetails('Transcription recorded in database');
-    
-    // Get the updated user data from the database operation
-    const updatedUserData = dbResult.user;
-    
-    // Check if user is down to their last credit to send referral info
-    if (shouldSendSequentialMessages) {
+    // First send the message, then update database
+    if (twilioClient.isAvailable()) {
       try {
-        logDetails('Sending sequential low credits messages');
+        // Send the transcription message(s)
+        await sendMessages(twilioClient, messageParts, userPhone, toPhone);
         
-        // Generate referral code if needed
-        userReferralCode = updatedUserData.referral_code || 
-          await referralService.generateReferralCodeForUser(
-            updatedUserData.id, 
-            req
-          );
-        
-        // Calculate estimated usage
-        const estimatedMonths = await creditManager.calculateUsageEstimate(
-          updatedUserData.id, 
-          req
-        );
-        
-        // Get user stats
-        const userStats = await userService.getUserStats(userPhone, req);
-        
-        // Send sequential messages with proper localization
-        await referralService.sendSequentialLowCreditsMessages(
-          twilioClient,
+        // Only after successful send, update the database
+        logDetails('Recording transcription in database');
+        const dbResult = await userService.recordTranscription(
           userPhone,
-          toPhone,
-          updatedUserData,
-          userReferralCode,
-          estimatedMonths,
-          userStats,
+          costs.audioLengthSeconds,
+          transcription.split(/\s+/).length,
+          costs.openAICost,
+          costs.twilioCost,
           req
         );
+        logDetails('Transcription recorded in database');
         
-      } catch (error) {
-        logDetails('Error sending sequential credit messages:', error);
+        // Get the updated user data from the database operation
+        const updatedUserData = dbResult.user;
+        
+        // Send sequential low credit messages if needed
+        if (useSequentialMessages) {
+          try {
+            logDetails('Triggering sequential messages for low credits warning');
+            
+            // Generate referral code if needed
+            userReferralCode = updatedUserData.referral_code || 
+              await referralService.generateReferralCodeForUser(
+                updatedUserData.id, 
+                req
+              );
+            
+            // Calculate estimated usage
+            const estimatedMonths = await creditManager.calculateUsageEstimate(
+              updatedUserData.id, 
+              req
+            );
+            
+            // Get user stats
+            const userStats = await userService.getUserStats(userPhone, req);
+            
+            // Important: send separate sequential messages
+            await referralService.sendSequentialLowCreditsMessages(
+              twilioClient,
+              userPhone,
+              toPhone,
+              updatedUserData,
+              userReferralCode,
+              estimatedMonths,
+              userStats,
+              req
+            );
+            
+            logDetails('Sequential low credit messages sent successfully');
+          } catch (error) {
+            logDetails('Error sending sequential credit messages:', error);
+          }
+        }
+        // For production, also check if user is down to their last credit in real scenario
+        else if (updatedUserData.credits_remaining === 1) {
+          try {
+            logDetails('User has exactly 1 credit left - generating referral code');
+            
+            // Generate referral code if needed
+            userReferralCode = updatedUserData.referral_code || 
+              await referralService.generateReferralCodeForUser(
+                updatedUserData.id, 
+                req
+              );
+            
+            logDetails('Generated referral code:', userReferralCode);
+          } catch (error) {
+            logDetails('Error generating referral code:', error);
+          }
+        }
+        
+        // Generate XML response
+        const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
+        
+        // For test mode, return test results instead of XML
+        if (req.isTestMode) {
+          return formatTestResponse(res, {
+            flow: 'successful_transcription',
+            summary: summary,
+            transcription: transcription,
+            message: finalMessage,
+            costs: costs,
+            credits: updatedUserData.credits_remaining,
+            referralCode: userReferralCode,
+            userInfo: {
+              id: updatedUserData.id,
+              credits_remaining: updatedUserData.credits_remaining,
+              referral_code: userReferralCode || updatedUserData.referral_code
+            },
+            testResults: twilioClient.getTestResults()
+          });
+        } else {
+          res.set('Content-Type', 'text/xml');
+          return res.send(xmlResponse);
+        }
+      } catch (twilioError) {
+        logDetails('Error sending message via Twilio:', twilioError);
+        return formatErrorResponse(res, 500, 'Failed to send transcription', {
+          flow: 'twilio_error',
+          error: twilioError.message
+        });
       }
-    }
-        
-    // Generate XML response
-    const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
-    
-    // For test mode, return test results instead of XML
-    if (req.isTestMode) {
-      return formatTestResponse(res, {
-        flow: 'successful_transcription',
-        summary: summary,
-        transcription: transcription,
-        message: finalMessage,
-        costs: costs,
-        credits: updatedUserData.credits_remaining,
-        referralCode: userReferralCode,
-        userInfo: {
-          id: updatedUserData.id,
-          credits_remaining: updatedUserData.credits_remaining,
-          referral_code: userReferralCode || updatedUserData.referral_code
-        },
-        testResults: twilioClient.getTestResults()
-      });
     } else {
-      res.set('Content-Type', 'text/xml');
-      return res.send(xmlResponse);
-    }
-  } catch (twilioError) {
-    logDetails('Error sending message via Twilio:', twilioError);
-    return formatErrorResponse(res, 500, 'Failed to send transcription', {
-      flow: 'twilio_error',
-      error: twilioError.message
-    });
-  }
-} else {
       logDetails('No Twilio client - returning JSON response');
       
       // For API mode, still record the transcription
