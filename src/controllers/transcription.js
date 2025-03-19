@@ -347,52 +347,43 @@ if (twilioClient.isAvailable()) {
     // Get the updated user data from the database operation
     const updatedUserData = dbResult.user;
     
-    // Check if user is down to their last credit to send referral info
-    if (updatedUserData.credits_remaining === 1) {
-      try {
-        logDetails('User has 1 credit left, sending referral information');
-        
-        // Get the user's referral code
-        const userReferralCode = updatedUserData.referral_code || 
-          await referralService.generateReferralCodeForUser(
-            updatedUserData.id, 
-            req
-          );
-        
-        // Calculate estimated usage
-        const estimatedMonths = await creditManager.calculateUsageEstimate(
-          updatedUserData.id, 
-          req
-        );
-        
-        // NEW: Send the creditWarning as its own message first
-        if (creditWarning) {
-          await twilioClient.sendMessage({
-            body: creditWarning,
-            from: toPhone,
-            to: userPhone
-          });
-          
-          // Add delay between messages
-          if (!req.isTestMode) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-        
-        // Then send the options as separate messages
-        await referralService.sendLowCreditsWithReferralInfo(
-          twilioClient,
-          userPhone,
-          toPhone,
-          updatedUserData,
-          userReferralCode,
-          estimatedMonths,
-          req
-        );
-      } catch (error) {
-        logDetails('Error sending low credits referral message:', error);
-      }
-    }
+ // Check if user is down to their last credit to send referral info
+if (updatedUserData.credits_remaining === 1) {
+  try {
+    logDetails('User has 1 credit left, sending sequential messages');
+    
+    // Generate referral code if needed
+    const userReferralCode = updatedUserData.referral_code || 
+      await referralService.generateReferralCodeForUser(
+        updatedUserData.id, 
+        req
+      );
+    
+    // Calculate estimated usage
+    const estimatedMonths = await creditManager.calculateUsageEstimate(
+      updatedUserData.id, 
+      req
+    );
+    
+    // Get user stats
+    const userStats = await userService.getUserStats(userPhone, req);
+    
+    // Send sequential messages with proper localization
+    await referralService.sendSequentialLowCreditsMessages(
+      twilioClient,
+      userPhone,
+      toPhone,
+      updatedUserData,
+      userReferralCode,
+      estimatedMonths,
+      userStats,
+      req
+    );
+    
+  } catch (error) {
+    logDetails('Error sending sequential credit messages:', error);
+  }
+}
         
         // Check if user is down to their last credit to send referral info
         if (updatedUserData.credits_remaining === 1) {
