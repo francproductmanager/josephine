@@ -139,8 +139,12 @@ function extractReferralCodeFromMessage(message) {
                     TEST_ALREADY_USED_CODE, TEST_MAXED_OUT_CODE,
                     TEST_LIMIT_REACHED_CODE];
   
+  // Log the check for test codes in test mode
+  console.log(`Checking for test codes in message: "${cleanedMessage}"`);
+  
   for (const code of testCodes) {
     if (cleanedMessage === code) {
+      console.log(`Found test code: ${code}`);
       return code;
     }
   }
