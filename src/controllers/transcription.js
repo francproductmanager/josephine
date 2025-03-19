@@ -67,6 +67,8 @@ async function handleVoiceNote(req, res) {
   
   // Declare userReferralCode at function scope
   let userReferralCode = null;
+  // Flag to check if we should send sequential messages
+  let shouldSendSequentialMessages = false;
   
   // Check if this is a text message with a potential referral code
   if (numMedia === 0 && event.Body) {
@@ -179,6 +181,11 @@ async function handleVoiceNote(req, res) {
   // Check user credits
   const creditStatus = await userService.checkUserCredits(userPhone, req);
   logDetails('Credit status check result', creditStatus);
+  
+  // Check if we should send sequential messages - BEFORE credit deduction
+  // Either the user has exactly 1 credit left, or we're in test mode with testLowCredits
+  shouldSendSequentialMessages = (creditStatus.creditsRemaining === 1) || 
+                                (req.isTestMode && req.body && req.body.testLowCredits === 'true');
   
   if (!creditStatus.canProceed) {
     logDetails(`User ${userPhone} has no credits left`);
@@ -319,7 +326,8 @@ if (creditStatus.creditsRemaining === 1) {
     // Make sure we don't add an extra emoji here - just use what's in the label
     finalMessage += `${transcriptionLabel.trim()}\n${transcription}`;
     
-    if (creditWarning) {
+    // Only append credit warning if we're NOT doing sequential messages
+    if (creditWarning && !shouldSendSequentialMessages) {
       finalMessage += creditWarning;
     }
 
@@ -351,9 +359,9 @@ if (twilioClient.isAvailable()) {
     const updatedUserData = dbResult.user;
     
     // Check if user is down to their last credit to send referral info
-    if (updatedUserData.credits_remaining === 1) {
+    if (shouldSendSequentialMessages) {
       try {
-        logDetails('User has 1 credit left, sending sequential messages');
+        logDetails('Sending sequential low credits messages');
         
         // Generate referral code if needed
         userReferralCode = updatedUserData.referral_code || 
