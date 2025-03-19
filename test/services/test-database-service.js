@@ -44,7 +44,7 @@ function setupTestMode(req) {
         country_code: '33',
         credits_remaining: 50,
         free_trial_used: false,
-        has_seen_intro: false,
+        has_seen_intro: true,
         usage_count: 0,
         total_seconds: 0
       },
