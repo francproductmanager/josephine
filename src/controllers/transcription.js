@@ -212,19 +212,20 @@ async function handleVoiceNote(req, res) {
   }
 
   // Check if this is the last credit and prepare warning if needed
-  let creditWarning = '';
-  if (creditStatus.creditsRemaining === 1) {
-    try {
-      const userStats = await userService.getUserStats(userPhone, req);
-      const totalSecondsFormatted = Math.round(userStats.totalSeconds);
-      const totalWordsFormatted = Math.round(userStats.totalWords);
-      const totalTranscriptionsFormatted = userStats.totalTranscriptions;
-      
-      creditWarning = `\n\n❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
-        `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
-        `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
-        `After that, I'll ask for a small contribution to keep going. Thanks for letting me help!`;
-      
+ let creditWarning = '';
+if (creditStatus.creditsRemaining === 1) {
+  try {
+    const userStats = await userService.getUserStats(userPhone, req);
+    const totalSecondsFormatted = Math.round(userStats.totalSeconds);
+    const totalWordsFormatted = Math.round(userStats.totalWords);
+    const totalTranscriptionsFormatted = userStats.totalTranscriptions;
+
+   // Instead, save this for later
+    creditWarning = `❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
+      `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
+      `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
+      `But worry not, you have two options to get more:`;
+    
     } catch (statsError) {
       logDetails('Error getting user stats for credit warning', statsError);
       // If there's an error, skip the warning
@@ -325,43 +326,73 @@ async function handleVoiceNote(req, res) {
     // Calculate costs
     const costs = calculateCosts(contentLength, messageParts.length);
     
-    // First send the message, then update database
-    if (twilioClient.isAvailable()) {
+// First send the message, then update database
+if (twilioClient.isAvailable()) {
+  try {
+    // Send the transcription message(s)
+    await sendMessages(twilioClient, messageParts, userPhone, toPhone);
+    
+    // Only after successful send, update the database
+    logDetails('Recording transcription in database');
+    const dbResult = await userService.recordTranscription(
+      userPhone,
+      costs.audioLengthSeconds,
+      transcription.split(/\s+/).length,
+      costs.openAICost,
+      costs.twilioCost,
+      req
+    );
+    logDetails('Transcription recorded in database');
+    
+    // Get the updated user data from the database operation
+    const updatedUserData = dbResult.user;
+    
+    // Check if user is down to their last credit to send referral info
+    if (updatedUserData.credits_remaining === 1) {
       try {
-        // Send the messages
-        await sendMessages(twilioClient, messageParts, userPhone, toPhone);
+        logDetails('User has 1 credit left, sending referral information');
         
-        // Only after successful send, update the database
-        logDetails('Recording transcription in database');
-        const dbResult = await userService.recordTranscription(
-          userPhone,
-          costs.audioLengthSeconds,
-          transcription.split(/\s+/).length,
-          costs.openAICost,
-          costs.twilioCost,
+        // Get the user's referral code
+        const userReferralCode = updatedUserData.referral_code || 
+          await referralService.generateReferralCodeForUser(
+            updatedUserData.id, 
+            req
+          );
+        
+        // Calculate estimated usage
+        const estimatedMonths = await creditManager.calculateUsageEstimate(
+          updatedUserData.id, 
           req
         );
-        logDetails('Transcription recorded in database');
         
-        // Get the updated user data from the database operation
-        const updatedUserData = dbResult.user;
-        
-        // For test mode, expose the user data and referral code for testing
-        let userReferralCode = null;
-        
-        // Check if user should get a referral code (4 credits left and on free trial)
-        if (creditManager.shouldGenerateReferralCode(updatedUserData)) {
-          try {
-            logDetails('Generating referral code for user with 4 credits left');
-            // Generate referral code if user doesn't have one
-            userReferralCode = await referralService.generateReferralCodeForUser(
-              updatedUserData.id, 
-              req
-            );
-          } catch (error) {
-            logDetails('Error generating referral code:', error);
+        // NEW: Send the creditWarning as its own message first
+        if (creditWarning) {
+          await twilioClient.sendMessage({
+            body: creditWarning,
+            from: toPhone,
+            to: userPhone
+          });
+          
+          // Add delay between messages
+          if (!req.isTestMode) {
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
+        
+        // Then send the options as separate messages
+        await referralService.sendLowCreditsWithReferralInfo(
+          twilioClient,
+          userPhone,
+          toPhone,
+          updatedUserData,
+          userReferralCode,
+          estimatedMonths,
+          req
+        );
+      } catch (error) {
+        logDetails('Error sending low credits referral message:', error);
+      }
+    }
         
         // Check if user is down to their last credit to send referral info
         if (updatedUserData.credits_remaining === 1) {
