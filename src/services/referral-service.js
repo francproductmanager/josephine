@@ -469,31 +469,42 @@ async function sendSequentialLowCreditsMessages(twilioClient, userPhone, fromPho
       codeUsesRemaining: user.referral_code_uses ? 5 - user.referral_code_uses : 5
     };
     
+    logDetails('Sending sequential messages with data:', {
+      userPhone,
+      referralCode,
+      totalTranscriptions: userStats.totalTranscriptions
+    });
+    
     // 1. Get and send heads-up message
     const headsUpMessage = await getLocalizedMessage('lowCreditsHeadsUp', userLang, contextData);
     
     if (twilioClient.isAvailable()) {
+      // Send first message - heading
+      logDetails('Sending first sequential message: heads-up');
       await twilioClient.sendMessage({
         body: headsUpMessage,
         from: fromPhone,
         to: userPhone
       });
       
-      // Add delay between messages in production
+      // Add delay between messages
       if (!req || !req.isTestMode) {
         await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        logDetails('In test mode - skipping delay between messages');
       }
       
       // 2. Get and send Option A (referral)
       const optionAMessage = await getLocalizedMessage('lowCreditsOptionA', userLang, contextData);
       
+      logDetails('Sending second sequential message: option A (referral)');
       await twilioClient.sendMessage({
         body: optionAMessage,
         from: fromPhone,
         to: userPhone
       });
       
-      // Add delay between messages in production
+      // Add delay between messages
       if (!req || !req.isTestMode) {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -501,11 +512,16 @@ async function sendSequentialLowCreditsMessages(twilioClient, userPhone, fromPho
       // 3. Get and send Option B (payment)
       const optionBMessage = await getLocalizedMessage('lowCreditsOptionB', userLang, contextData);
       
+      logDetails('Sending third sequential message: option B (payment)');
       await twilioClient.sendMessage({
         body: optionBMessage,
         from: fromPhone,
         to: userPhone
       });
+      
+      logDetails('Completed sending all three sequential messages');
+    } else {
+      logDetails('Twilio client not available - unable to send sequential messages');
     }
   } catch (error) {
     logDetails('Error sending sequential low credits messages:', error);
