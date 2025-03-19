@@ -456,28 +456,35 @@ async function sendLowCreditsWithReferralInfo(twilioClient, userPhone, fromPhone
   try {
     const userLang = getUserLanguage(userPhone);
     
-    // Get localized message from languages.json
-    const messageData = {
-      creditsRemaining: user.credits_remaining,
-      referralCode,
-      estimatedMonths,
-      plural: user.credits_remaining !== 1,
-      codeUsesRemaining: user.referral_code_uses ? 5 - user.referral_code_uses : 5
-    };
+// Instead of getting one message, prepare two separate option messages
     
-    // Get the "lowCreditsReferral" message from languages.json
-    const message = await getLocalizedMessage('lowCreditsReferral', userLang, messageData);
+    // Prepare option A - Referral
+    const optionA = `A) 👫 Send Josephine to a friend and ask them to type the referral code ${referralCode}. This will give both of you 5 extra transcriptions.`;
     
-    // Send the message via Twilio
+    // Prepare option B - Payment
+    const optionB = `B) 💳 Purchase an extra 50 transcriptions. Based on your usage, 50 transcriptions will last you more than ${estimatedMonths} month${estimatedMonths !== 1 ? 's' : ''}. The cost will be £2 [payment link coming soon]`;
+        // Send Option A message
     if (twilioClient.isAvailable()) {
       await twilioClient.sendMessage({
-        body: message,
+        body: optionA,
+        from: fromPhone,
+        to: userPhone
+      });
+      
+      // Add delay between messages
+      if (!req || !req.isTestMode) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Send Option B message
+      await twilioClient.sendMessage({
+        body: optionB,
         from: fromPhone,
         to: userPhone
       });
     }
   } catch (error) {
-    logDetails('Error sending low credits referral message:', error);
+    logDetails('Error sending low credits referral messages:', error);
     // We don't throw the error here to prevent affecting the main process
   }
 }
