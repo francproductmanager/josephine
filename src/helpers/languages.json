@@ -15,13 +15,13 @@
     "welcomeIntro": "Hi! I'm Josephine, your friendly transcription assistant 👋. I turn voice notes into text so you can read them at your convenience.",
     "termsIntro": "By sending audio, you confirm you've read and agreed to my Terms & Conditions https://tinyurl.com/josephine-Terms. Forward a voice note, and I'll do the rest!",
     "voiceNoteIntro": "Hey there! I see you sent me a voice note 👋. Before I transcribe, I want to make sure you've checked my Terms & Conditions.",
-    "voiceNoteTerms": "By continuing to send audio, you're confirming you've read and agreed to my Terms & Conditions: https://tinyurl.com/josephine-Terms. Please forward your voice note again, and I'll transcribe it right away!"
+    "voiceNoteTerms": "By continuing to send audio, you're confirming you've read and agreed to my Terms & Conditions: https://tinyurl.com/josephine-Terms. Please forward your voice note again, and I'll transcribe it right away!",
     "lowCreditsReferral": "⚠️ You have only {creditsRemaining} transcription{plural ? 's' : ''} left!\n\nYou have two options to get more:\n\nA) 👫 Send Josephine to a friend and ask them to type the referral code {referralCode}. This will give both of you 5 extra transcriptions.\n\nB) 💳 Purchase an extra 50 transcriptions. Based on your usage, 50 transcriptions will last you more than {estimatedMonths} month{estimatedMonths !== 1 ? 's' : ''}. The cost will be £2 [payment link coming soon]",
     "referralSuccess": "🎉 Referral code accepted! You've received {refereeCredits} additional transcription credits. Your friend has also received {referrerCredits} credits. Thank you for using Josephine!",
     "referralLimitReached": "Thanks for using the referral code! However, you've reached the maximum bonus credits from referrals (25). Your friend still received {referrerCredits} credits for referring you.",
     "referralInvalid": "Sorry, that referral code is invalid. Please check the code and try again.",
     "referralSelfUse": "You cannot use your own referral code. Please share it with friends instead.",
-    "referralAlreadyUsed": "You've already used this referral code."
+    "referralAlreadyUsed": "You've already used this referral code.",
     "referralCodeMaxedOut": "Sorry, this referral code has already been used 5 times and has expired."
   },
   "de": {
