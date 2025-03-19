@@ -99,21 +99,20 @@ async function handleVoiceNote(req, res) {
         } else {
           logDetails('Referral code processing failed:', referralResult);
           
-          // Get the appropriate error message key based on the error type
-          const errorKey = 
-            referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
-            referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
-            'referralAlreadyUsed';
-          
-          // Get localized error message
-          const errorMessage = await getLocalizedMessage(errorKey, userLang);
-          
-          // Send the error message
-          await twilioClient.sendMessage({
-            body: errorMessage,
-            from: toPhone,
-            to: userPhone
-          });
+// Get the appropriate error message key based on the error type
+const errorKey = 
+  referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
+  referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
+  referralResult.error === 'CODE_MAXED_OUT' ? 'referralCodeMaxedOut' :
+  'referralAlreadyUsed';
+
+const errorMessage = await getLocalizedMessage(errorKey, userLang);
+
+await twilioClient.sendMessage({
+  body: errorMessage,
+  from: toPhone,
+  to: userPhone
+});
         }
         
         // Generate appropriate response based on test mode
