@@ -9,6 +9,10 @@ const { splitLongMessage, sendMessages } = require('../services/messaging-servic
 const { formatTestResponse, formatErrorResponse, formatSuccessResponse } = require('../utils/response-formatter');
 const { logDetails } = require('../utils/logging-utils');
 
+// Import the new credit manager and referral service
+const creditManager = require('../services/credit-manager');
+const referralService = require('../services/referral-service');
+
 /**
  * Handle non-audio media
  */
@@ -59,6 +63,79 @@ async function handleVoiceNote(req, res) {
   const twilioClient = req.twilioClient;
   const mediaContentType = event.MediaContentType0;
   const mediaUrl = event.MediaUrl0;
+  const numMedia = parseInt(event.NumMedia || 0);
+  
+  // NEW: Check if this is a text message with a potential referral code
+  if (numMedia === 0 && event.Body) {
+    const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
+    
+    if (potentialReferralCode) {
+      try {
+        logDetails('Potential referral code detected:', potentialReferralCode);
+        
+        // Process the referral code
+        const referralResult = await referralService.processReferralCode(
+          potentialReferralCode, 
+          req.user, 
+          req
+        );
+        
+        if (referralResult.success) {
+          logDetails('Referral code processed successfully:', {
+            referrerId: referralResult.referrer.id,
+            refereeId: referralResult.referee.id,
+            referrerCreditsAdded: referralResult.referrerCreditsAdded,
+            refereeCreditsAdded: referralResult.refereeCreditsAdded
+          });
+          
+          // Send success message to the person who entered the code
+          await referralService.sendReferralSuccessMessage(
+            twilioClient, 
+            userPhone, 
+            toPhone, 
+            referralResult, 
+            req
+          );
+        } else {
+          logDetails('Referral code processing failed:', referralResult);
+          
+          // Get the appropriate error message key based on the error type
+          const errorKey = 
+            referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
+            referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
+            'referralAlreadyUsed';
+          
+          // Get localized error message
+          const errorMessage = await getLocalizedMessage(errorKey, userLang);
+          
+          // Send the error message
+          await twilioClient.sendMessage({
+            body: errorMessage,
+            from: toPhone,
+            to: userPhone
+          });
+        }
+        
+        // Generate appropriate response based on test mode
+        if (req.isTestMode) {
+          return formatTestResponse(res, {
+            flow: 'referral_code_processed',
+            success: referralResult.success,
+            result: referralResult,
+            testResults: twilioClient.getTestResults()
+          });
+        } else {
+          // Generate XML response for Twilio
+          const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
+          res.set('Content-Type', 'text/xml');
+          return res.send(xmlResponse);
+        }
+      } catch (error) {
+        logDetails('Error processing referral code:', error);
+        // If there's an error, we'll continue with normal processing
+      }
+    }
+  }
   
   logDetails('Processing voice note...');
   
@@ -182,16 +259,16 @@ async function handleVoiceNote(req, res) {
     }
 
     // Generate summary for long transcriptions
-let summary = null;
-// Special handling for test mode with longTranscription=true
-if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
-  logDetails('Forcing summary generation for test with longTranscription=true');
-  summary = "This is a test summary of the transcription. The main points discussed include testing functionality, mock data generation, and verification of the summary feature.";
-} else if (exceedsWordLimit(transcription, 150)) {
-  logDetails('Generating summary for long transcription');
-  summary = await generateSummary(transcription, userLang);
-  logDetails('Summary generated', { summary });
-}
+    let summary = null;
+    // Special handling for test mode with longTranscription=true
+    if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
+      logDetails('Forcing summary generation for test with longTranscription=true');
+      summary = "This is a test summary of the transcription. The main points discussed include testing functionality, mock data generation, and verification of the summary feature.";
+    } else if (exceedsWordLimit(transcription, 150)) {
+      logDetails('Generating summary for long transcription');
+      summary = await generateSummary(transcription, userLang);
+      logDetails('Summary generated', { summary });
+    }
 
     // Prepare the final message
     let finalMessage = '';
@@ -222,7 +299,7 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
         
         // Only after successful send, update the database
         logDetails('Recording transcription in database');
-        await userService.recordTranscription(
+        const dbResult = await userService.recordTranscription(
           userPhone,
           costs.audioLengthSeconds,
           transcription.split(/\s+/).length,
@@ -231,6 +308,61 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
           req
         );
         logDetails('Transcription recorded in database');
+        
+        // NEW: Check if user should get a referral code (4 credits left and on free trial)
+        // Get the updated user data from the database operation
+        const updatedUserData = dbResult.user;
+        
+        if (creditManager.shouldGenerateReferralCode(updatedUserData)) {
+          try {
+            logDetails('Generating referral code for user with 4 credits left');
+            // Generate referral code if user doesn't have one
+            await referralService.generateReferralCodeForUser(
+              updatedUserData.id, 
+              req
+            );
+          } catch (error) {
+            logDetails('Error generating referral code:', error);
+          }
+        }
+        
+        // NEW: Check if user is down to their last credit to send referral info
+        if (updatedUserData.credits_remaining === 1) {
+          try {
+            logDetails('User has 1 credit left, sending referral information');
+            
+            // Get the user's referral code
+            const userReferralCode = updatedUserData.referral_code;
+            
+            // If no code is stored yet (unlikely but possible due to race conditions)
+            // generate one now
+            const referralCode = userReferralCode || 
+              await referralService.generateReferralCodeForUser(updatedUserData.id, req);
+            
+            // Calculate estimated usage
+            const estimatedMonths = await creditManager.calculateUsageEstimate(
+              updatedUserData.id, 
+              req
+            );
+            
+            // Send low credits message with referral info
+            // This happens after the main transcription message
+            await referralService.sendLowCreditsWithReferralInfo(
+              twilioClient,
+              userPhone,
+              toPhone,
+              updatedUserData,
+              referralCode,
+              estimatedMonths,
+              req
+            );
+          } catch (error) {
+            logDetails('Error sending low credits referral message:', error);
+          }
+        }
+        
+        // Generate XML response
+        const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
         
         // For test mode, return test results instead of XML
         if (req.isTestMode) {
@@ -244,8 +376,6 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
             testResults: twilioClient.getTestResults()
           });
         } else {
-          // Generate XML response for Twilio
-          const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
           res.set('Content-Type', 'text/xml');
           return res.send(xmlResponse);
         }
