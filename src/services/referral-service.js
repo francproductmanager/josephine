@@ -134,26 +134,46 @@ function extractReferralCodeFromMessage(message) {
   // Convert to uppercase and trim
   const cleanedMessage = message.trim().toUpperCase();
   
-  // Check for special test codes first (for easier testing)
-  const testCodes = [TEST_VALID_CODE, TEST_SELF_REFERRAL_CODE, 
-                    TEST_ALREADY_USED_CODE, TEST_MAXED_OUT_CODE,
-                    TEST_LIMIT_REACHED_CODE];
+  // Add debugging for test mode
+  console.log(`[REFERRAL DEBUG] Checking message: "${cleanedMessage}"`);
   
-  // Log the check for test codes in test mode
-  console.log(`Checking for test codes in message: "${cleanedMessage}"`);
-  
-  for (const code of testCodes) {
-    if (cleanedMessage === code) {
-      console.log(`Found test code: ${code}`);
-      return code;
-    }
+  // Check for special test codes first
+  if (cleanedMessage === TEST_VALID_CODE) {
+    console.log(`[REFERRAL DEBUG] Found valid test code: ${TEST_VALID_CODE}`);
+    return TEST_VALID_CODE;
   }
   
-  // Using regex to extract a valid code
+  if (cleanedMessage === TEST_SELF_REFERRAL_CODE) {
+    console.log(`[REFERRAL DEBUG] Found self-referral test code`);
+    return TEST_SELF_REFERRAL_CODE;
+  }
+  
+  if (cleanedMessage === TEST_ALREADY_USED_CODE) {
+    console.log(`[REFERRAL DEBUG] Found already-used test code`);
+    return TEST_ALREADY_USED_CODE;
+  }
+  
+  if (cleanedMessage === TEST_MAXED_OUT_CODE) {
+    console.log(`[REFERRAL DEBUG] Found maxed-out test code`);
+    return TEST_MAXED_OUT_CODE;
+  }
+  
+  if (cleanedMessage === TEST_LIMIT_REACHED_CODE) {
+    console.log(`[REFERRAL DEBUG] Found limit-reached test code`);
+    return TEST_LIMIT_REACHED_CODE;
+  }
+  
+  // Regular extraction for production cases
   const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
   const match = cleanedMessage.match(pattern);
   
-  return match ? match[0] : null;
+  if (match) {
+    console.log(`[REFERRAL DEBUG] Found pattern-matched code: ${match[0]}`);
+    return match[0];
+  }
+  
+  console.log(`[REFERRAL DEBUG] No referral code found in message`);
+  return null;
 }
 
 /**
