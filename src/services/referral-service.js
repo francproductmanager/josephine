@@ -93,9 +93,9 @@ async function generateReferralCodeForUser(userId, req = null) {
       isUnique = parseInt(codeCheck.rows[0].count) === 0;
     }
     
-    // Save the new referral code
+    // Save the new referral code with usage counter at 0
     await client.query(
-      `UPDATE users SET referral_code = $1 WHERE id = $2`,
+      `UPDATE users SET referral_code = $1, referral_code_uses = 0 WHERE id = $2`,
       [newCode, userId]
     );
     
@@ -122,7 +122,7 @@ function extractReferralCodeFromMessage(message) {
   // Convert to uppercase and trim
   const cleanedMessage = message.trim().toUpperCase();
   
-  // Using regex to extract a valid code (as per your friend's suggestion)
+  // Using regex to extract a valid code
   const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
   const match = cleanedMessage.match(pattern);
   
@@ -139,6 +139,7 @@ function extractReferralCodeFromMessage(message) {
  */
 async function processReferralCode(referralCode, newUser, req = null) {
   const REFERRAL_CREDIT_AMOUNT = 5; // Credits given for successful referral
+  const MAX_USES_PER_CODE = 5; // Maximum number of times a code can be used
   
   // Check for test mode
   if (req && req.isTestMode) {
@@ -161,9 +162,11 @@ async function processReferralCode(referralCode, newUser, req = null) {
     // Default mock response
     return { 
       success: true,
-      referrer: { id: 1001, phone_number: 'whatsapp:+1234567890' },
+      referrer: { id: 1001, phone_number: 'whatsapp:+1234567890', referral_code_uses: 1 },
       referee: newUser,
-      creditsAdded: REFERRAL_CREDIT_AMOUNT
+      referrerCreditsAdded: REFERRAL_CREDIT_AMOUNT,
+      refereeCreditsAdded: REFERRAL_CREDIT_AMOUNT,
+      codeUsesRemaining: MAX_USES_PER_CODE - 1
     };
   }
   
@@ -191,7 +194,17 @@ async function processReferralCode(referralCode, newUser, req = null) {
     
     const referrer = referrerResult.rows[0];
     
-    // 2. Verify users aren't the same person
+    // 2. Check if code has reached maximum usage limit
+    if (referrer.referral_code_uses >= MAX_USES_PER_CODE) {
+      await client.query('ROLLBACK');
+      return { 
+        success: false, 
+        error: 'CODE_MAXED_OUT',
+        message: `This referral code has been used the maximum number of times (${MAX_USES_PER_CODE})` 
+      };
+    }
+    
+    // 3. Verify users aren't the same person
     if (referrer.id === newUser.id) {
       await client.query('ROLLBACK');
       return { 
@@ -201,7 +214,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    // 3. Check if this referral already exists
+    // 4. Check if this referral already exists
     const existingReferralCheck = await client.query(
       `SELECT * FROM referrals 
        WHERE referrer_id = $1 AND referee_id = $2`,
@@ -217,7 +230,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    // 4. Check referral credit limits for both users
+    // 5. Check referral credit limits for both users
     const referrerLimitCheck = await creditManager.checkReferralCreditLimit(referrer.id);
     const refereeLimitCheck = await creditManager.checkReferralCreditLimit(newUser.id);
     
@@ -232,7 +245,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       refereeLimitCheck.remainingReferralCredits
     );
     
-    // 5. Create referral record
+    // 6. Create referral record
     await client.query(
       `INSERT INTO referrals
        (referrer_id, referee_id, referrer_credits, referee_credits)
@@ -240,7 +253,13 @@ async function processReferralCode(referralCode, newUser, req = null) {
       [referrer.id, newUser.id, referrerCredits, refereeCredits]
     );
     
-    // 6. Add credits to both users if they haven't reached their limits
+    // 7. Increment the referral code usage counter
+    await client.query(
+      `UPDATE users SET referral_code_uses = referral_code_uses + 1 WHERE id = $1`,
+      [referrer.id]
+    );
+    
+    // 8. Add credits to both users if they haven't reached their limits
     if (referrerCredits > 0) {
       await creditManager.addCreditsToUser(
         referrer.id, 
@@ -267,12 +286,21 @@ async function processReferralCode(referralCode, newUser, req = null) {
       [newUser.id]
     );
     
+    // Get updated referrer info for use counter
+    const updatedReferrerResult = await client.query(
+      `SELECT id, phone_number, referral_code, referral_code_uses FROM users WHERE id = $1`,
+      [referrer.id]
+    );
+    
+    const updatedReferrer = updatedReferrerResult.rows[0];
+    
     return {
       success: true,
-      referrer,
+      referrer: updatedReferrer,
       referee: updatedRefereeResult.rows[0],
       referrerCreditsAdded: referrerCredits,
-      refereeCreditsAdded: refereeCredits
+      refereeCreditsAdded: refereeCredits,
+      codeUsesRemaining: MAX_USES_PER_CODE - updatedReferrer.referral_code_uses
     };
   } catch (error) {
     await client.query('ROLLBACK');
@@ -303,7 +331,8 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
     const messageData = {
       refereeCredits: referralResult.refereeCreditsAdded,
       referrerCredits: referralResult.referrerCreditsAdded,
-      maxReached: referralResult.refereeCreditsAdded === 0
+      maxReached: referralResult.refereeCreditsAdded === 0,
+      codeUsesRemaining: referralResult.codeUsesRemaining
     };
     
     // Try to get localized version from language.json
@@ -344,7 +373,8 @@ async function sendLowCreditsWithReferralInfo(twilioClient, userPhone, fromPhone
       creditsRemaining: user.credits_remaining,
       referralCode,
       estimatedMonths,
-      plural: user.credits_remaining !== 1
+      plural: user.credits_remaining !== 1,
+      codeUsesRemaining: user.referral_code_uses ? 5 - user.referral_code_uses : 5
     };
     
     // Get the "lowCreditsReferral" message from languages.json
@@ -361,6 +391,65 @@ async function sendLowCreditsWithReferralInfo(twilioClient, userPhone, fromPhone
   } catch (error) {
     logDetails('Error sending low credits referral message:', error);
     // We don't throw the error here to prevent affecting the main process
+  }
+}
+
+/**
+ * Generate a new referral code when the old one reaches its usage limit
+ * 
+ * @param {number} userId - User ID to regenerate code for
+ * @param {object} [req=null] - Express request object (for test mode)
+ * @returns {Promise<string>} The new referral code
+ */
+async function regenerateReferralCode(userId, req = null) {
+  // Check for test mode
+  if (req && req.isTestMode) {
+    logDetails('[TEST MODE] Regenerating referral code for user:', userId);
+    
+    // Track operation in test results
+    if (req.testResults) {
+      req.testResults.dbOperations.push({
+        type: 'regenerateReferralCode',
+        timestamp: new Date().toISOString(),
+        details: { userId }
+      });
+    }
+    
+    // Default mock response
+    return 'NEW123';
+  }
+  
+  // Regular database operation
+  const client = await pool.connect();
+  try {
+    // Generate a new unique referral code
+    let isUnique = false;
+    let newCode;
+    
+    while (!isUnique) {
+      newCode = generateReferralCode();
+      
+      // Check if code already exists
+      const codeCheck = await client.query(
+        `SELECT COUNT(*) FROM users WHERE referral_code = $1`,
+        [newCode]
+      );
+      
+      isUnique = parseInt(codeCheck.rows[0].count) === 0;
+    }
+    
+    // Update the user with new code and reset usage counter
+    await client.query(
+      `UPDATE users SET referral_code = $1, referral_code_uses = 0 WHERE id = $2`,
+      [newCode, userId]
+    );
+    
+    return newCode;
+  } catch (error) {
+    logDetails('Error in regenerateReferralCode:', error);
+    throw error;
+  } finally {
+    client.release();
   }
 }
 
@@ -411,6 +500,24 @@ async function setupReferralSchema() {
       logDetails('Added referral_code column to users table');
     }
     
+    // Check for referral_code_uses column in users table
+    const usesColumnCheck = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'referral_code_uses'
+      );
+    `);
+    
+    if (!usesColumnCheck.rows[0].exists) {
+      // Add referral_code_uses column to users table
+      await client.query(`
+        ALTER TABLE users
+        ADD COLUMN referral_code_uses INTEGER NOT NULL DEFAULT 0;
+      `);
+      
+      logDetails('Added referral_code_uses column to users table');
+    }
+    
     // Check for credit_transactions table
     const creditTxTableCheck = await client.query(`
       SELECT EXISTS (
@@ -434,6 +541,18 @@ async function setupReferralSchema() {
       
       logDetails('Created credit_transactions table');
     }
+    
+    // Create index for referral code usage lookups if not exists
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_referral_code_uses'
+        ) THEN
+          CREATE INDEX idx_users_referral_code_uses ON users(referral_code, referral_code_uses);
+        END IF;
+      END$$;
+    `);
   } catch (error) {
     logDetails('Error setting up referral schema:', error);
     throw error;
@@ -449,5 +568,6 @@ module.exports = {
   processReferralCode,
   sendReferralSuccessMessage,
   sendLowCreditsWithReferralInfo,
+  regenerateReferralCode,
   setupReferralSchema
 };
