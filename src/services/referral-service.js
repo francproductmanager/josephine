@@ -19,6 +19,13 @@ const pool = new Pool({
 // All valid characters for referral codes - using your friend's approach
 const ALLOWED_CHARS = "ABCDEFGHJKMNPRTUVWXY01258";
 
+// Special test code constants
+const TEST_VALID_CODE = "TEST123";
+const TEST_SELF_REFERRAL_CODE = "SELF123";
+const TEST_ALREADY_USED_CODE = "USED123";
+const TEST_MAXED_OUT_CODE = "FULL123";
+const TEST_LIMIT_REACHED_CODE = "LIMIT123";
+
 /**
  * Generate a random 6-character referral code
  * Using only valid characters (uppercase letters except I,L,O,Q,S,Z and numbers except 3,4,6,7,9)
@@ -60,8 +67,13 @@ async function generateReferralCodeForUser(userId, req = null) {
       return req.mockDb.generateReferralCodeForUser(userId, req);
     }
     
+    // In test mode, return a predictable code for testing
+    if (req.body && req.body.testGenerateCode === 'true') {
+      return TEST_VALID_CODE;
+    }
+    
     // Default mock response
-    return 'ABC123';
+    return 'ABC125';
   }
   
   // Regular database operation
@@ -122,6 +134,17 @@ function extractReferralCodeFromMessage(message) {
   // Convert to uppercase and trim
   const cleanedMessage = message.trim().toUpperCase();
   
+  // Check for special test codes first (for easier testing)
+  const testCodes = [TEST_VALID_CODE, TEST_SELF_REFERRAL_CODE, 
+                    TEST_ALREADY_USED_CODE, TEST_MAXED_OUT_CODE,
+                    TEST_LIMIT_REACHED_CODE];
+  
+  for (const code of testCodes) {
+    if (cleanedMessage === code) {
+      return code;
+    }
+  }
+  
   // Using regex to extract a valid code
   const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
   const match = cleanedMessage.match(pattern);
@@ -141,7 +164,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
   const REFERRAL_CREDIT_AMOUNT = 5; // Credits given for successful referral
   const MAX_USES_PER_CODE = 5; // Maximum number of times a code can be used
   
-  // Check for test mode
+  // Special test mode handling for predictable testing
   if (req && req.isTestMode) {
     logDetails('[TEST MODE] Processing referral code:', { referralCode, newUserId: newUser.id });
     
@@ -154,19 +177,84 @@ async function processReferralCode(referralCode, newUser, req = null) {
       });
     }
     
+    // Special test codes that trigger specific behaviors in test mode
+    if (referralCode === TEST_VALID_CODE) {
+      // Success case with a valid code
+      return {
+        success: true,
+        flow: 'referral_success',
+        referrer: { 
+          id: 1001, 
+          phone_number: 'whatsapp:+44123456789', 
+          referral_code_uses: 1,
+          referral_code: TEST_VALID_CODE
+        },
+        referee: newUser,
+        referrerCreditsAdded: REFERRAL_CREDIT_AMOUNT,
+        refereeCreditsAdded: REFERRAL_CREDIT_AMOUNT,
+        codeUsesRemaining: MAX_USES_PER_CODE - 1,
+        testMode: true
+      };
+    }
+    
+    if (referralCode === TEST_SELF_REFERRAL_CODE) {
+      // Self-referral error case
+      return { 
+        success: false, 
+        flow: 'referral_self_use',
+        error: 'SELF_REFERRAL',
+        message: 'You cannot use your own referral code. Please share it with friends instead.',
+        testMode: true
+      };
+    }
+    
+    if (referralCode === TEST_ALREADY_USED_CODE) {
+      // Already used error case
+      return { 
+        success: false, 
+        flow: 'referral_already_used',
+        error: 'ALREADY_REFERRED',
+        message: 'You\'ve already used this referral code.',
+        testMode: true
+      };
+    }
+    
+    if (referralCode === TEST_MAXED_OUT_CODE) {
+      // Maxed out error case
+      return { 
+        success: false, 
+        flow: 'referral_code_maxed_out',
+        error: 'CODE_MAXED_OUT',
+        message: 'Sorry, this referral code has already been used 5 times and has expired.',
+        testMode: true
+      };
+    }
+    
+    if (referralCode === TEST_LIMIT_REACHED_CODE) {
+      // Referee limit reached case
+      return {
+        success: false,
+        flow: 'referral_limit_reached',
+        error: 'REFERRAL_LIMIT_REACHED',
+        message: 'Thanks for using the referral code! However, you\'ve reached the maximum bonus credits from referrals (25). Your friend still received 5 credits for referring you.',
+        referrerCreditsAdded: 5,
+        refereeCreditsAdded: 0,
+        testMode: true
+      };
+    }
+    
     // Use mock DB if available
     if (req.mockDb && req.mockDb.processReferralCode) {
       return req.mockDb.processReferralCode(referralCode, newUser, req);
     }
     
-    // Default mock response
+    // For any other code in test mode, treat as invalid
     return { 
-      success: true,
-      referrer: { id: 1001, phone_number: 'whatsapp:+1234567890', referral_code_uses: 1 },
-      referee: newUser,
-      referrerCreditsAdded: REFERRAL_CREDIT_AMOUNT,
-      refereeCreditsAdded: REFERRAL_CREDIT_AMOUNT,
-      codeUsesRemaining: MAX_USES_PER_CODE - 1
+      success: false, 
+      flow: 'referral_invalid',
+      error: 'INVALID_CODE',
+      message: 'Sorry, that referral code is invalid. Please check the code and try again.',
+      testMode: true
     };
   }
   
@@ -569,5 +657,13 @@ module.exports = {
   sendReferralSuccessMessage,
   sendLowCreditsWithReferralInfo,
   regenerateReferralCode,
-  setupReferralSchema
+  setupReferralSchema,
+  // Export test codes for use in tests
+  TEST_CODES: {
+    VALID: TEST_VALID_CODE,
+    SELF_REFERRAL: TEST_SELF_REFERRAL_CODE,
+    ALREADY_USED: TEST_ALREADY_USED_CODE,
+    MAXED_OUT: TEST_MAXED_OUT_CODE,
+    LIMIT_REACHED: TEST_LIMIT_REACHED_CODE
+  }
 };
