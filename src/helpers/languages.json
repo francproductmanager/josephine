@@ -22,7 +22,7 @@
     "referralInvalid": "Sorry, that referral code is invalid. Please check the code and try again.",
     "referralSelfUse": "You cannot use your own referral code. Please share it with friends instead.",
     "referralAlreadyUsed": "You've already used this referral code."
-    "referralCodeMaxedOut": "Sorry, this referral code has already been used 5 times."
+    "referralCodeMaxedOut": "Sorry, this referral code has already been used 5 times and has expired."
   },
   "de": {
     "welcome": "Hallo! Ich bin Josephine, dein Transkriptionsassistent für Sprachnotizen. Schicke mir eine Sprachnotiz und ich transkribiere sie für dich!",
