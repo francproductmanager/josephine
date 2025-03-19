@@ -441,6 +441,79 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
 }
 
 /**
+ * Send sequential low credits messages with referral info
+ * 
+ * @param {object} twilioClient - Initialized Twilio client
+ * @param {string} userPhone - Phone number to send message to
+ * @param {string} fromPhone - Phone number to send from
+ * @param {object} user - User object
+ * @param {string} referralCode - User's referral code
+ * @param {number} estimatedMonths - Estimated months for 50 credits
+ * @param {object} userStats - User usage statistics object
+ * @param {object} [req=null] - Express request object (for test mode)
+ * @returns {Promise<void>}
+ */
+async function sendSequentialLowCreditsMessages(twilioClient, userPhone, fromPhone, user, referralCode, estimatedMonths, userStats, req = null) {
+  try {
+    const userLang = getUserLanguage(userPhone);
+    
+    // Prepare context data for message templates
+    const contextData = {
+      totalTranscriptions: userStats.totalTranscriptions,
+      totalWords: userStats.totalWords,
+      totalSeconds: userStats.totalSeconds,
+      referralCode: referralCode,
+      estimatedMonths: estimatedMonths,
+      plural: estimatedMonths !== 1,
+      creditsRemaining: user.credits_remaining,
+      codeUsesRemaining: user.referral_code_uses ? 5 - user.referral_code_uses : 5
+    };
+    
+    // 1. Get and send heads-up message
+    const headsUpMessage = await getLocalizedMessage('lowCreditsHeadsUp', userLang, contextData);
+    
+    if (twilioClient.isAvailable()) {
+      await twilioClient.sendMessage({
+        body: headsUpMessage,
+        from: fromPhone,
+        to: userPhone
+      });
+      
+      // Add delay between messages in production
+      if (!req || !req.isTestMode) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // 2. Get and send Option A (referral)
+      const optionAMessage = await getLocalizedMessage('lowCreditsOptionA', userLang, contextData);
+      
+      await twilioClient.sendMessage({
+        body: optionAMessage,
+        from: fromPhone,
+        to: userPhone
+      });
+      
+      // Add delay between messages in production
+      if (!req || !req.isTestMode) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // 3. Get and send Option B (payment)
+      const optionBMessage = await getLocalizedMessage('lowCreditsOptionB', userLang, contextData);
+      
+      await twilioClient.sendMessage({
+        body: optionBMessage,
+        from: fromPhone,
+        to: userPhone
+      });
+    }
+  } catch (error) {
+    logDetails('Error sending sequential low credits messages:', error);
+    // We don't throw the error here to prevent affecting the main process
+  }
+}
+
+/**
  * Send a low credits message with referral info
  * 
  * @param {object} twilioClient - Initialized Twilio client
@@ -456,35 +529,28 @@ async function sendLowCreditsWithReferralInfo(twilioClient, userPhone, fromPhone
   try {
     const userLang = getUserLanguage(userPhone);
     
-// Instead of getting one message, prepare two separate option messages
+    // Get localized message from languages.json
+    const messageData = {
+      creditsRemaining: user.credits_remaining,
+      referralCode,
+      estimatedMonths,
+      plural: user.credits_remaining !== 1,
+      codeUsesRemaining: user.referral_code_uses ? 5 - user.referral_code_uses : 5
+    };
     
-    // Prepare option A - Referral
-    const optionA = `A) 👫 Send Josephine to a friend and ask them to type the referral code ${referralCode}. This will give both of you 5 extra transcriptions.`;
+    // Get the "lowCreditsReferral" message from languages.json
+    const message = await getLocalizedMessage('lowCreditsReferral', userLang, messageData);
     
-    // Prepare option B - Payment
-    const optionB = `B) 💳 Purchase an extra 50 transcriptions. Based on your usage, 50 transcriptions will last you more than ${estimatedMonths} month${estimatedMonths !== 1 ? 's' : ''}. The cost will be £2 [payment link coming soon]`;
-        // Send Option A message
+    // Send the message via Twilio
     if (twilioClient.isAvailable()) {
       await twilioClient.sendMessage({
-        body: optionA,
-        from: fromPhone,
-        to: userPhone
-      });
-      
-      // Add delay between messages
-      if (!req || !req.isTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      // Send Option B message
-      await twilioClient.sendMessage({
-        body: optionB,
+        body: message,
         from: fromPhone,
         to: userPhone
       });
     }
   } catch (error) {
-    logDetails('Error sending low credits referral messages:', error);
+    logDetails('Error sending low credits referral message:', error);
     // We don't throw the error here to prevent affecting the main process
   }
 }
@@ -663,6 +729,7 @@ module.exports = {
   processReferralCode,
   sendReferralSuccessMessage,
   sendLowCreditsWithReferralInfo,
+  sendSequentialLowCreditsMessages, // New function for sequential messages
   regenerateReferralCode,
   setupReferralSchema,
   // Export test codes for use in tests
