@@ -1,4 +1,4 @@
-// helpers/localization.js
+// src/helpers/localization.js
 const axios = require('axios');
 const translations = require('./languages.json');
 
@@ -38,46 +38,26 @@ const countryLanguageMap = {
   'default': { code: 'en', name: 'English' }
 };
 
-async function getLocalizedMessage(messageKey, langObj, context) {
+/**
+ * Retrieves a localized message and replaces placeholders with provided values.
+ * @param {string} messageKey - The key for the message in the translations file.
+ * @param {object} langObj - Object with language info (code and name).
+ * @param {object} [context={}] - An object containing key-value pairs for placeholder replacement.
+ * @returns {Promise<string>} - The localized message with placeholders replaced.
+ */
+async function getLocalizedMessage(messageKey, langObj, context = {}) {
   const langCode = (langObj && langObj.code) ? langObj.code : 'en';
-  // Return hardcoded translation if available
-  if (translations[langCode] && translations[langCode][messageKey]) {
-    return translations[langCode][messageKey];
+  let message = translations[langCode] && translations[langCode][messageKey]
+    ? translations[langCode][messageKey]
+    : translations.en[messageKey] || "Message not found";
+
+  // Replace placeholders in the format {placeholder} with actual values from context
+  for (const [key, value] of Object.entries(context)) {
+    const placeholder = new RegExp(`\\{${key}\\}`, 'g');
+    message = message.replace(placeholder, value);
   }
-  // Fallback to English message
-  const englishMessage = translations.en[messageKey] || "Message not found";
-  // Use OpenAI translation as a last resort
-  try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional translator. Translate the following text into ${langObj ? langObj.name : 'the target language'} accurately. Provide ONLY the translation, no additional text.`
-          },
-          {
-            role: "user",
-            content: `Translate this to ${langObj ? langObj.name : 'the target language'}: ${englishMessage}`
-          }
-        ],
-        max_tokens: 150,
-        temperature: 0.3
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    const translation = response.data.choices[0].message.content.trim();
-    return translation;
-  } catch (error) {
-    console.error(`Translation error for ${langCode}:`, error);
-    return englishMessage;
-  }
+
+  return message;
 }
 
 function detectCountryCode(phoneNumber) {
@@ -108,6 +88,7 @@ function detectCountryCode(phoneNumber) {
   }
   return 'default';
 }
+
 function getUserLanguage(phoneNumber) {
   const countryCode = detectCountryCode(phoneNumber);
   return countryLanguageMap[countryCode] || countryLanguageMap['default'];
