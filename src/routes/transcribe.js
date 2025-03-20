@@ -16,6 +16,7 @@ const languageController = require('../controllers/language-test');
 // Services
 const userService = require('../services/user-service');
 const { TwilioClientWrapper } = require('../services/twilio-service');
+const referralService = require('../services/referral-service'); // ADD THIS IMPORT
 
 // Utils
 const { logDetails } = require('../utils/logging-utils');
@@ -62,19 +63,19 @@ router.post('/', async (req, res, next) => {
     
     // Regular user flows
     if (numMedia === 0) {
-
- // Check if this is a text message with a potential referral code
+      // Check if this is a text message with a potential referral code
       if (event.Body) {
         const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
-        logDetails(`Checking for referral code in message body: ${event.Body}, extracted: ${potentialReferralCode || 'none'}`);
+        logDetails(`Checking for referral code in message body: "${event.Body}", extracted: ${potentialReferralCode || 'none'}`);
         
         if (potentialReferralCode) {
           // Process referral code instead of welcome message
-          logDetails(`Processing referral code: ${potentialReferralCode}`);
+          logDetails(`Found referral code: ${potentialReferralCode} - processing referral`);
           return await transcriptionController.handleVoiceNote(req, res);
         }
       }
-
+      
+      // Only send welcome if no referral code was found
       return await welcomeController.handleWelcomeMessage(req, res);
     } else if (numMedia > 0) {
       if (!event.MediaContentType0 || !event.MediaUrl0) {
