@@ -16,15 +16,17 @@ const pool = new Pool({
   }
 });
 
-// All valid characters for referral codes - using your friend's approach
+// All valid characters for referral codes - using characters that are less likely to be confused
 const ALLOWED_CHARS = "ABCDEFGHJKMNPRTUVWXY01258";
 
-// Special test code constants
-const TEST_VALID_CODE = "TEST123";
-const TEST_SELF_REFERRAL_CODE = "SELF123";
-const TEST_ALREADY_USED_CODE = "USED123";
-const TEST_MAXED_OUT_CODE = "FULL123";
-const TEST_LIMIT_REACHED_CODE = "LIMIT123";
+// Special test code constants - these MUST follow the same pattern rules as real codes
+const TEST_CODES = {
+  VALID: "TEST123",
+  SELF_REFERRAL: "SELF123",
+  ALREADY_USED: "USED123",
+  MAXED_OUT: "FULL123",
+  LIMIT_REACHED: "LIMIT123"
+};
 
 /**
  * Generate a random 6-character referral code
@@ -39,6 +41,47 @@ function generateReferralCode() {
     code += ALLOWED_CHARS[randomIndex];
   }
   return code;
+}
+
+/**
+ * Extract a potential referral code from a message using regex
+ * Uses a unified approach that handles both test and real referral codes
+ * 
+ * @param {string} message - Message to check for referral code
+ * @returns {string|null} Extracted referral code or null if not found
+ */
+function extractReferralCodeFromMessage(message) {
+  if (!message || typeof message !== 'string') {
+    return null;
+  }
+  
+  // Convert to uppercase and trim
+  const cleanedMessage = message.trim().toUpperCase();
+  
+  logDetails(`[REFERRAL DEBUG] Checking message for referral code: "${cleanedMessage}"`);
+  
+  // Use a single detection mechanism for all codes - both test and real
+  const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
+  const match = cleanedMessage.match(pattern);
+  
+  if (!match) {
+    logDetails('[REFERRAL DEBUG] No valid code pattern found in message');
+    return null;
+  }
+  
+  const extractedCode = match[0];
+  
+  // Check if it's a special test code
+  const testCodeType = Object.entries(TEST_CODES)
+    .find(([_, value]) => value === extractedCode)?.[0];
+    
+  if (testCodeType) {
+    logDetails(`[REFERRAL DEBUG] Detected special test code: ${extractedCode} (${testCodeType})`);
+  } else {
+    logDetails(`[REFERRAL DEBUG] Detected regular referral code: ${extractedCode}`);
+  }
+  
+  return extractedCode;
 }
 
 /**
@@ -69,7 +112,7 @@ async function generateReferralCodeForUser(userId, req = null) {
     
     // In test mode, return a predictable code for testing
     if (req.body && req.body.testGenerateCode === 'true') {
-      return TEST_VALID_CODE;
+      return TEST_CODES.VALID;
     }
     
     // Default mock response
@@ -121,62 +164,6 @@ async function generateReferralCodeForUser(userId, req = null) {
 }
 
 /**
- * Extract a potential referral code from a message using regex
- * 
- * @param {string} message - Message to check for referral code
- * @returns {string|null} Extracted referral code or null if not found
- */
-function extractReferralCodeFromMessage(message) {
-  if (!message || typeof message !== 'string') {
-    return null;
-  }
-  
-  // Convert to uppercase and trim
-  const cleanedMessage = message.trim().toUpperCase();
-  
-  // Add debugging for test mode
-  console.log(`[REFERRAL DEBUG] Checking message: "${cleanedMessage}"`);
-  
-  // Check for special test codes first
-  if (cleanedMessage === TEST_VALID_CODE) {
-    console.log(`[REFERRAL DEBUG] Found valid test code: ${TEST_VALID_CODE}`);
-    return TEST_VALID_CODE;
-  }
-  
-  if (cleanedMessage === TEST_SELF_REFERRAL_CODE) {
-    console.log(`[REFERRAL DEBUG] Found self-referral test code`);
-    return TEST_SELF_REFERRAL_CODE;
-  }
-  
-  if (cleanedMessage === TEST_ALREADY_USED_CODE) {
-    console.log(`[REFERRAL DEBUG] Found already-used test code`);
-    return TEST_ALREADY_USED_CODE;
-  }
-  
-  if (cleanedMessage === TEST_MAXED_OUT_CODE) {
-    console.log(`[REFERRAL DEBUG] Found maxed-out test code`);
-    return TEST_MAXED_OUT_CODE;
-  }
-  
-  if (cleanedMessage === TEST_LIMIT_REACHED_CODE) {
-    console.log(`[REFERRAL DEBUG] Found limit-reached test code`);
-    return TEST_LIMIT_REACHED_CODE;
-  }
-  
-  // Regular extraction for production cases
-  const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
-  const match = cleanedMessage.match(pattern);
-  
-  if (match) {
-    console.log(`[REFERRAL DEBUG] Found pattern-matched code: ${match[0]}`);
-    return match[0];
-  }
-  
-  console.log(`[REFERRAL DEBUG] No referral code found in message`);
-  return null;
-}
-
-/**
  * Process a referral code submitted by a user
  * 
  * @param {string} referralCode - The referral code being used
@@ -187,6 +174,8 @@ function extractReferralCodeFromMessage(message) {
 async function processReferralCode(referralCode, newUser, req = null) {
   const REFERRAL_CREDIT_AMOUNT = 5; // Credits given for successful referral
   const MAX_USES_PER_CODE = 5; // Maximum number of times a code can be used
+  
+  logDetails(`Processing referral code: ${referralCode} for user: ${newUser.phone_number}`);
   
   // Special test mode handling for predictable testing
   if (req && req.isTestMode) {
@@ -202,7 +191,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     }
     
     // Special test codes that trigger specific behaviors in test mode
-    if (referralCode === TEST_VALID_CODE) {
+    if (referralCode === TEST_CODES.VALID) {
       // Success case with a valid code
       return {
         success: true,
@@ -211,7 +200,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
           id: 1001, 
           phone_number: 'whatsapp:+44123456789', 
           referral_code_uses: 1,
-          referral_code: TEST_VALID_CODE
+          referral_code: TEST_CODES.VALID
         },
         referee: newUser,
         referrerCreditsAdded: REFERRAL_CREDIT_AMOUNT,
@@ -221,7 +210,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    if (referralCode === TEST_SELF_REFERRAL_CODE) {
+    if (referralCode === TEST_CODES.SELF_REFERRAL) {
       // Self-referral error case
       return { 
         success: false, 
@@ -232,7 +221,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    if (referralCode === TEST_ALREADY_USED_CODE) {
+    if (referralCode === TEST_CODES.ALREADY_USED) {
       // Already used error case
       return { 
         success: false, 
@@ -243,7 +232,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    if (referralCode === TEST_MAXED_OUT_CODE) {
+    if (referralCode === TEST_CODES.MAXED_OUT) {
       // Maxed out error case
       return { 
         success: false, 
@@ -254,7 +243,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
       };
     }
     
-    if (referralCode === TEST_LIMIT_REACHED_CODE) {
+    if (referralCode === TEST_CODES.LIMIT_REACHED) {
       // Referee limit reached case
       return {
         success: false,
@@ -511,7 +500,7 @@ async function sendSequentialLowCreditsMessages(twilioClient, userPhone, fromPho
         to: userPhone
       });
       
-      // Add delay between messages
+      // Add delay between messages in production
       if (!req || !req.isTestMode) {
         await new Promise(resolve => setTimeout(resolve, 500));
       } else {
@@ -528,7 +517,7 @@ async function sendSequentialLowCreditsMessages(twilioClient, userPhone, fromPho
         to: userPhone
       });
       
-      // Add delay between messages
+      // Add delay between messages in production
       if (!req || !req.isTestMode) {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -769,15 +758,9 @@ module.exports = {
   processReferralCode,
   sendReferralSuccessMessage,
   sendLowCreditsWithReferralInfo,
-  sendSequentialLowCreditsMessages, // New function for sequential messages
+  sendSequentialLowCreditsMessages,
   regenerateReferralCode,
   setupReferralSchema,
   // Export test codes for use in tests
-  TEST_CODES: {
-    VALID: TEST_VALID_CODE,
-    SELF_REFERRAL: TEST_SELF_REFERRAL_CODE,
-    ALREADY_USED: TEST_ALREADY_USED_CODE,
-    MAXED_OUT: TEST_MAXED_OUT_CODE,
-    LIMIT_REACHED: TEST_LIMIT_REACHED_CODE
-  }
+  TEST_CODES
 };
