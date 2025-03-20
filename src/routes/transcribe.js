@@ -62,22 +62,26 @@ router.post('/', async (req, res, next) => {
     }
     
     // Regular user flows
-    if (numMedia === 0) {
-      // Check if this is a text message with a potential referral code
-      if (event.Body) {
-        const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
-        logDetails(`Checking for referral code in message body: "${event.Body}", extracted: ${potentialReferralCode || 'none'}`);
-        
-        if (potentialReferralCode) {
-          // Process referral code instead of welcome message
-          logDetails(`Found referral code: ${potentialReferralCode} - processing referral`);
-          return await transcriptionController.handleVoiceNote(req, res);
-        }
-      }
-      
-      // Only send welcome if no referral code was found
-      return await welcomeController.handleWelcomeMessage(req, res);
-    } else if (numMedia > 0) {
+if (numMedia === 0) {
+  // Check if this is a text message with a potential referral code
+  if (event.Body) {
+    logDetails(`[ROUTER DEBUG] Checking message body for referral code: "${event.Body}"`);
+    
+    const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
+    
+    logDetails(`[ROUTER DEBUG] Referral extraction result: ${potentialReferralCode || 'null'}`);
+    
+    if (potentialReferralCode) {
+      logDetails(`[ROUTER DEBUG] ✓ Processing referral code: ${potentialReferralCode}`);
+      return await transcriptionController.handleVoiceNote(req, res);
+    } else {
+      logDetails(`[ROUTER DEBUG] ✗ No referral code found, sending welcome message`);
+    }
+  }
+  
+  // Only send welcome if no referral code was found
+  return await welcomeController.handleWelcomeMessage(req, res);
+} else if (numMedia > 0) {
       if (!event.MediaContentType0 || !event.MediaUrl0) {
         return formatErrorResponse(res, 400, 'Missing media content type or URL');
       }
