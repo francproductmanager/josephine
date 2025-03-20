@@ -62,6 +62,19 @@ router.post('/', async (req, res, next) => {
     
     // Regular user flows
     if (numMedia === 0) {
+
+ // Check if this is a text message with a potential referral code
+      if (event.Body) {
+        const potentialReferralCode = referralService.extractReferralCodeFromMessage(event.Body);
+        logDetails(`Checking for referral code in message body: ${event.Body}, extracted: ${potentialReferralCode || 'none'}`);
+        
+        if (potentialReferralCode) {
+          // Process referral code instead of welcome message
+          logDetails(`Processing referral code: ${potentialReferralCode}`);
+          return await transcriptionController.handleVoiceNote(req, res);
+        }
+      }
+
       return await welcomeController.handleWelcomeMessage(req, res);
     } else if (numMedia > 0) {
       if (!event.MediaContentType0 || !event.MediaUrl0) {
