@@ -12,7 +12,17 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { 
     rejectUnauthorized: false 
-  }
+  },
+  statement_timeout: 5000, // 5 second timeout for queries
+  connectionTimeoutMillis: 10000, // 10 second timeout for connecting
+  max: 20, // Maximum 20 clients in pool
+  idleTimeoutMillis: 30000 // Close idle clients after 30 seconds
+});
+
+// Add pool error handler
+pool.on('error', (err, client) => {
+  logDetails('Unexpected error on idle database client in credit manager:', err);
+  // Don't crash on connection errors
 });
 
 /**
@@ -73,12 +83,17 @@ async function addCreditsToUser(userId, creditAmount, operationType, metadata = 
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    logDetails(`DB operation: Adding ${creditAmount} credits to user ID: ${userId}, operation: ${operationType}`);
+    client = await pool.connect();
+    
     // Start transaction
+    logDetails(`Credit manager: Starting transaction for adding credits`);
     await client.query('BEGIN');
     
     // 1. Record the credit transaction
+    logDetails(`Credit manager: Recording credit transaction`);
     const creditTxResult = await client.query(
       `INSERT INTO credit_transactions
        (user_id, credits_amount, operation_type, metadata)
@@ -88,6 +103,7 @@ async function addCreditsToUser(userId, creditAmount, operationType, metadata = 
     );
     
     // 2. Update user credits
+    logDetails(`Credit manager: Updating user credits`);
     const userUpdateResult = await client.query(
       `UPDATE users
        SET credits_remaining = credits_remaining + $1
@@ -101,19 +117,35 @@ async function addCreditsToUser(userId, creditAmount, operationType, metadata = 
       throw new Error(`User with ID ${userId} not found`);
     }
     
+    logDetails(`Credit manager: Committing transaction`);
     await client.query('COMMIT');
     
+    logDetails(`Credit manager: Successfully added ${creditAmount} credits to user ${userId}`);
     return {
       user: userUpdateResult.rows[0],
       transaction: creditTxResult.rows[0]
     };
   } catch (error) {
     // Rollback transaction on error
-    await client.query('ROLLBACK');
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+        logDetails('Credit manager: Transaction rolled back due to error');
+      } catch (rollbackError) {
+        logDetails('Credit manager: Error during rollback:', rollbackError);
+      }
+    }
     logDetails('Error in addCreditsToUser:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      try {
+        logDetails('Credit manager: Releasing database client');
+        client.release();
+      } catch (releaseError) {
+        logDetails('Credit manager: Error releasing client:', releaseError);
+      }
+    }
   }
 }
 
@@ -155,11 +187,14 @@ async function checkReferralCreditLimit(userId, req = null) {
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    logDetails(`DB operation: Checking referral credit limit for user: ${userId}`);
+    client = await pool.connect();
+    
     // Get all credits from referrals (both giving and receiving)
     const result = await client.query(
-      `SELECT SUM(credits_amount) as total_referral_credits
+      `SELECT COALESCE(SUM(credits_amount), 0) as total_referral_credits
        FROM credit_transactions
        WHERE user_id = $1 
        AND (operation_type = $2 OR operation_type = $3)`,
@@ -177,7 +212,14 @@ async function checkReferralCreditLimit(userId, req = null) {
     logDetails('Error in checkReferralCreditLimit:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      try {
+        logDetails('Credit manager: Releasing database client from checkReferralCreditLimit');
+        client.release();
+      } catch (releaseError) {
+        logDetails('Credit manager: Error releasing client:', releaseError);
+      }
+    }
   }
 }
 
@@ -223,8 +265,11 @@ async function calculateUsageEstimate(userId, req = null) {
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    logDetails(`DB operation: Calculating usage estimate for user: ${userId}`);
+    client = await pool.connect();
+    
     // Get user's first usage date and total usage
     const result = await client.query(
       `SELECT 
@@ -249,7 +294,7 @@ async function calculateUsageEstimate(userId, req = null) {
     const dailyRate = totalTranscriptions / usageDays;
     
     // Estimate how long 50 credits will last in months
-    const daysFor50Credits = 50 / dailyRate;
+    const daysFor50Credits = dailyRate > 0 ? 50 / dailyRate : 90; // Default to 3 months if no usage
     const monthsEstimate = Math.round(daysFor50Credits / 30);
     
     // Return at least 1 month, at most 12 months
@@ -258,7 +303,14 @@ async function calculateUsageEstimate(userId, req = null) {
     logDetails('Error in calculateUsageEstimate:', error);
     return 3; // Default fallback on error
   } finally {
-    client.release();
+    if (client) {
+      try {
+        logDetails('Credit manager: Releasing database client from calculateUsageEstimate');
+        client.release();
+      } catch (releaseError) {
+        logDetails('Credit manager: Error releasing client:', releaseError);
+      }
+    }
   }
 }
 
