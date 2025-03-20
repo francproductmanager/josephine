@@ -434,6 +434,7 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
     // Get localized message from languages.json
     const messageKey = referralResult.refereeCreditsAdded > 0 ? 'referralSuccess' : 'referralLimitReached';
     
+    // Create context data with actual values, not placeholders
     const messageData = {
       refereeCredits: referralResult.refereeCreditsAdded,
       referrerCredits: referralResult.referrerCreditsAdded,
@@ -441,16 +442,38 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
       codeUsesRemaining: referralResult.codeUsesRemaining
     };
     
+    // Log the message data for debugging
+    logDetails('[REFERRAL] Message data for template:', messageData);
+    
     // Try to get localized version from language.json
     const message = await getLocalizedMessage(messageKey, userLang, messageData);
     
-    // Send the message via Twilio
-    if (twilioClient.isAvailable()) {
-      await twilioClient.sendMessage({
-        body: message,
-        from: fromPhone,
-        to: userPhone
-      });
+    // Check if placeholders were replaced
+    if (message.includes('{refereeCredits}') || message.includes('{referrerCredits}')) {
+      // Manual replacement as a fallback
+      const fixedMessage = message
+        .replace(/{refereeCredits}/g, referralResult.refereeCreditsAdded)
+        .replace(/{referrerCredits}/g, referralResult.referrerCreditsAdded);
+      
+      logDetails('[REFERRAL] Using manually fixed message template');
+      
+      // Send the message via Twilio
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: fixedMessage,
+          from: fromPhone,
+          to: userPhone
+        });
+      }
+    } else {
+      // Send the original message via Twilio
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: message,
+          from: fromPhone,
+          to: userPhone
+        });
+      }
     }
   } catch (error) {
     logDetails('Error sending referral success message:', error);
