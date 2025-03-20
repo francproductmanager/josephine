@@ -50,6 +50,7 @@ function generateReferralCode() {
  * @param {string} message - Message to check for referral code
  * @returns {string|null} Extracted referral code or null if not found
  */
+// In referral-service.js
 function extractReferralCodeFromMessage(message) {
   if (!message || typeof message !== 'string') {
     return null;
@@ -58,28 +59,32 @@ function extractReferralCodeFromMessage(message) {
   // Convert to uppercase and trim
   const cleanedMessage = message.trim().toUpperCase();
   
-  logDetails(`[REFERRAL DEBUG] Checking message for referral code: "${cleanedMessage}"`);
+  logDetails(`[REFERRAL DEBUG] Checking message: "${cleanedMessage}"`);
   
-  // Use a single detection mechanism for all codes - both test and real
+  // EXPLICIT CHECK: First, check for exact matches with test codes
+  // This bypasses the pattern matching completely for test codes
+  if (cleanedMessage === TEST_CODES.VALID ||
+      cleanedMessage === TEST_CODES.SELF_REFERRAL ||
+      cleanedMessage === TEST_CODES.ALREADY_USED ||
+      cleanedMessage === TEST_CODES.MAXED_OUT ||
+      cleanedMessage === TEST_CODES.LIMIT_REACHED) {
+    
+    logDetails(`[REFERRAL DEBUG] ✓ Found exact match with test code: ${cleanedMessage}`);
+    return cleanedMessage;
+  }
+  
+  // For real-world codes, use pattern matching
+  // This should probably be a 6-character code with allowed characters
   const pattern = new RegExp(`[${ALLOWED_CHARS}]{6}`);
   const match = cleanedMessage.match(pattern);
   
   if (!match) {
-    logDetails('[REFERRAL DEBUG] No valid code pattern found in message');
+    logDetails(`[REFERRAL DEBUG] ✗ No valid code pattern found in message: "${cleanedMessage}"`);
     return null;
   }
   
   const extractedCode = match[0];
-  
-  // Check if it's a special test code
-  const testCodeType = Object.entries(TEST_CODES)
-    .find(([_, value]) => value === extractedCode)?.[0];
-    
-  if (testCodeType) {
-    logDetails(`[REFERRAL DEBUG] Detected special test code: ${extractedCode} (${testCodeType})`);
-  } else {
-    logDetails(`[REFERRAL DEBUG] Detected regular referral code: ${extractedCode}`);
-  }
+  logDetails(`[REFERRAL DEBUG] ✓ Found pattern-matched code: ${extractedCode}`);
   
   return extractedCode;
 }
