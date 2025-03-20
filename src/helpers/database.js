@@ -3,12 +3,22 @@ const { Pool } = require('pg');
 const { detectCountryCode } = require('./localization');
 const { logDetails } = require('../utils/logging-utils');
 
-// Create a connection pool
+// Create a connection pool with timeout settings
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { 
     rejectUnauthorized: false 
-  }
+  },
+  statement_timeout: 5000, // 5 second timeout for queries
+  connectionTimeoutMillis: 10000, // 10 second timeout for connecting
+  max: 20, // Maximum 20 clients in pool (default is 10)
+  idleTimeoutMillis: 30000 // Close idle clients after 30 seconds
+});
+
+// Add pool error handler
+pool.on('error', (err, client) => {
+  logDetails('Unexpected error on idle database client:', err);
+  // Don't crash on connection errors
 });
 
 // Check if a user exists by phone number, create if not
@@ -48,13 +58,16 @@ async function findOrCreateUser(phoneNumber, req = null) {
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Connecting to find/create user: ${phoneNumber}`);
+    
     // Normalize the phone number - store the full WhatsApp format
     let normalizedPhone = phoneNumber;
     let countryCode = detectCountryCode(phoneNumber);
 
-    console.log(`Looking for user with phone: ${normalizedPhone}, country code: ${countryCode}`);
+    logDetails(`Looking for user with phone: ${normalizedPhone}, country code: ${countryCode}`);
 
     // Check if user exists
     let result = await client.query(
@@ -63,12 +76,12 @@ async function findOrCreateUser(phoneNumber, req = null) {
     );
     
     if (result.rows.length > 0) {
-      console.log(`User found: ${normalizedPhone}`);
+      logDetails(`User found: ${normalizedPhone}`);
       return { user: result.rows[0], created: false };
     }
     
     // Create new user with has_seen_intro = false
-    console.log(`Creating new user: ${normalizedPhone}`);
+    logDetails(`Creating new user: ${normalizedPhone}`);
     result = await client.query(
       `INSERT INTO users 
        (phone_number, country_code, credits_remaining, free_trial_used, has_seen_intro) 
@@ -79,10 +92,13 @@ async function findOrCreateUser(phoneNumber, req = null) {
     
     return { user: result.rows[0], created: true };
   } catch (error) {
-    console.error('Error in findOrCreateUser:', error);
+    logDetails('Error in findOrCreateUser:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from findOrCreateUser');
+      client.release();
+    }
   }
 }
 
@@ -130,8 +146,10 @@ async function checkUserCredits(phoneNumber, req = null) {
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Checking credits for user: ${phoneNumber}`);
     const { user } = await findOrCreateUser(phoneNumber);
     
     return {
@@ -142,8 +160,14 @@ async function checkUserCredits(phoneNumber, req = null) {
                     (user.credits_remaining <= 5 ? 'urgent' : 'warning') 
                     : 'none'
     };
+  } catch (error) {
+    logDetails('Error in checkUserCredits:', error);
+    throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from checkUserCredits');
+      client.release();
+    }
   }
 }
 
@@ -178,8 +202,10 @@ async function getUserStats(phoneNumber, req = null) {
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Getting stats for user: ${phoneNumber}`);
     const { user } = await findOrCreateUser(phoneNumber);
     
     // Get total seconds from the users table
@@ -205,8 +231,14 @@ async function getUserStats(phoneNumber, req = null) {
       creditsRemaining: user.credits_remaining,
       freeTrialUsed: user.free_trial_used
     };
+  } catch (error) {
+    logDetails('Error in getUserStats:', error);
+    throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from getUserStats');
+      client.release();
+    }
   }
 }
 
@@ -269,8 +301,11 @@ async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, o
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Recording transcription for user: ${phoneNumber}`);
+    
     // Start transaction
     await client.query('BEGIN');
     
@@ -308,10 +343,16 @@ async function recordTranscription(phoneNumber, audioLengthSeconds, wordCount, o
       user: userUpdateResult.rows[0] 
     };
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) {
+      await client.query('ROLLBACK');
+    }
+    logDetails('Error in recordTranscription:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from recordTranscription');
+      client.release();
+    }
   }
 }
 
@@ -372,8 +413,11 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Adding ${credits} credits for user: ${phoneNumber}`);
+    
     // Start transaction
     await client.query('BEGIN');
     
@@ -404,10 +448,16 @@ async function addCredits(phoneNumber, credits, amount, paymentMethod, transacti
       user: userUpdateResult.rows[0] 
     };
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) {
+      await client.query('ROLLBACK');
+    }
+    logDetails('Error in addCredits:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from addCredits');
+      client.release();
+    }
   }
 }
 
@@ -436,18 +486,23 @@ async function markUserIntroAsSeen(userId, req = null) {
   }
   
   // Normal production code
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Marking intro as seen for user ID: ${userId}`);
     await client.query(
       'UPDATE users SET has_seen_intro = true WHERE id = $1',
       [userId]
     );
     return true;
   } catch (error) {
-    console.error('Error in markUserIntroAsSeen:', error);
+    logDetails('Error in markUserIntroAsSeen:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from markUserIntroAsSeen');
+      client.release();
+    }
   }
 }
 
