@@ -87,6 +87,7 @@ async function handleVoiceNote(req, res) {
         if (req.isTestMode) {
           // Different response format for successful vs failed referrals
           if (referralResult.success) {
+            
             return formatTestResponse(res, {
               flow: 'referral_success',  // Clear flow name for test success
               message: await getLocalizedMessage('referralSuccess', userLang, {
@@ -136,13 +137,14 @@ async function handleVoiceNote(req, res) {
         } else {
           logDetails('Referral code processing failed:', referralResult);
           
-          // Get the appropriate error message key based on the error type
-          const errorKey = 
-            referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
-            referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
-            referralResult.error === 'CODE_MAXED_OUT' ? 'referralCodeMaxedOut' :
-            referralResult.error === 'REFERRAL_LIMIT_REACHED' ? 'referralLimitReached' :
-            'referralAlreadyUsed';
+// Get the appropriate error message key based on the error type
+const errorKey = 
+  referralResult.error === 'INVALID_CODE' ? 'referralInvalid' : 
+  referralResult.error === 'SELF_REFERRAL' ? 'referralSelfUse' : 
+  referralResult.error === 'CODE_MAXED_OUT' ? 'referralCodeMaxedOut' :
+  referralResult.error === 'REFERRAL_LIMIT_REACHED' ? 'referralLimitReached' :
+  referralResult.error === 'PROCESSING_ERROR' ? 'referralProcessingError' :
+  'referralAlreadyUsed';
 
           const errorMessage = await getLocalizedMessage(errorKey, userLang);
 
