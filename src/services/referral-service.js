@@ -451,20 +451,20 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
     // Check if placeholders were replaced
     if (message.includes('{refereeCredits}') || message.includes('{referrerCredits}')) {
       // Manual replacement as a fallback
-      const fixedMessage = message
-        .replace(/{refereeCredits}/g, referralResult.refereeCreditsAdded)
-        .replace(/{referrerCredits}/g, referralResult.referrerCreditsAdded);
+     const finalMessage = message
+  .replace(/{refereeCredits}/g, referralResult.refereeCreditsAdded)
+  .replace(/{referrerCredits}/g, referralResult.referrerCreditsAdded);
       
       logDetails('[REFERRAL] Using manually fixed message template');
       
       // Send the message via Twilio
-      if (twilioClient.isAvailable()) {
-        await twilioClient.sendMessage({
-          body: fixedMessage,
-          from: fromPhone,
-          to: userPhone
-        });
-      }
+ if (twilioClient.isAvailable()) {
+  await twilioClient.sendMessage({
+    body: finalMessage,
+    from: fromPhone,
+    to: userPhone
+  });
+}
     } else {
       // Send the original message via Twilio
       if (twilioClient.isAvailable()) {
