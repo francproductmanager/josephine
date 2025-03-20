@@ -13,7 +13,17 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { 
     rejectUnauthorized: false 
-  }
+  },
+  statement_timeout: 5000, // 5 second timeout for queries
+  connectionTimeoutMillis: 10000, // 10 second timeout for connecting
+  max: 20, // Maximum 20 clients in pool
+  idleTimeoutMillis: 30000 // Close idle clients after 30 seconds
+});
+
+// Add pool error handler
+pool.on('error', (err, client) => {
+  logDetails('Unexpected error on idle database client in referral service:', err);
+  // Don't crash on connection errors
 });
 
 // All valid characters for referral codes - using characters that are less likely to be confused
@@ -50,7 +60,6 @@ function generateReferralCode() {
  * @param {string} message - Message to check for referral code
  * @returns {string|null} Extracted referral code or null if not found
  */
-// In referral-service.js
 function extractReferralCodeFromMessage(message) {
   if (!message || typeof message !== 'string') {
     return null;
@@ -125,8 +134,11 @@ async function generateReferralCodeForUser(userId, req = null) {
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`DB operation: Generating referral code for user ID: ${userId}`);
+    
     // Check if user already has a referral code
     const existingCode = await client.query(
       `SELECT referral_code FROM users WHERE id = $1`,
@@ -134,15 +146,20 @@ async function generateReferralCodeForUser(userId, req = null) {
     );
     
     if (existingCode.rows[0]?.referral_code) {
+      logDetails(`User already has referral code: ${existingCode.rows[0].referral_code}`);
       return existingCode.rows[0].referral_code;
     }
     
     // Generate a unique referral code
     let isUnique = false;
     let newCode;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 5;
     
-    while (!isUnique) {
+    while (!isUnique && attempts < MAX_ATTEMPTS) {
+      attempts++;
       newCode = generateReferralCode();
+      logDetails(`Attempt ${attempts}: Generated potential referral code: ${newCode}`);
       
       // Check if code already exists
       const codeCheck = await client.query(
@@ -153,7 +170,13 @@ async function generateReferralCodeForUser(userId, req = null) {
       isUnique = parseInt(codeCheck.rows[0].count) === 0;
     }
     
+    if (!isUnique) {
+      logDetails('Failed to generate unique code after multiple attempts');
+      throw new Error('Failed to generate unique referral code');
+    }
+    
     // Save the new referral code with usage counter at 0
+    logDetails(`Saving new referral code ${newCode} for user ${userId}`);
     await client.query(
       `UPDATE users SET referral_code = $1, referral_code_uses = 0 WHERE id = $2`,
       [newCode, userId]
@@ -162,9 +185,13 @@ async function generateReferralCodeForUser(userId, req = null) {
     return newCode;
   } catch (error) {
     logDetails('Error in generateReferralCodeForUser:', error);
-    throw error;
+    // Return a default code in case of error to prevent cascading failures
+    return 'ERROR01';
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from generateReferralCodeForUser');
+      client.release();
+    }
   }
 }
 
@@ -181,6 +208,23 @@ async function processReferralCode(referralCode, newUser, req = null) {
   const MAX_USES_PER_CODE = 5; // Maximum number of times a code can be used
   
   logDetails(`Processing referral code: ${referralCode} for user: ${newUser.phone_number}`);
+  
+  // Set up timeout handling if available
+  if (req) {
+    req.onTimeout = function() {
+      logDetails('Referral processing timeout triggered - will need to be retried');
+    };
+  }
+  
+  // Quick validation check before hitting the database
+  if (!referralCode || referralCode.length !== 6) {
+    logDetails('Invalid referral code format (not 6 characters)');
+    return { 
+      success: false, 
+      error: 'INVALID_CODE',
+      message: 'Invalid referral code format' 
+    };
+  }
   
   // Special test mode handling for predictable testing
   if (req && req.isTestMode) {
@@ -277,19 +321,25 @@ async function processReferralCode(referralCode, newUser, req = null) {
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    
     // Start transaction
+    logDetails('Starting transaction for referral code processing');
     await client.query('BEGIN');
     
     // 1. Find the referrer (user who owns the code)
+    logDetails(`Looking for referrer with code: ${referralCode}`);
     const referrerResult = await client.query(
       `SELECT * FROM users WHERE referral_code = $1`,
       [referralCode]
     );
+    logDetails(`Referrer search complete. Found: ${referrerResult.rows.length > 0}`);
     
     if (referrerResult.rows.length === 0) {
       // Invalid referral code
+      logDetails('Invalid referral code - no user found with this code');
       await client.query('ROLLBACK');
       return { 
         success: false, 
@@ -299,9 +349,11 @@ async function processReferralCode(referralCode, newUser, req = null) {
     }
     
     const referrer = referrerResult.rows[0];
+    logDetails(`Found referrer: ID=${referrer.id}, Code uses=${referrer.referral_code_uses}`);
     
     // 2. Check if code has reached maximum usage limit
     if (referrer.referral_code_uses >= MAX_USES_PER_CODE) {
+      logDetails(`Referral code maxed out - used ${referrer.referral_code_uses} times`);
       await client.query('ROLLBACK');
       return { 
         success: false, 
@@ -312,6 +364,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     
     // 3. Verify users aren't the same person
     if (referrer.id === newUser.id) {
+      logDetails('Self-referral attempt detected');
       await client.query('ROLLBACK');
       return { 
         success: false, 
@@ -321,6 +374,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     }
     
     // 4. Check if this referral already exists
+    logDetails('Checking if referral already exists');
     const existingReferralCheck = await client.query(
       `SELECT * FROM referrals 
        WHERE referrer_id = $1 AND referee_id = $2`,
@@ -328,6 +382,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     );
     
     if (existingReferralCheck.rows.length > 0) {
+      logDetails('Referral already exists between these users');
       await client.query('ROLLBACK');
       return { 
         success: false, 
@@ -337,6 +392,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     }
     
     // 5. Check referral credit limits for both users
+    logDetails('Checking referral credit limits');
     const referrerLimitCheck = await creditManager.checkReferralCreditLimit(referrer.id);
     const refereeLimitCheck = await creditManager.checkReferralCreditLimit(newUser.id);
     
@@ -351,7 +407,15 @@ async function processReferralCode(referralCode, newUser, req = null) {
       refereeLimitCheck.remainingReferralCredits
     );
     
+    logDetails('Credit calculation complete', {
+      referrerCredits, 
+      refereeCredits,
+      referrerLimit: referrerLimitCheck,
+      refereeLimit: refereeLimitCheck
+    });
+    
     // 6. Create referral record
+    logDetails('Creating referral record');
     await client.query(
       `INSERT INTO referrals
        (referrer_id, referee_id, referrer_credits, referee_credits)
@@ -360,6 +424,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     );
     
     // 7. Increment the referral code usage counter
+    logDetails('Incrementing referral code usage counter');
     await client.query(
       `UPDATE users SET referral_code_uses = referral_code_uses + 1 WHERE id = $1`,
       [referrer.id]
@@ -367,6 +432,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     
     // 8. Add credits to both users if they haven't reached their limits
     if (referrerCredits > 0) {
+      logDetails(`Adding ${referrerCredits} credits to referrer (ID: ${referrer.id})`);
       await creditManager.addCreditsToUser(
         referrer.id, 
         referrerCredits,
@@ -376,6 +442,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     }
     
     if (refereeCredits > 0) {
+      logDetails(`Adding ${refereeCredits} credits to referee (ID: ${newUser.id})`);
       await creditManager.addCreditsToUser(
         newUser.id, 
         refereeCredits,
@@ -384,9 +451,11 @@ async function processReferralCode(referralCode, newUser, req = null) {
       );
     }
     
+    logDetails('Committing referral transaction');
     await client.query('COMMIT');
     
     // Return success result with updated user info
+    logDetails('Retrieving updated user information');
     const updatedRefereeResult = await client.query(
       `SELECT * FROM users WHERE id = $1`,
       [newUser.id]
@@ -400,6 +469,7 @@ async function processReferralCode(referralCode, newUser, req = null) {
     
     const updatedReferrer = updatedReferrerResult.rows[0];
     
+    logDetails('Referral process completed successfully');
     return {
       success: true,
       referrer: updatedReferrer,
@@ -409,11 +479,31 @@ async function processReferralCode(referralCode, newUser, req = null) {
       codeUsesRemaining: MAX_USES_PER_CODE - updatedReferrer.referral_code_uses
     };
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+        logDetails('Transaction rolled back due to error');
+      } catch (rollbackError) {
+        logDetails('Error during transaction rollback:', rollbackError);
+      }
+    }
     logDetails('Error in processReferralCode:', error);
-    throw error;
+    
+    // Return a friendly error response that won't break the app
+    return { 
+      success: false, 
+      error: 'PROCESSING_ERROR',
+      message: 'There was an error processing your referral code. Please try again later.'
+    };
   } finally {
-    client.release();
+    if (client) {
+      try {
+        logDetails('Releasing database client from processReferralCode');
+        client.release();
+      } catch (releaseError) {
+        logDetails('Error releasing client:', releaseError);
+      }
+    }
   }
 }
 
@@ -451,20 +541,20 @@ async function sendReferralSuccessMessage(twilioClient, userPhone, fromPhone, re
     // Check if placeholders were replaced
     if (message.includes('{refereeCredits}') || message.includes('{referrerCredits}')) {
       // Manual replacement as a fallback
-     const finalMessage = message
-  .replace(/{refereeCredits}/g, referralResult.refereeCreditsAdded)
-  .replace(/{referrerCredits}/g, referralResult.referrerCreditsAdded);
+      const finalMessage = message
+        .replace(/{refereeCredits}/g, referralResult.refereeCreditsAdded)
+        .replace(/{referrerCredits}/g, referralResult.referrerCreditsAdded);
       
       logDetails('[REFERRAL] Using manually fixed message template');
       
       // Send the message via Twilio
- if (twilioClient.isAvailable()) {
-  await twilioClient.sendMessage({
-    body: finalMessage,
-    from: fromPhone,
-    to: userPhone
-  });
-}
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: finalMessage,
+          from: fromPhone,
+          to: userPhone
+        });
+      }
     } else {
       // Send the original message via Twilio
       if (twilioClient.isAvailable()) {
@@ -638,13 +728,19 @@ async function regenerateReferralCode(userId, req = null) {
   }
   
   // Regular database operation
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails(`Regenerating referral code for user ID: ${userId}`);
+    
     // Generate a new unique referral code
     let isUnique = false;
     let newCode;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 5;
     
-    while (!isUnique) {
+    while (!isUnique && attempts < MAX_ATTEMPTS) {
+      attempts++;
       newCode = generateReferralCode();
       
       // Check if code already exists
@@ -654,6 +750,10 @@ async function regenerateReferralCode(userId, req = null) {
       );
       
       isUnique = parseInt(codeCheck.rows[0].count) === 0;
+    }
+    
+    if (!isUnique) {
+      throw new Error('Failed to generate unique referral code');
     }
     
     // Update the user with new code and reset usage counter
@@ -667,14 +767,20 @@ async function regenerateReferralCode(userId, req = null) {
     logDetails('Error in regenerateReferralCode:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from regenerateReferralCode');
+      client.release();
+    }
   }
 }
 
 // Set up database schema for referrals if needed
 async function setupReferralSchema() {
-  const client = await pool.connect();
+  let client = null;
   try {
+    client = await pool.connect();
+    logDetails('Setting up/checking referral schema in database');
+    
     // Check if the referrals table exists
     const tableCheck = await client.query(`
       SELECT EXISTS (
@@ -684,6 +790,7 @@ async function setupReferralSchema() {
     `);
     
     if (!tableCheck.rows[0].exists) {
+      logDetails('Referrals table does not exist - creating it');
       // Create referrals table
       await client.query(`
         CREATE TABLE referrals (
@@ -698,6 +805,8 @@ async function setupReferralSchema() {
       `);
       
       logDetails('Created referrals table');
+    } else {
+      logDetails('Referrals table already exists');
     }
     
     // Check for referral_code column in users table
@@ -709,6 +818,7 @@ async function setupReferralSchema() {
     `);
     
     if (!columnCheck.rows[0].exists) {
+      logDetails('referral_code column does not exist in users table - adding it');
       // Add referral_code column to users table
       await client.query(`
         ALTER TABLE users
@@ -716,6 +826,8 @@ async function setupReferralSchema() {
       `);
       
       logDetails('Added referral_code column to users table');
+    } else {
+      logDetails('referral_code column already exists');
     }
     
     // Check for referral_code_uses column in users table
@@ -727,6 +839,7 @@ async function setupReferralSchema() {
     `);
     
     if (!usesColumnCheck.rows[0].exists) {
+      logDetails('referral_code_uses column does not exist in users table - adding it');
       // Add referral_code_uses column to users table
       await client.query(`
         ALTER TABLE users
@@ -734,6 +847,8 @@ async function setupReferralSchema() {
       `);
       
       logDetails('Added referral_code_uses column to users table');
+    } else {
+      logDetails('referral_code_uses column already exists');
     }
     
     // Check for credit_transactions table
@@ -745,6 +860,7 @@ async function setupReferralSchema() {
     `);
     
     if (!creditTxTableCheck.rows[0].exists) {
+      logDetails('credit_transactions table does not exist - creating it');
       // Create credit_transactions table
       await client.query(`
         CREATE TABLE credit_transactions (
@@ -758,6 +874,8 @@ async function setupReferralSchema() {
       `);
       
       logDetails('Created credit_transactions table');
+    } else {
+      logDetails('credit_transactions table already exists');
     }
     
     // Create index for referral code usage lookups if not exists
@@ -771,11 +889,16 @@ async function setupReferralSchema() {
         END IF;
       END$$;
     `);
+    
+    logDetails('Completed setup/verification of referral database schema');
   } catch (error) {
     logDetails('Error setting up referral schema:', error);
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      logDetails('Releasing database client from setupReferralSchema');
+      client.release();
+    }
   }
 }
 
