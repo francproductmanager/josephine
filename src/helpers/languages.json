@@ -22,6 +22,7 @@
     "referralInvalid": "Sorry, that referral code is invalid. Please check the code and try again.",
     "referralSelfUse": "You cannot use your own referral code. Please share it with friends instead.",
     "referralAlreadyUsed": "You've already used this referral code.",
+    "referralProcessingError": "Sorry, we're having trouble processing this referral code right now. Please try again in a few minutes.",
     "referralCodeMaxedOut": "Sorry, this referral code has already been used 5 times and has expired.",
     "lowCreditsHeadsUp": "❗ Hi! Josephine here with a little heads-up 👋 We've done {totalTranscriptions} voice notes together—about {totalWords} words, saving you ~{totalSeconds} seconds of listening! You have one free transcription left. But worry not, you have two options to get more:",
     "lowCreditsOptionA": "A) 👫 Send Josephine to a friend and ask them to type the referral code {referralCode}. This will give both of you 5 extra transcriptions.",
