@@ -1,7 +1,6 @@
 // src/controllers/transcription.js
 const { getUserLanguage, getLocalizedMessage, exceedsWordLimit } = require('../helpers/localization');
 const { generateSummary } = require('../helpers/transcription');
-const userService = require('../services/user-service');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio, calculateCosts } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
@@ -151,23 +150,11 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
     // Calculate costs
     const costs = calculateCosts(contentLength, messageParts.length);
     
-    // First send the message, then update database
+    // First send the message, then finish the response
     if (twilioClient.isAvailable()) {
       try {
         // Send the messages
         await sendMessages(twilioClient, messageParts, userPhone, toPhone);
-        
-        // Only after successful send, update the database
-        logDetails('Recording transcription in database');
-        await userService.recordTranscription(
-          userPhone,
-          costs.audioLengthSeconds,
-          transcription.split(/\s+/).length,
-          costs.openAICost,
-          costs.twilioCost,
-          req
-        );
-        logDetails('Transcription recorded in database');
         
         // For test mode, return test results instead of XML
         if (req.isTestMode) {
@@ -194,19 +181,7 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
       }
     } else {
       logDetails('No Twilio client - returning JSON response');
-      
-      // For API mode, still record the transcription
-      logDetails('Recording transcription in database');
-      await userService.recordTranscription(
-        userPhone,
-        costs.audioLengthSeconds,
-        transcription.split(/\s+/).length,
-        costs.openAICost,
-        costs.twilioCost,
-        req
-      );
-      logDetails('Transcription recorded in database');
-      
+
       return formatSuccessResponse(res, {
         flow: 'successful_transcription',
         summary: summary,
