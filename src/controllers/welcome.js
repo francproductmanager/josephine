@@ -26,8 +26,6 @@ async function handleApiInfo(req, res) {
     test_mode: {
       usage: "To run in test mode, add x-test-mode: true header or testMode=true",
       special_params: {
-        testNoCredits: "true (simulate user with no credits)",
-        testLowCredits: "true (simulate user with 1 credit left)",
         longTranscription: "true (simulate a longer transcription text)"
       }
     }

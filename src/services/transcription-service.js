@@ -101,28 +101,6 @@ async function transcribeAudio(formData, apiKey, req = null) {
   }
 }
 
-function calculateCosts(audioLengthBytes, messageParts) {
-  // Calculate estimated audio length in seconds
-  const estimatedSeconds = Math.ceil(audioLengthBytes / 16000);
-  
-  // OpenAI cost calculation
-  const openAICost = estimatedSeconds / 60 * 0.006; // £0.006 per minute for Whisper API
-  
-  // Twilio cost calculation
-  const inboundTwilioCost = 0.005; // Cost for receiving audio message
-  const outboundBaseCost = 0.005; // Base cost for sending a message
-  const outboundTwilioCost = outboundBaseCost * messageParts.length;
-  const twilioCost = inboundTwilioCost + outboundTwilioCost;
-  
-  return {
-    audioLengthSeconds: estimatedSeconds,
-    openAICost,
-    twilioCost,
-    totalCost: openAICost + twilioCost
-  };
-}
-
 module.exports = {
-  transcribeAudio,
-  calculateCosts
+  transcribeAudio
 };
