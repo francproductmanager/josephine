@@ -2,7 +2,7 @@
 const { getUserLanguage, getLocalizedMessage, exceedsWordLimit } = require('../helpers/localization');
 const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
-const { transcribeAudio, calculateCosts } = require('../services/transcription-service');
+const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { formatTestResponse, formatErrorResponse, formatSuccessResponse } = require('../utils/response-formatter');
@@ -70,7 +70,7 @@ async function handleVoiceNote(req, res) {
     }
     
     // Download audio file
-    const { data: audioData, contentLength } = await downloadAudio(mediaUrl, authHeaders, req);
+    const { data: audioData } = await downloadAudio(mediaUrl, authHeaders, req);
     
     // Prepare form data for Whisper API
     const formData = prepareFormData(audioData, mediaContentType);
@@ -147,9 +147,6 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
     // Split the message if needed
     const messageParts = splitLongMessage(finalMessage);
     
-    // Calculate costs
-    const costs = calculateCosts(contentLength, messageParts.length);
-    
     // First send the message, then finish the response
     if (twilioClient.isAvailable()) {
       try {
@@ -163,7 +160,6 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
             summary: summary,
             transcription: transcription,
             message: finalMessage,
-            costs: costs,
             testResults: twilioClient.getTestResults()
           });
         } else {
