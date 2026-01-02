@@ -8,13 +8,10 @@ const requestLogger = require('../middleware/request-logger');
 const errorHandler = require('../middleware/error-handler');
 
 // Controllers
-const firstTimeController = require('../controllers/first-time-user');
 const welcomeController = require('../controllers/welcome');
 const transcriptionController = require('../controllers/transcription');
 const languageController = require('../controllers/language-test');
 
-// Services
-const userService = require('../services/user-service');
 const { TwilioClientWrapper } = require('../services/twilio-service');
 
 // Utils
@@ -43,22 +40,9 @@ router.post('/', async (req, res, next) => {
       return await welcomeController.handleApiInfo(req, res);
     }
     
-    // Get user info
     const userPhone = event.From || 'unknown';
-    const { user } = await userService.findOrCreateUser(userPhone, req);
-    req.user = user;
     
     const numMedia = parseInt(event.NumMedia || 0);
-    
-    // First time user flows
-    if (!user.has_seen_intro) {
-      if (numMedia > 0 && event.MediaContentType0 && 
-          event.MediaContentType0.startsWith('audio/')) {
-        return await firstTimeController.handleFirstTimeUserVoice(req, res);
-      } else {
-        return await firstTimeController.handleFirstTimeUserText(req, res);
-      }
-    }
     
     // Regular user flows
     if (numMedia === 0) {
