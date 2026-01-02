@@ -46,7 +46,7 @@ async function downloadAudio(mediaUrl, headers = {}, req = null) {
   }
 }
 
-function prepareFormData(audioData, contentType, model = 'whisper-1') {
+function prepareFormData(audioData, contentType, model = 'gpt-4o-mini-transcribe') {
   const formData = new FormData();
   
   formData.append('file', Buffer.from(audioData), {
