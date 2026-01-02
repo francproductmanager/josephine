@@ -3,13 +3,12 @@ const { Pool } = require('pg');
 const { detectCountryCode } = require('./localization');
 const { logDetails } = require('../utils/logging-utils');
 
-const sslEnabled = process.env.DATABASE_SSL !== 'false';
-const rejectUnauthorized = process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false';
-
 // Create a connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: sslEnabled ? { rejectUnauthorized } : false
+  ssl: { 
+    rejectUnauthorized: false 
+  }
 });
 
 // Check if a user exists by phone number, create if not
