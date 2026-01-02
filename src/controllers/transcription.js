@@ -62,65 +62,6 @@ async function handleVoiceNote(req, res) {
   
   logDetails('Processing voice note...');
   
-  // Check user credits
-  const creditStatus = await userService.checkUserCredits(userPhone, req);
-  logDetails('Credit status check result', creditStatus);
-  
-  if (!creditStatus.canProceed) {
-    logDetails(`User ${userPhone} has no credits left`);
-    const paymentMessage = await getLocalizedMessage('needCredits', userLang) ||
-      "You've used all your free transcriptions. To continue using Josephine, please send £2 to purchase 50 more transcriptions.";
-    
-    if (twilioClient.isAvailable()) {
-      await twilioClient.sendMessage({
-        body: paymentMessage,
-        from: toPhone,
-        to: userPhone
-      });
-      
-      // For test mode, return test results instead of XML
-      if (req.isTestMode) {
-        return formatTestResponse(res, {
-          flow: 'no_credits',
-          message: paymentMessage,
-          credits: creditStatus,
-          testResults: twilioClient.getTestResults()
-        });
-      } else {
-        // Generate XML response for Twilio
-        const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
-        res.set('Content-Type', 'text/xml');
-        return res.send(xmlResponse);
-      }
-    } else {
-      return formatErrorResponse(res, 402, paymentMessage, {
-        flow: 'no_credits',
-        credits: creditStatus
-      });
-    }
-  }
-
-  // Check if this is the last credit and prepare warning if needed
-  let creditWarning = '';
-  if (creditStatus.creditsRemaining === 1) {
-    try {
-      const userStats = await userService.getUserStats(userPhone, req);
-      const totalSecondsFormatted = Math.round(userStats.totalSeconds);
-      const totalWordsFormatted = Math.round(userStats.totalWords);
-      const totalTranscriptionsFormatted = userStats.totalTranscriptions;
-      
-      creditWarning = `\n\n❗ Hi! Josephine here with a little heads-up 👋 We've done ` +
-        `${totalTranscriptionsFormatted} voice notes together—about ${totalWordsFormatted} words, ` +
-        `saving you ~${totalSecondsFormatted} seconds of listening! You have one free transcription left. ` +
-        `After that, I'll ask for a small contribution to keep going. Thanks for letting me help!`;
-      
-    } catch (statsError) {
-      logDetails('Error getting user stats for credit warning', statsError);
-      // If there's an error, skip the warning
-      creditWarning = '';
-    }
-  }
-
   try {
     // Prepare authentication headers for audio download
     const authHeaders = {};
@@ -204,10 +145,6 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
     // Make sure we don't add an extra emoji here - just use what's in the label
     finalMessage += `${transcriptionLabel.trim()}\n${transcription}`;
     
-    if (creditWarning) {
-      finalMessage += creditWarning;
-    }
-
     // Split the message if needed
     const messageParts = splitLongMessage(finalMessage);
     
@@ -240,7 +177,6 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
             transcription: transcription,
             message: finalMessage,
             costs: costs,
-            credits: creditStatus.creditsRemaining,
             testResults: twilioClient.getTestResults()
           });
         } else {
@@ -275,8 +211,7 @@ if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
         flow: 'successful_transcription',
         summary: summary,
         transcription: transcription,
-        message: finalMessage,
-        credits: creditStatus.creditsRemaining
+        message: finalMessage
       });
     }
   } catch (processingError) {
