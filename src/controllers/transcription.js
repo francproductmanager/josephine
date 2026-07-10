@@ -1,10 +1,6 @@
 // src/controllers/transcription.js
-const { getUserLanguage, getLocalizedMessage, exceedsWordLimit } = require('../helpers/localization');
-const { generateSummary } = require('../helpers/transcription');
-const { downloadAudio, prepareFormData } = require('../services/audio-service');
-const { transcribeAudio } = require('../services/transcription-service');
-const { checkContentModeration } = require('../services/moderation-service');
-const { splitLongMessage, sendMessages } = require('../services/messaging-service');
+const { getUserLanguage, getLocalizedMessage } = require('../helpers/localization');
+const { processVoiceNote } = require('../core/voice-note-pipeline');
 const { formatTestResponse, formatErrorResponse, formatSuccessResponse } = require('../utils/response-formatter');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -17,16 +13,16 @@ async function handleNonAudioMedia(req, res) {
   const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
   const userLang = getUserLanguage(userPhone);
   const twilioClient = req.twilioClient;
-  
+
   const sendAudioMessage = await getLocalizedMessage('sendAudio', userLang);
-  
+
   if (twilioClient.isAvailable()) {
     await twilioClient.sendMessage({
       body: sendAudioMessage,
       from: toPhone,
       to: userPhone
     });
-    
+
     // For test mode, return test results instead of XML
     if (req.isTestMode) {
       return formatTestResponse(res, {
@@ -48,184 +44,85 @@ async function handleNonAudioMedia(req, res) {
 }
 
 /**
- * Handle transcription of voice note
+ * Handle transcription of voice note.
+ * The pipeline itself lives in src/core/voice-note-pipeline.js (shared
+ * with the Netlify background function); this wrapper only maps the
+ * pipeline result onto the same HTTP responses as before.
  */
 async function handleVoiceNote(req, res) {
-  const event = req.body || {};
-  const userPhone = event.From || 'unknown';
-  const toPhone = event.To || process.env.TWILIO_PHONE_NUMBER;
-  const userLang = getUserLanguage(userPhone);
   const twilioClient = req.twilioClient;
-  const mediaContentType = event.MediaContentType0;
-  const mediaUrl = event.MediaUrl0;
-  
-  logDetails('Processing voice note...');
-  
-  try {
-    // Prepare authentication headers for audio download
-    const authHeaders = {};
-    if (process.env.ACCOUNT_SID && process.env.AUTH_TOKEN) {
-      const authHeader = 'Basic ' + Buffer.from(`${process.env.ACCOUNT_SID}:${process.env.AUTH_TOKEN}`).toString('base64');
-      authHeaders['Authorization'] = authHeader;
-    }
-    
-    // Download audio file
-    const { data: audioData } = await downloadAudio(mediaUrl, authHeaders, req);
-    
-    // Prepare form data for Whisper API
-    const formData = prepareFormData(audioData, mediaContentType);
-    
-    // Transcribe the audio
-    const transcription = await transcribeAudio(formData, process.env.OPENAI_API_KEY, req);
-    
-    // Check for prohibited content
-    const moderationResult = await checkContentModeration(transcription, process.env.OPENAI_API_KEY);
-    if (moderationResult.flagged) {
-      logDetails('Content moderation flagged this transcription', moderationResult);
-      
-      // Get a localized message about content violation
-      const contentViolationMessage = await getLocalizedMessage('contentViolation', userLang);
-      
-      if (twilioClient.isAvailable()) {
-        await twilioClient.sendMessage({
-          body: contentViolationMessage,
-          from: toPhone,
-          to: userPhone
-        });
-        
-        // For test mode, return test results instead of XML
+
+  // An Express req is a valid pipeline context: it carries
+  // body, isTestMode, testResults and twilioClient.
+  const result = await processVoiceNote(req);
+
+  const sendXML = () => {
+    const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
+    res.set('Content-Type', 'text/xml');
+    return res.send(xmlResponse);
+  };
+
+  switch (result.flow) {
+    case 'content_violation':
+      if (result.twilioAvailable) {
         if (req.isTestMode) {
           return formatTestResponse(res, {
             flow: 'content_violation',
-            message: contentViolationMessage,
-            moderation: {
-              flagged: true,
-              categories: moderationResult.categories
-            },
+            message: result.message,
+            moderation: result.moderation,
             testResults: twilioClient.getTestResults()
           });
-        } else {
-          // Generate XML response for Twilio
-          const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
-          res.set('Content-Type', 'text/xml');
-          return res.send(xmlResponse);
         }
-      } else {
-        return formatErrorResponse(res, 403, contentViolationMessage, {
-          flow: 'content_violation',
-          moderation: {
-            flagged: true,
-            categories: moderationResult.categories
-          }
-        });
+        return sendXML();
       }
-    }
+      return formatErrorResponse(res, 403, result.message, {
+        flow: 'content_violation',
+        moderation: result.moderation
+      });
 
-    // Generate summary for long transcriptions
-let summary = null;
-// Special handling for test mode with longTranscription=true
-if (req.isTestMode && req.body && req.body.longTranscription === 'true') {
-  logDetails('Forcing summary generation for test with longTranscription=true');
-  summary = "This is a test summary of the transcription. The main points discussed include testing functionality, mock data generation, and verification of the summary feature.";
-} else if (exceedsWordLimit(transcription, 150)) {
-  logDetails('Generating summary for long transcription');
-  summary = await generateSummary(transcription, userLang);
-  logDetails('Summary generated', { summary });
-}
-
-    // Prepare the final message
-    let finalMessage = '';
-    if (summary) {
-      const summaryLabel = await getLocalizedMessage('longMessage', userLang);
-      finalMessage += `${summaryLabel.trim()} ${summary}\n\n`;
-    }
-    
-    const transcriptionLabel = await getLocalizedMessage('transcription', userLang);
-    // Make sure we don't add an extra emoji here - just use what's in the label
-    finalMessage += `${transcriptionLabel.trim()}\n${transcription}`;
-    
-    // Split the message if needed
-    const messageParts = splitLongMessage(finalMessage);
-    
-    // First send the message, then finish the response
-    if (twilioClient.isAvailable()) {
-      try {
-        // Send the messages
-        await sendMessages(twilioClient, messageParts, userPhone, toPhone);
-        
-        // For test mode, return test results instead of XML
+    case 'successful_transcription':
+      if (result.twilioAvailable) {
         if (req.isTestMode) {
           return formatTestResponse(res, {
             flow: 'successful_transcription',
-            summary: summary,
-            transcription: transcription,
-            message: finalMessage,
+            summary: result.summary,
+            transcription: result.transcription,
+            message: result.message,
             testResults: twilioClient.getTestResults()
           });
-        } else {
-          // Generate XML response for Twilio
-          const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
-          res.set('Content-Type', 'text/xml');
-          return res.send(xmlResponse);
         }
-      } catch (twilioError) {
-        logDetails('Error sending message via Twilio:', twilioError);
-        return formatErrorResponse(res, 500, 'Failed to send transcription', {
-          flow: 'twilio_error',
-          error: twilioError.message
-        });
+        return sendXML();
       }
-    } else {
-      logDetails('No Twilio client - returning JSON response');
-
       return formatSuccessResponse(res, {
         flow: 'successful_transcription',
-        summary: summary,
-        transcription: transcription,
-        message: finalMessage
+        summary: result.summary,
+        transcription: result.transcription,
+        message: result.message
       });
-    }
-  } catch (processingError) {
-    logDetails('ERROR PROCESSING AUDIO:', processingError);
-    
-    // Determine specific error type
-    let errorMessage;
-    
-    if (processingError.response && processingError.response.status === 429) {
-      errorMessage = await getLocalizedMessage('rateLimited', userLang);
-    } else if (processingError.code === 'ECONNABORTED' || processingError.message.includes('timeout')) {
-      errorMessage = await getLocalizedMessage('processingTimeout', userLang);
-    } else {
-      errorMessage = await getLocalizedMessage('apiError', userLang);
-    }
-    
-    if (twilioClient.isAvailable()) {
-      await twilioClient.sendMessage({
-        body: errorMessage,
-        from: toPhone,
-        to: userPhone
+
+    case 'twilio_error':
+      return formatErrorResponse(res, 500, 'Failed to send transcription', {
+        flow: 'twilio_error',
+        error: result.error
       });
-      
-      // For test mode, return test results instead of XML
-      if (req.isTestMode) {
-        return formatTestResponse(res, {
-          flow: 'processing_error',
-          message: errorMessage,
-          error: processingError.message,
-          testResults: twilioClient.getTestResults()
-        });
-      } else {
-        // Generate XML response for Twilio
-        const xmlResponse = twilioClient.generateXMLResponse('<Response></Response>');
-        res.set('Content-Type', 'text/xml'); 
-        return res.send(xmlResponse);
+
+    case 'processing_error':
+    default:
+      if (result.twilioAvailable) {
+        if (req.isTestMode) {
+          return formatTestResponse(res, {
+            flow: 'processing_error',
+            message: result.message,
+            error: result.error,
+            testResults: twilioClient.getTestResults()
+          });
+        }
+        return sendXML();
       }
-    } else {
-      return formatErrorResponse(res, 500, errorMessage, {
+      return formatErrorResponse(res, 500, result.message, {
         flow: 'processing_error',
-        error: processingError.message
+        error: result.error
       });
-    }
   }
 }
 

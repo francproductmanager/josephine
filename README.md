@@ -14,16 +14,41 @@ A Node.js/Express backend that powers a WhatsApp-based voice note transcription 
 ```
 .
 ├── src/
+│   ├── app.js          # Express app definition (shared by server + serverless)
+│   ├── index.js        # Server entry point (Heroku / local dev)
 │   ├── controllers/    # Request handlers and business logic
+│   ├── core/           # Voice-note pipeline (Express-free, shared)
 │   ├── helpers/        # Localization and transcription helpers
 │   ├── middleware/     # Request processing utilities
 │   ├── routes/         # Express route definitions
 │   ├── services/       # External service integrations (e.g., Twilio)
 │   └── utils/          # Shared utilities and logging
-├── test/               # Test helpers and mocks
+├── netlify/functions/  # Netlify deployment (sync webhook + background worker)
+├── public/             # Static landing page (Netlify publish dir)
+├── netlify.toml        # Netlify build config + /transcribe rewrite
 ├── index.js            # Entry point (loads src/index.js)
 └── package.json
 ```
+
+## Deployment
+
+The app runs in two modes from the same codebase:
+
+- **Server mode** (Heroku / any Node host): `npm start` runs the Express
+  server; the whole pipeline executes inside the webhook request.
+- **Netlify mode**: `netlify/functions/transcribe.js` acks the Twilio
+  webhook instantly (signature-validated), dedupes on `MessageSid` via
+  Netlify Blobs, and hands the pipeline to
+  `transcribe-background.js` (15-minute budget). Fast flows (welcome,
+  non-audio, test mode) are served by the same Express app via
+  `serverless-http`. Point the Twilio webhook at
+  `https://<site>/transcribe`.
+
+Netlify-only environment variables (set in the Netlify UI, in addition
+to the ones below): `INTERNAL_API_SECRET` (random 32+ chars; auth
+between the two functions) and `TWILIO_WEBHOOK_URL` (the exact URL
+configured in Twilio, used for signature validation). Set
+`TWILIO_SIGNATURE_VALIDATION=off` only for local development.
 
 ## Requirements
 

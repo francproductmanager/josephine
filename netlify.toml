@@ -1,0 +1,20 @@
+# Netlify configuration for the Josephine transcription service.
+# The site is functions-only; `public/` holds a minimal landing page.
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Keep the public webhook URL clean and stable: Twilio posts to
+# https://<site>/transcribe and this rewrite (status 200 = proxy, not a
+# redirect — Twilio never sees a 3xx) forwards it to the sync function.
+# The Twilio signature is computed over the public URL, so the function
+# validates against TWILIO_WEBHOOK_URL (or event.rawUrl), never the
+# internal /.netlify/functions/* path.
+[[redirects]]
+  from = "/transcribe"
+  to = "/.netlify/functions/transcribe"
+  status = 200
+  force = true

@@ -16,3 +16,6 @@ logs/
 Thumbs.db
 .idea/
 .vscode/
+
+# Netlify CLI local cache
+.netlify/
