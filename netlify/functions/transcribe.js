@@ -61,7 +61,19 @@ exports.handler = async (event, context) => {
     const url = process.env.TWILIO_WEBHOOK_URL || event.rawUrl;
     const valid = twilio.validateRequest(process.env.AUTH_TOKEN || '', signature, url, params);
     if (!valid) {
-      logDetails('Rejected request with invalid Twilio signature', { url });
+      // Log enough detail to distinguish a URL mismatch from a token
+      // mismatch without exposing secrets (signature prefix only).
+      logDetails('Rejected request with invalid Twilio signature', {
+        urlUsed: url,
+        urlSource: process.env.TWILIO_WEBHOOK_URL ? 'TWILIO_WEBHOOK_URL env' : 'event.rawUrl fallback',
+        rawUrl: event.rawUrl,
+        signatureHeaderPresent: !!signature,
+        signaturePrefix: signature ? signature.slice(0, 6) : null,
+        authTokenPresent: !!process.env.AUTH_TOKEN,
+        authTokenLength: (process.env.AUTH_TOKEN || '').length,
+        paramCount: Object.keys(params).length,
+        messageSid: params.MessageSid
+      });
       return { statusCode: 403, body: 'Invalid Twilio signature' };
     }
   }
