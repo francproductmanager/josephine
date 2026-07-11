@@ -28,6 +28,8 @@ const countryLanguageMap = {
   '386': { code: 'sl', name: 'Slovenian' },
   '34': { code: 'es', name: 'Spanish' },
   '46': { code: 'sv', name: 'Swedish' },
+  '380': { code: 'uk', name: 'Ukrainian' },
+  '90': { code: 'tr', name: 'Turkish' },
   '44': { code: 'en', name: 'English' },
   '1': { code: 'en', name: 'English' },
   '52': { code: 'es', name: 'Spanish' },
@@ -51,7 +53,7 @@ async function getLocalizedMessage(messageKey, langObj, context) {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
