@@ -68,6 +68,17 @@ Activated by `x-test-mode: true` header, `testMode=true` query, or `testMode=tru
 
 `getLocalizedMessage(key, langObj)` in `src/helpers/localization.js`: phone prefix → `countryLanguageMap` → `languages.json` (29 languages × 11 keys) → English fallback → live `gpt-4o-mini` translation as last resort. **Invariant (test-enforced): every prefix in `countryLanguageMap` must resolve to a language present in `languages.json`** — otherwise every message to those users silently fires a live translation call (~1s + cost, uncached). When adding a language: add both the prefix map entry and the full translation block (key parity with `en` is also test-enforced). All translated strings must preserve the Revolut support link and any URLs.
 
+## Zero runtime dependencies in the pipeline — do not add npm deps
+
+The pipeline and everything the background function imports use **native Node APIs only** (`fetch`, `FormData`, `Blob`, `crypto` via `src/utils/http-client.js`). This is not a style preference: Netlify's v2 function bundler externalizes CJS `require()`s of node_modules **without shipping the modules** — production crashed with `MODULE_NOT_FOUND: twilio` on 2026-07-11, and neither `external_node_modules` nor `included_files` fixes it for v2 functions. axios, form-data, and the twilio SDK were all removed for this reason. The twilio SDK's two jobs are done natively: message send = one REST POST in `twilio-service.js`; webhook signature = a documented HMAC-SHA1 in `netlify/functions/transcribe.js` (cross-validated against the SDK). Allowed exceptions: `@netlify/blobs` (the v2 pipeline ships `@netlify/*` packages itself) and `express`/`serverless-http`/`dotenv` (only reached via the v1 sync function, whose packaging copies externalized modules correctly).
+
+To verify function packaging locally without deploying (this is what caught the bug):
+```bash
+npx @netlify/zip-it-and-ship-it netlify/functions <outdir> --config '{"*":{"nodeBundler":"esbuild"}}'
+# then unzip and grep the .mjs bundle for leftover __require("...") externals
+```
+`http-client.js` normalizes errors to the axios-like shape the pipeline classifies on (`error.response.status`, `code === 'ECONNABORTED'`) — preserve that contract.
+
 ## OpenAI models in use
 
 - Transcription: `gpt-4o-mini-transcribe` (default param in `prepareFormData`)
@@ -88,6 +99,5 @@ Merging to `main` auto-deploys to Netlify. Verify against the live URL with test
 
 - Keep-warm scheduled ping (cold starts ~0.5–1.5s on first message after idle)
 - Long notes: send transcription immediately, summary as a follow-up message (UX decision pending)
-- Twilio SDK v3 → v5 (v3 causes a harmless `url.parse` deprecation warning)
 - Users are never shown Terms & Conditions (the consent flow was removed with the database; product/legal decision pending)
 - Machine-drafted translations for bg/cs/da/et/fi/lv/lt/mt/pt/sk/sl/zh/hi/ja await native-speaker review

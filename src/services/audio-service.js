@@ -1,13 +1,12 @@
 // services/audio-service.js
-const axios = require('axios');
-const FormData = require('form-data');
+const { getBuffer } = require('../utils/http-client');
 const { logDetails } = require('../utils/logging-utils');
 
 async function downloadAudio(mediaUrl, headers = {}, req = null) {
   // Return mock data for test mode
   if (req && req.isTestMode) {
     logDetails(`[TEST MODE] Simulating audio download from: ${mediaUrl}`);
-    
+
     // Return mock audio data
     const mockAudioSize = 30000; // ~30KB
     return {
@@ -16,30 +15,24 @@ async function downloadAudio(mediaUrl, headers = {}, req = null) {
       mockData: true
     };
   }
-  
+
   // Normal production code
   try {
     logDetails(`Starting audio download from: ${mediaUrl}`);
-    const response = await axios({
-      method: 'get',
-      url: mediaUrl,
-      responseType: 'arraybuffer',
-      timeout: 15000,
+    const { data, contentLength } = await getBuffer(mediaUrl, {
+      timeoutMs: 15000,
       headers: {
         'User-Agent': 'WhatsAppTranscriptionService/1.0',
         ...headers
       }
     });
-    
+
     logDetails('Audio download complete', {
-      size: response.data.length,
-      responseSizeBytes: response.headers['content-length']
+      size: data.length,
+      responseSizeBytes: contentLength
     });
-    
-    return {
-      data: response.data,
-      contentLength: response.headers['content-length'] || 0
-    };
+
+    return { data, contentLength };
   } catch (error) {
     logDetails('Error downloading audio:', error);
     throw error;
@@ -47,15 +40,13 @@ async function downloadAudio(mediaUrl, headers = {}, req = null) {
 }
 
 function prepareFormData(audioData, contentType, model = 'gpt-4o-mini-transcribe') {
+  // Native FormData/Blob (Node 18+); fetch sets the multipart boundary.
   const formData = new FormData();
-  
-  formData.append('file', Buffer.from(audioData), {
-    filename: 'audio.ogg',
-    contentType: contentType
-  });
+
+  formData.append('file', new Blob([Buffer.from(audioData)], { type: contentType }), 'audio.ogg');
   formData.append('model', model);
   formData.append('response_format', 'json');
-  
+
   return formData;
 }
 

@@ -6,6 +6,16 @@
 
 [functions]
   node_bundler = "esbuild"
+  # NOTE: the v2 (.mjs) background function's bundle externalizes CJS
+  # node_modules requires WITHOUT shipping the modules (production
+  # MODULE_NOT_FOUND, 2026-07-11) — and external_node_modules /
+  # included_files do not fix it. The cure is structural: the runtime
+  # code has ZERO npm dependencies (native fetch/FormData/crypto replace
+  # axios/form-data/twilio), except @netlify/blobs (ESM, inlines cleanly)
+  # and express/serverless-http (only reached by the v1 sync function,
+  # whose packaging copies externalized modules correctly). Keep it that
+  # way: do not add runtime npm dependencies to anything the background
+  # function imports.
 
 # Keep the public webhook URL clean and stable: Twilio posts to
 # https://<site>/transcribe and this rewrite (status 200 = proxy, not a
