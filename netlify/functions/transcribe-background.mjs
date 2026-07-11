@@ -1,50 +1,57 @@
-// netlify/functions/transcribe-background.js
+// netlify/functions/transcribe-background.mjs
 // Background worker (the "-background" suffix gives it a 15-minute budget;
 // Netlify acks invocations with 202 immediately and auto-retries failed
 // runs after 1 min, then 2 min).
 //
+// Uses the modern (v2) function API on purpose: v2 functions receive the
+// full Netlify Blobs context automatically — including the uncachedEdgeURL
+// required for strong-consistency reads, which the legacy Lambda-style
+// context (connectLambda) never provides. This function is the
+// authoritative dedup gate, so it must have strong reads; the sync
+// webhook's best-effort check runs at eventual consistency.
+//
 // Runs the full voice-note pipeline via src/core/voice-note-pipeline.js —
-// download, Whisper, moderation, optional summary, Twilio sends. On any
-// handled failure the pipeline itself messages the user with the existing
-// localized error text, so nothing fails silently.
+// download, transcription, moderation, optional summary, Twilio sends. On
+// any handled failure the pipeline itself messages the user with the
+// existing localized error text, so nothing fails silently.
 //
 // Idempotency marker (Netlify Blobs, key = MessageSid):
 //   done / failed  -> terminal, exit without reprocessing
 //   anything else  -> process (covers first delivery, crash retries, and
 //                     'retrying' set after a failed Twilio send)
-const { TwilioClientWrapper } = require('../../src/services/twilio-service');
-const { processVoiceNote } = require('../../src/core/voice-note-pipeline');
-const { logDetails } = require('../../src/utils/logging-utils');
-const { getProcessedStore } = require('./lib/shared');
+import { getStore } from '@netlify/blobs';
+import { TwilioClientWrapper } from '../../src/services/twilio-service.js';
+import { processVoiceNote } from '../../src/core/voice-note-pipeline.js';
+import { logDetails } from '../../src/utils/logging-utils.js';
 
-exports.handler = async (event) => {
+export default async (req) => {
   // Only our own sync function may invoke this endpoint.
-  const token = (event.headers && (event.headers['x-internal-token'] || event.headers['X-Internal-Token'])) || '';
+  const token = req.headers.get('x-internal-token') || '';
   if (!process.env.INTERNAL_API_SECRET || token !== process.env.INTERNAL_API_SECRET) {
     logDetails('Rejected background invocation with missing/invalid internal token');
-    return { statusCode: 401, body: 'Unauthorized' };
+    return new Response('Unauthorized', { status: 401 });
   }
 
   let params;
   try {
-    params = JSON.parse(event.body || '{}');
+    params = await req.json();
   } catch (e) {
-    return { statusCode: 400, body: 'Invalid JSON payload' };
+    return new Response('Invalid JSON payload', { status: 400 });
   }
 
   const sid = params.MessageSid;
   if (!sid || !params.MediaUrl0) {
-    return { statusCode: 400, body: 'Missing MessageSid or MediaUrl0' };
+    return new Response('Missing MessageSid or MediaUrl0', { status: 400 });
   }
 
   // Idempotency check — fail-open (a Blobs hiccup must not drop the job).
   let store = null;
   try {
-    store = getProcessedStore(event);
+    store = getStore({ name: 'processed-messages', consistency: 'strong' });
     const marker = await store.get(sid, { type: 'json' });
     if (marker && (marker.status === 'done' || marker.status === 'failed')) {
       logDetails(`Skipping ${sid}: already ${marker.status}`);
-      return { statusCode: 200, body: 'Already processed' };
+      return new Response('Already processed', { status: 200 });
     }
     await store.setJSON(sid, { status: 'processing', at: new Date().toISOString() });
   } catch (blobError) {
@@ -78,5 +85,5 @@ exports.handler = async (event) => {
   }
 
   logDetails(`Background processing finished for ${sid}: ${result.flow}`);
-  return { statusCode: 200, body: result.flow };
+  return new Response(result.flow, { status: 200 });
 };
