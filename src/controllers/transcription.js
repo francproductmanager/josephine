@@ -100,6 +100,21 @@ async function handleVoiceNote(req, res) {
         message: result.message
       });
 
+    case 'file_too_big':
+      if (result.twilioAvailable) {
+        if (req.isTestMode) {
+          return formatTestResponse(res, {
+            flow: 'file_too_big',
+            message: result.message,
+            testResults: twilioClient.getTestResults()
+          });
+        }
+        return sendXML();
+      }
+      return formatErrorResponse(res, 413, result.message, {
+        flow: 'file_too_big'
+      });
+
     case 'twilio_error':
       return formatErrorResponse(res, 500, 'Failed to send transcription', {
         flow: 'twilio_error',

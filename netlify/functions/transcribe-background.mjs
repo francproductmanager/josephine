@@ -24,6 +24,35 @@ import { TwilioClientWrapper } from '../../src/services/twilio-service.js';
 import { processVoiceNote } from '../../src/core/voice-note-pipeline.js';
 import { logDetails } from '../../src/utils/logging-utils.js';
 
+const ALERT_MARKER_KEY = '_admin-alert-last';
+const ALERT_MUTE_MS = 60 * 60 * 1000; // one alert per hour
+
+/**
+ * Send a WhatsApp alert to the operator (ADMIN_PHONE), debounced via the
+ * Blobs store. Best-effort on every level: if Blobs is down we alert
+ * anyway (visibility over silence), and a failed send is only logged.
+ */
+async function sendAdminAlert(store, twilioClient, result, params) {
+  try {
+    if (store) {
+      const last = await store.get(ALERT_MARKER_KEY, { type: 'json' });
+      if (last && Date.now() - new Date(last.at).getTime() < ALERT_MUTE_MS) {
+        logDetails('Admin alert suppressed (within mute window)');
+        return;
+      }
+      await store.setJSON(ALERT_MARKER_KEY, { at: new Date().toISOString() });
+    }
+    await twilioClient.sendMessage({
+      body: `⚠️ Josephine: transcription failed for ${params.From || 'unknown'} (${params.MessageSid}): ${result.error || 'unknown error'}. Alerts muted for 1h.`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: process.env.ADMIN_PHONE
+    });
+    logDetails('Admin alert sent');
+  } catch (alertError) {
+    logDetails('Failed to send admin alert:', alertError.message);
+  }
+}
+
 export default async (req) => {
   // Only our own sync function may invoke this endpoint.
   const token = req.headers.get('x-internal-token') || '';
@@ -65,13 +94,22 @@ export default async (req) => {
 
   const result = await processVoiceNote(context);
 
+  // Alert the operator on processing errors (expired API key, OpenAI
+  // outage, etc. — the user gets a localized error message, but without
+  // this the operator would never know). Debounced to one alert per hour
+  // via the Blobs store so an outage doesn't spam.
+  if (result.flow === 'processing_error' && process.env.ADMIN_PHONE) {
+    await sendAdminAlert(store, context.twilioClient, result, params);
+  }
+
   // Terminal states: 'done' (user got transcription or violation notice),
-  // 'failed' (user got the localized error message — do not re-spend).
-  // 'retrying': the pipeline succeeded but the Twilio send failed, so the
-  // user got NOTHING — throw to trigger Netlify's automatic retry.
+  // 'failed'/'file_too_big' (user got the localized message — do not
+  // re-spend). 'retrying': the pipeline succeeded but the Twilio send
+  // failed, so the user got NOTHING — throw to trigger Netlify's
+  // automatic retry.
   const status = result.flow === 'twilio_error'
     ? 'retrying'
-    : (result.flow === 'processing_error' ? 'failed' : 'done');
+    : (result.flow === 'processing_error' || result.flow === 'file_too_big' ? 'failed' : 'done');
 
   if (store) {
     try {
