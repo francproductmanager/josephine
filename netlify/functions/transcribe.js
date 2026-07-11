@@ -9,11 +9,33 @@
 //      ALL test-mode flows) is delegated to the unchanged Express app —
 //      those paths are fast (fully mocked, or at most one Twilio REST call).
 const querystring = require('querystring');
+const crypto = require('crypto');
 const serverless = require('serverless-http');
-const twilio = require('twilio');
 const app = require('../../src/app');
 const { logDetails } = require('../../src/utils/logging-utils');
 const { getProcessedStore, EMPTY_TWIML } = require('./lib/shared');
+
+/**
+ * Twilio's documented webhook signature scheme: append the sorted POST
+ * params (key + value) to the exact public URL, HMAC-SHA1 with the auth
+ * token, base64. Implemented locally (cross-validated byte-for-byte
+ * against twilio SDK v3's validateRequest in the test suite) — the SDK
+ * itself was dropped because its dynamic requires break Netlify's v2
+ * function bundling.
+ */
+function isValidTwilioSignature(authToken, signature, url, params) {
+  const data = url + Object.keys(params).sort().map((key) => {
+    const value = params[key];
+    // Repeated keys arrive as arrays; Twilio signs deduped sorted values.
+    return Array.isArray(value)
+      ? [...new Set(value)].sort().map((v) => key + v).join('')
+      : key + value;
+  }).join('');
+  const expected = crypto.createHmac('sha1', authToken).update(Buffer.from(data, 'utf-8')).digest('base64');
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 const expressHandler = serverless(app);
 
@@ -59,7 +81,7 @@ exports.handler = async (event, context) => {
   if (!testMode && params.MessageSid && process.env.TWILIO_SIGNATURE_VALIDATION !== 'off') {
     const signature = getHeader(event, 'x-twilio-signature');
     const url = process.env.TWILIO_WEBHOOK_URL || event.rawUrl;
-    const valid = twilio.validateRequest(process.env.AUTH_TOKEN || '', signature, url, params);
+    const valid = isValidTwilioSignature(process.env.AUTH_TOKEN || '', signature, url, params);
     if (!valid) {
       // Log enough detail to distinguish a URL mismatch from a token
       // mismatch without exposing secrets (signature prefix only).

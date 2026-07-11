@@ -1,5 +1,5 @@
 // src/services/moderation-service.js
-const axios = require('axios');
+const { postJson } = require('../utils/http-client');
 const { logDetails } = require('../utils/logging-utils');
 
 async function checkContentModeration(text, apiKey, req = null) {
@@ -11,23 +11,16 @@ async function checkContentModeration(text, apiKey, req = null) {
   }
 
   try {
-    const response = await axios.post(
+    const data = await postJson(
       'https://api.openai.com/v1/moderations',
-      {
-        input: text
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      { input: text },
+      { headers: { Authorization: `Bearer ${apiKey}` } }
     );
-    
+
     return {
-      flagged: response.data.results[0].flagged,
-      categories: response.data.results[0].categories,
-      scores: response.data.results[0].category_scores
+      flagged: data.results[0].flagged,
+      categories: data.results[0].categories,
+      scores: data.results[0].category_scores
     };
   } catch (error) {
     logDetails('Error in content moderation:', error);

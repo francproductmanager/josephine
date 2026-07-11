@@ -1,5 +1,5 @@
 // src/services/transcription-service.js
-const axios = require('axios');
+const { postJson } = require('../utils/http-client');
 const { logDetails } = require('../utils/logging-utils');
 
 async function transcribeAudio(formData, apiKey, req = null) {
@@ -76,25 +76,21 @@ async function transcribeAudio(formData, apiKey, req = null) {
   // Normal production code
   try {
     logDetails('Sending request to OpenAI Whisper API...');
-    
-    const headers = formData.getHeaders();
-    headers.Authorization = `Bearer ${apiKey}`;
-    
-    const response = await axios.post(
+
+    const data = await postJson(
       'https://api.openai.com/v1/audio/transcriptions',
       formData,
       {
-        headers: headers,
-        timeout: 30000
+        headers: { Authorization: `Bearer ${apiKey}` },
+        timeoutMs: 30000
       }
     );
-    
+
     logDetails('Received response from Whisper API', {
-      status: response.status,
-      hasText: !!response.data.text
+      hasText: !!data.text
     });
-    
-    return response.data.text.trim();
+
+    return data.text.trim();
   } catch (error) {
     logDetails('Error transcribing audio:', error);
     throw error;

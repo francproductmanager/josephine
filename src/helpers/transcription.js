@@ -1,9 +1,9 @@
 // helpers/transcription.js
-const axios = require('axios');
+const { postJson } = require('../utils/http-client');
 
 async function generateSummary(text, language, context) {
   try {
-    const response = await axios.post(
+    const data = await postJson(
       'https://api.openai.com/v1/chat/completions',
       {
         model: "gpt-4o-mini",
@@ -21,13 +21,10 @@ async function generateSummary(text, language, context) {
         temperature: 0.7
       },
       {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
       }
     );
-    return response.data.choices[0].message.content.trim();
+    return data.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error generating summary:', error);
     return null;

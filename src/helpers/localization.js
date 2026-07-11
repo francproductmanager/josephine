@@ -1,5 +1,5 @@
 // helpers/localization.js
-const axios = require('axios');
+const { postJson } = require('../utils/http-client');
 const translations = require('./languages.json');
 
 const countryLanguageMap = {
@@ -50,7 +50,7 @@ async function getLocalizedMessage(messageKey, langObj, context) {
   const englishMessage = translations.en[messageKey] || "Message not found";
   // Use OpenAI translation as a last resort
   try {
-    const response = await axios.post(
+    const data = await postJson(
       'https://api.openai.com/v1/chat/completions',
       {
         model: "gpt-4o-mini",
@@ -68,13 +68,10 @@ async function getLocalizedMessage(messageKey, langObj, context) {
         temperature: 0.3
       },
       {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
       }
     );
-    const translation = response.data.choices[0].message.content.trim();
+    const translation = data.choices[0].message.content.trim();
     return translation;
   } catch (error) {
     console.error(`Translation error for ${langCode}:`, error);
