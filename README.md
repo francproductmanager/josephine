@@ -47,8 +47,17 @@ The app runs in two modes from the same codebase:
 Netlify-only environment variables (set in the Netlify UI, in addition
 to the ones below): `INTERNAL_API_SECRET` (random 32+ chars; auth
 between the two functions) and `TWILIO_WEBHOOK_URL` (the exact URL
-configured in Twilio, used for signature validation). Set
-`TWILIO_SIGNATURE_VALIDATION=off` only for local development.
+configured in Twilio, used for signature validation). Optional:
+`ADMIN_PHONE` (e.g. `whatsapp:+44...`) — when set, the operator gets a
+WhatsApp alert on transcription failures, debounced to one per hour.
+Set `TWILIO_SIGNATURE_VALIDATION=off` only for local development.
+
+## Tests
+
+`npm test` runs the offline test suite (Node's built-in test runner, no
+extra dependencies): localization invariants, Express flows in test
+mode, and the Netlify function handlers (signature validation, dispatch
+handshake, background auth). CI runs it on every PR via GitHub Actions.
 
 ## Requirements
 

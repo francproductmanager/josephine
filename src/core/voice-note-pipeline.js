@@ -47,6 +47,24 @@ async function processVoiceNote(context) {
     // Download audio file
     const { data: audioData } = await downloadAudio(mediaUrl, authHeaders, context);
 
+    // Guard against files too large to transcribe (OpenAI caps uploads at
+    // 25MB; leave headroom). WhatsApp media tops out at 16MB so this is a
+    // belt-and-braces check, mostly for non-WhatsApp callers.
+    const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
+    if (audioData && audioData.length > MAX_AUDIO_BYTES) {
+      logDetails('Audio file too large', { size: audioData.length, limit: MAX_AUDIO_BYTES });
+      const fileTooBigMessage = await getLocalizedMessage('fileTooBig', userLang);
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: fileTooBigMessage,
+          from: toPhone,
+          to: userPhone
+        });
+        return { flow: 'file_too_big', twilioAvailable: true, message: fileTooBigMessage };
+      }
+      return { flow: 'file_too_big', twilioAvailable: false, statusCode: 413, message: fileTooBigMessage };
+    }
+
     // Prepare form data for Whisper API
     const formData = prepareFormData(audioData, mediaContentType);
 
@@ -75,7 +93,7 @@ async function processVoiceNote(context) {
 
     // Check for prohibited content
     const [moderationResult, summary] = await Promise.all([
-      checkContentModeration(transcription, process.env.OPENAI_API_KEY),
+      checkContentModeration(transcription, process.env.OPENAI_API_KEY, context),
       summaryPromise
     ]);
     if (moderationResult.flagged) {
