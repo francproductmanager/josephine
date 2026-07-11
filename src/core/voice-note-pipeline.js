@@ -53,8 +53,31 @@ async function processVoiceNote(context) {
     // Transcribe the audio
     const transcription = await transcribeAudio(formData, process.env.OPENAI_API_KEY, context);
 
+    // Moderation and summary generation both depend only on the
+    // transcript, so run them concurrently (saves the moderation time
+    // on long notes). The summary is simply discarded if moderation
+    // flags the content — rare enough that the wasted call is a fair
+    // trade for the latency win on every clean long note.
+    const summaryPromise = (async () => {
+      // Special handling for test mode with longTranscription=true
+      if (context.isTestMode && event.longTranscription === 'true') {
+        logDetails('Forcing summary generation for test with longTranscription=true');
+        return "This is a test summary of the transcription. The main points discussed include testing functionality, mock data generation, and verification of the summary feature.";
+      }
+      if (exceedsWordLimit(transcription, 150)) {
+        logDetails('Generating summary for long transcription');
+        const generated = await generateSummary(transcription, userLang);
+        logDetails('Summary generated', { summary: generated });
+        return generated;
+      }
+      return null;
+    })();
+
     // Check for prohibited content
-    const moderationResult = await checkContentModeration(transcription, process.env.OPENAI_API_KEY);
+    const [moderationResult, summary] = await Promise.all([
+      checkContentModeration(transcription, process.env.OPENAI_API_KEY),
+      summaryPromise
+    ]);
     if (moderationResult.flagged) {
       logDetails('Content moderation flagged this transcription', moderationResult);
 
@@ -89,18 +112,6 @@ async function processVoiceNote(context) {
           categories: moderationResult.categories
         }
       };
-    }
-
-    // Generate summary for long transcriptions
-    let summary = null;
-    // Special handling for test mode with longTranscription=true
-    if (context.isTestMode && event.longTranscription === 'true') {
-      logDetails('Forcing summary generation for test with longTranscription=true');
-      summary = "This is a test summary of the transcription. The main points discussed include testing functionality, mock data generation, and verification of the summary feature.";
-    } else if (exceedsWordLimit(transcription, 150)) {
-      logDetails('Generating summary for long transcription');
-      summary = await generateSummary(transcription, userLang);
-      logDetails('Summary generated', { summary });
     }
 
     // Prepare the final message

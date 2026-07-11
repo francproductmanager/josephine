@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   // Idempotency check — fail-open (a Blobs hiccup must not drop the job).
   let store = null;
   try {
-    store = getProcessedStore();
+    store = getProcessedStore(event);
     const marker = await store.get(sid, { type: 'json' });
     if (marker && (marker.status === 'done' || marker.status === 'failed')) {
       logDetails(`Skipping ${sid}: already ${marker.status}`);

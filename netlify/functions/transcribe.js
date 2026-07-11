@@ -91,7 +91,7 @@ exports.handler = async (event, context) => {
     // Dedup is fail-open: a Blobs hiccup must never block a transcription.
     let store = null;
     try {
-      store = getProcessedStore();
+      store = getProcessedStore(event);
       const existing = await store.get(params.MessageSid, { type: 'json' });
       if (existing) {
         logDetails(`Duplicate webhook for ${params.MessageSid} (status=${existing.status}) — acking without re-dispatch`);
