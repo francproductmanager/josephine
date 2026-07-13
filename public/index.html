@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Josephine · voice notes, transcribed</title>
-  <meta name="description" content="Send Josephine a voice note on WhatsApp and get the words back in your language within a minute. Free, no account, 29 languages.">
+  <meta name="description" content="Send Josephine a voice note on WhatsApp and get the words back in your language within seconds. Free, no account, 29 languages.">
   <meta property="og:title" content="Josephine · voice notes, transcribed">
-  <meta property="og:description" content="Send Josephine a voice note on WhatsApp. She writes back the words, in your language, within a minute.">
+  <meta property="og:description" content="Send Josephine a voice note on WhatsApp. She writes back the words, in your language, within seconds.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='29' fill='%23f7f1e5' stroke='%232e2921' stroke-width='3'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-style='italic' font-size='36' text-anchor='middle' fill='%232e2921'%3EJ%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -78,6 +78,23 @@
     .voice-length { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #5b7a44; }
     .bubble-text { align-self: flex-start; background: #fbf8f1; border-radius: 12px 12px 12px 4px; padding: 10px 12px; max-width: 84%; font-size: 13.5px; line-height: 1.5; box-shadow: 0 1px 1px rgba(46,41,33,0.08); }
     .bubble-caption { align-self: flex-start; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8a877e; padding-left: 4px; }
+    .bubble-label { font-weight: 700; }
+
+    /* Typing indicator (Josephine is writing…) */
+    .typing-bubble { align-self: flex-start; background: #fbf8f1; border-radius: 12px 12px 12px 4px; padding: 13px 14px; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 1px rgba(46,41,33,0.08); }
+    .typing-bubble span { width: 6px; height: 6px; border-radius: 50%; background: #a49e8f; animation: dot-bounce 1.2s infinite; }
+    .typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes dot-bounce { 0%, 60%, 100% { transform: none; opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+    /* Chat demo sequence — states applied only once JS adds .anim, so
+       the mockup stays fully visible if scripting is unavailable. */
+    .chat-body.anim .bubble-voice,
+    .chat-body.anim .typing-bubble,
+    .chat-body.anim .bubble-text,
+    .chat-body.anim .bubble-caption { transition: opacity 0.35s ease, transform 0.35s ease; opacity: 0; transform: translateY(5px); }
+    .chat-body.anim .shown { opacity: 1; transform: none; }
+    .chat-body.anim .gone { display: none; }
 
     .figs { display: flex; gap: 10px; }
     .fig { flex: 1; border: 1px dashed #b5a888; border-radius: 6px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
@@ -98,7 +115,7 @@
   <header>
     <div class="monogram">J</div>
     <div class="header-right">
-      <div class="est">EST. 2026 · FREE</div>
+      <div class="est">EST. 2025 · FREE</div>
       <div class="lang-toggle">
         <button class="btn-en" onclick="setLang('en')" aria-label="English">EN</button>
         <button class="btn-it" onclick="setLang('it')" aria-label="Italiano">IT</button>
@@ -108,12 +125,39 @@
 
   <section class="hero">
     <h1>Voice notes, faithfully <span style="font-style: italic;">transcribed.</span></h1>
-    <p class="subtitle">Send Josephine a voice note on WhatsApp. She writes back the words, in your language, within a minute.</p>
+    <p class="subtitle">Send Josephine a voice note on WhatsApp. She writes back the words, in your language, within seconds.</p>
   </section>
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Hi%20Josephine!">Add Josephine on WhatsApp</a>
     <div class="cta-hint">then just send her a voice note</div>
+  </section>
+
+  <!-- WhatsApp demo -->
+  <section class="demo-section">
+    <div class="kicker">WHAT IT LOOKS LIKE</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">TODAY</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Transcription of your voice note:</span><br>"Hey! Running 20 minutes late, the train stopped at Clapham. Order me the usual and I'll pay you back when I get there."</div>
+        <div class="bubble-caption">transcribed by Josephine</div>
+      </div>
+    </div>
   </section>
 
   <!-- Use cases -->
@@ -139,32 +183,6 @@
     </div>
   </section>
 
-  <!-- WhatsApp demo -->
-  <section class="demo-section">
-    <div class="kicker">WHAT IT LOOKS LIKE</div>
-    <div class="chat">
-      <div class="chat-header">
-        <div class="chat-avatar">J</div>
-        <div>
-          <div class="chat-name">Josephine</div>
-          <div class="chat-status">online</div>
-        </div>
-      </div>
-      <div class="chat-body">
-        <div class="chat-day">TODAY</div>
-        <div class="bubble-voice">
-          <div class="play">▶</div>
-          <div class="waveform" aria-hidden="true">
-            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
-          </div>
-          <div class="voice-length">0:42</div>
-        </div>
-        <div class="bubble-text">"Hey! Running 20 minutes late, the train stopped at Clapham. Order me the usual and I'll pay you back when I get there."</div>
-        <div class="bubble-caption">transcribed by Josephine</div>
-      </div>
-    </div>
-  </section>
-
   <!-- Patent figure steps -->
   <section class="rule-section">
     <div class="kicker">STEPS</div>
@@ -172,17 +190,17 @@
       <div class="fig">
         <div class="fig-label">FIG. 1</div>
         <div class="fig-icon">🎙</div>
-        <div class="fig-caption">You record a voice note</div>
+        <div class="fig-caption">You forward a voice note to Josephine</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 2</div>
         <div class="fig-icon">✍️</div>
-        <div class="fig-caption">Josephine listens &amp; writes</div>
+        <div class="fig-caption">Josephine transcribes</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 3</div>
         <div class="fig-icon">💬</div>
-        <div class="fig-caption">The text arrives in chat</div>
+        <div class="fig-caption">The text arrives</div>
       </div>
     </div>
     <div class="fig-note">Long note? You always get the <span style="font-weight: 700;">full transcription</span>, plus a short summary on top when it goes over 150 words. She speaks 29 languages and picks yours automatically.</div>
@@ -206,7 +224,7 @@
   <header>
     <div class="monogram">J</div>
     <div class="header-right">
-      <div class="est">DAL 2026 · GRATIS</div>
+      <div class="est">DAL 2025 · GRATIS</div>
       <div class="lang-toggle">
         <button class="btn-en" onclick="setLang('en')" aria-label="English">EN</button>
         <button class="btn-it" onclick="setLang('it')" aria-label="Italiano">IT</button>
@@ -216,12 +234,39 @@
 
   <section class="hero">
     <h1>Messaggi vocali, fedelmente <span style="font-style: italic;">trascritti.</span></h1>
-    <p class="subtitle">Manda a Josephine un vocale su WhatsApp. Lei ti risponde con il testo, nella tua lingua, entro un minuto.</p>
+    <p class="subtitle">Manda a Josephine un vocale su WhatsApp. Lei ti risponde con il testo, nella tua lingua, in pochi secondi.</p>
   </section>
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Ciao%20Josephine!">Aggiungi Josephine su WhatsApp</a>
     <div class="cta-hint">poi mandale semplicemente un vocale</div>
+  </section>
+
+  <!-- WhatsApp demo -->
+  <section class="demo-section">
+    <div class="kicker">ECCO COME FUNZIONA</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">OGGI</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Trascrizione del messaggio vocale:</span><br>"Ciao! Sono in ritardo di 20 minuti, il treno si è fermato. Ordina il solito per me e ti ripago appena arrivo."</div>
+        <div class="bubble-caption">trascritto da Josephine</div>
+      </div>
+    </div>
   </section>
 
   <!-- Use cases -->
@@ -247,32 +292,6 @@
     </div>
   </section>
 
-  <!-- WhatsApp demo -->
-  <section class="demo-section">
-    <div class="kicker">ECCO COME FUNZIONA</div>
-    <div class="chat">
-      <div class="chat-header">
-        <div class="chat-avatar">J</div>
-        <div>
-          <div class="chat-name">Josephine</div>
-          <div class="chat-status">online</div>
-        </div>
-      </div>
-      <div class="chat-body">
-        <div class="chat-day">OGGI</div>
-        <div class="bubble-voice">
-          <div class="play">▶</div>
-          <div class="waveform" aria-hidden="true">
-            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
-          </div>
-          <div class="voice-length">0:42</div>
-        </div>
-        <div class="bubble-text">"Ciao! Sono in ritardo di 20 minuti, il treno si è fermato. Ordina il solito per me e ti ripago appena arrivo."</div>
-        <div class="bubble-caption">trascritto da Josephine</div>
-      </div>
-    </div>
-  </section>
-
   <!-- Patent figure steps -->
   <section class="rule-section">
     <div class="kicker">STEP</div>
@@ -280,17 +299,17 @@
       <div class="fig">
         <div class="fig-label">FIG. 1</div>
         <div class="fig-icon">🎙</div>
-        <div class="fig-caption">Registri un vocale</div>
+        <div class="fig-caption">Inoltri un vocale a Josephine</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 2</div>
         <div class="fig-icon">✍️</div>
-        <div class="fig-caption">Josephine ascolta e scrive</div>
+        <div class="fig-caption">Josephine trascrive</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 3</div>
         <div class="fig-icon">💬</div>
-        <div class="fig-caption">Il testo arriva in chat</div>
+        <div class="fig-caption">Il testo arriva</div>
       </div>
     </div>
     <div class="fig-note">Vocale lungo? Ricevi sempre la <span style="font-weight: 700;">trascrizione completa</span>, più un breve riassunto in aggiunta quando supera le 150 parole. Parla 29 lingue e riconosce la tua automaticamente.</div>
@@ -314,6 +333,35 @@
     document.documentElement.setAttribute('data-lang', lang);
     document.documentElement.lang = lang;
   }
+
+  // Chat demo: you send a voice note → Josephine types for a couple of
+  // seconds → the transcription arrives. Plays three times, then rests
+  // on the finished conversation (an endless loop gets annoying).
+  (function () {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('.chat-body').forEach(function (body) {
+      var voice = body.querySelector('.bubble-voice');
+      var typing = body.querySelector('.typing-bubble');
+      var reply = body.querySelector('.bubble-text');
+      var caption = body.querySelector('.bubble-caption');
+      var all = [voice, typing, reply, caption];
+      if (reduced) { typing.style.display = 'none'; return; }
+      body.classList.add('anim');
+      function show(el) { el.classList.remove('gone'); void el.offsetWidth; el.classList.add('shown'); }
+      function hide(el) { el.classList.add('gone'); el.classList.remove('shown'); }
+      function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+      (async function loop() {
+        for (var run = 0; run < 3; run++) {
+          all.forEach(hide);
+          await wait(700); show(voice);      // you send the voice note
+          await wait(900); show(typing);     // Josephine starts typing…
+          await wait(2300); hide(typing); show(reply);   // …the transcription lands
+          await wait(350); show(caption);
+          await wait(4500);                  // hold, then replay (3x max)
+        }
+      })();
+    });
+  })();
 </script>
 
 </body>
