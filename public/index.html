@@ -11,12 +11,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script>
-    // Pick the page language from the browser before first paint.
-    // Supported: en, it, es, pt, hi, id — everything else falls back to
-    // English. Indonesian may report the legacy "in" code.
+    // Pick the page language before first paint: a ?lang=xx override
+    // wins, otherwise the browser language. Supported: en, it, es, pt,
+    // hi, id — everything else falls back to English. Indonesian may
+    // report the legacy "in" code.
     (function () {
-      var nav = (navigator.language || 'en').toLowerCase();
-      var lang = nav.slice(0, 2);
+      var lang = null;
+      try { lang = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+      lang = (lang || navigator.language || 'en').toLowerCase().slice(0, 2);
       if (lang === 'in') lang = 'id';
       if (['en', 'it', 'es', 'pt', 'hi', 'id'].indexOf(lang) === -1) lang = 'en';
       document.documentElement.setAttribute('data-lang', lang);
@@ -121,7 +123,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Hi%20Josephine!">Add Josephine on WhatsApp</a>
-    <div class="cta-hint">then just forward her a voice note</div>
+    <div class="cta-hint">completely free to use</div>
   </section>
 
   <section class="demo-section">
@@ -220,7 +222,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Ciao%20Josephine!">Aggiungi Josephine su WhatsApp</a>
-    <div class="cta-hint">poi inoltrale semplicemente un vocale</div>
+    <div class="cta-hint">completamente gratuita</div>
   </section>
 
   <section class="demo-section">
@@ -319,7 +321,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Hola%20Josephine!">Añade a Josephine en WhatsApp</a>
-    <div class="cta-hint">luego solo reenvíale una nota de voz</div>
+    <div class="cta-hint">completamente gratis</div>
   </section>
 
   <section class="demo-section">
@@ -418,7 +420,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Oi%20Josephine!">Adicione a Josephine no WhatsApp</a>
-    <div class="cta-hint">depois é só encaminhar uma mensagem de voz</div>
+    <div class="cta-hint">totalmente grátis</div>
   </section>
 
   <section class="demo-section">
@@ -517,7 +519,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Namaste%20Josephine!">Josephine को WhatsApp पर जोड़ें</a>
-    <div class="cta-hint">फिर बस उसे कोई वॉयस नोट फ़ॉरवर्ड करें</div>
+    <div class="cta-hint">पूरी तरह मुफ़्त</div>
   </section>
 
   <section class="demo-section">
@@ -616,7 +618,7 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Halo%20Josephine!">Tambahkan Josephine di WhatsApp</a>
-    <div class="cta-hint">lalu tinggal teruskan pesan suara</div>
+    <div class="cta-hint">sepenuhnya gratis</div>
   </section>
 
   <section class="demo-section">
