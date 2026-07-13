@@ -81,6 +81,19 @@ test('voice note: successful transcription with summary:null contract', async ()
   assert.strictEqual(json.testResults.messages.length, 1);
 });
 
+test('voice note: message starts with the transcription and ends with the cost footer', async () => {
+  const { json } = await post({ ...VOICE, MessageSid: 'SM-footer' });
+  // The support line moved to the end (2026-07): the message must NOT
+  // open with the Revolut link anymore...
+  assert.ok(!json.message.startsWith('💌'), 'message must not start with the footer');
+  assert.ok(json.message.indexOf('Trascrizione') < json.message.indexOf('revolut.me'), 'transcription label must precede the support link');
+  // ...and the footer must close the message with a $ cost estimate.
+  const footer = json.message.split('\n').pop();
+  assert.match(footer, /💌/, 'footer present at the end');
+  assert.match(footer, /\$\d+\.\d{2}/, 'footer contains a $X.XX cost estimate');
+  assert.match(footer, /revolut\.me\/magicfranci/, 'footer contains the support link');
+});
+
 test('voice note: long transcription generates summary', async () => {
   const { status, json } = await post({ ...VOICE, longTranscription: 'true', MessageSid: 'SM-long' });
   assert.strictEqual(status, 200);
