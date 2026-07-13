@@ -28,6 +28,13 @@ test('no message string is empty', () => {
   }
 });
 
+test('supportFooter carries both cost placeholders in every language', () => {
+  for (const [lang, block] of Object.entries(translations)) {
+    assert.ok(block.supportFooter.includes('{cost}'), `${lang}.supportFooter missing {cost}`);
+    assert.ok(block.supportFooter.includes('{monthly}'), `${lang}.supportFooter missing {monthly}`);
+  }
+});
+
 test('strings with links keep them in every language', () => {
   for (const [key, enValue] of Object.entries(translations.en)) {
     for (const url of ['https://revolut.me/magicfranci']) {

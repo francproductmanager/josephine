@@ -7,7 +7,7 @@
 // here via the provided twilioClient; the returned result object only
 // describes what happened so callers can shape their HTTP response.
 const { getUserLanguage, getLocalizedMessage, exceedsWordLimit } = require('../helpers/localization');
-const { estimateCostUsd, formatCostUsd } = require('./cost-estimate');
+const { countWords, estimateNoteShareUsd, formatCostUsd, MONTHLY_DISPLAY } = require('./cost-estimate');
 const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
@@ -144,13 +144,11 @@ async function processVoiceNote(context) {
     // Make sure we don't add an extra emoji here - just use what's in the label
     finalMessage += `${transcriptionLabel.trim()}\n${transcription}`;
 
-    // Append the support footer with a per-message cost estimate. Parts
-    // are estimated before the footer is added; the footer itself only
-    // tips the split in rare edge cases, slightly underestimating cost.
-    const estimatedParts = splitLongMessage(finalMessage).length;
-    const cost = formatCostUsd(estimateCostUsd(audioData.length, estimatedParts));
+    // Append the support footer: monthly running cost + this note's
+    // word-count-scaled share (see src/core/cost-estimate.js).
+    const cost = formatCostUsd(estimateNoteShareUsd(countWords(transcription)));
     const supportFooter = await getLocalizedMessage('supportFooter', userLang);
-    finalMessage += `\n\n${supportFooter.replace('{cost}', cost)}`;
+    finalMessage += `\n\n${supportFooter.replace('{cost}', cost).replace('{monthly}', MONTHLY_DISPLAY)}`;
 
     // Split the message if needed
     const messageParts = splitLongMessage(finalMessage);
