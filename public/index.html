@@ -78,6 +78,23 @@
     .voice-length { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #5b7a44; }
     .bubble-text { align-self: flex-start; background: #fbf8f1; border-radius: 12px 12px 12px 4px; padding: 10px 12px; max-width: 84%; font-size: 13.5px; line-height: 1.5; box-shadow: 0 1px 1px rgba(46,41,33,0.08); }
     .bubble-caption { align-self: flex-start; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8a877e; padding-left: 4px; }
+    .bubble-label { font-weight: 700; }
+
+    /* Typing indicator (Josephine is writing…) */
+    .typing-bubble { align-self: flex-start; background: #fbf8f1; border-radius: 12px 12px 12px 4px; padding: 13px 14px; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 1px rgba(46,41,33,0.08); }
+    .typing-bubble span { width: 6px; height: 6px; border-radius: 50%; background: #a49e8f; animation: dot-bounce 1.2s infinite; }
+    .typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes dot-bounce { 0%, 60%, 100% { transform: none; opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+    /* Chat demo sequence — states applied only once JS adds .anim, so
+       the mockup stays fully visible if scripting is unavailable. */
+    .chat-body.anim .bubble-voice,
+    .chat-body.anim .typing-bubble,
+    .chat-body.anim .bubble-text,
+    .chat-body.anim .bubble-caption { transition: opacity 0.35s ease, transform 0.35s ease; opacity: 0; transform: translateY(5px); }
+    .chat-body.anim .shown { opacity: 1; transform: none; }
+    .chat-body.anim .gone { display: none; }
 
     .figs { display: flex; gap: 10px; }
     .fig { flex: 1; border: 1px dashed #b5a888; border-radius: 6px; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
@@ -116,29 +133,6 @@
     <div class="cta-hint">then just send her a voice note</div>
   </section>
 
-  <!-- Use cases -->
-  <section class="rule-section">
-    <div class="kicker">PERFECT WHEN</div>
-    <div class="cases">
-      <div class="case">
-        <div class="case-title">You're in a meeting</div>
-        <div class="case-body">Can't play the audio out loud. Read it instead.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">You're in a rush</div>
-        <div class="case-body">No time for a six-minute note. Skim the text in seconds.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">You're on a call</div>
-        <div class="case-body">Keep talking, read the note as it comes in.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">People around you</div>
-        <div class="case-body">Some notes aren't for the whole bus to hear.</div>
-      </div>
-    </div>
-  </section>
-
   <!-- WhatsApp demo -->
   <section class="demo-section">
     <div class="kicker">WHAT IT LOOKS LIKE</div>
@@ -159,8 +153,32 @@
           </div>
           <div class="voice-length">0:42</div>
         </div>
-        <div class="bubble-text">"Hey! Running 20 minutes late, the train stopped at Clapham. Order me the usual and I'll pay you back when I get there."</div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Transcription of your voice note:</span><br>"Hey! Running 20 minutes late, the train stopped at Clapham. Order me the usual and I'll pay you back when I get there."</div>
         <div class="bubble-caption">transcribed by Josephine</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use cases -->
+  <section class="rule-section">
+    <div class="kicker">PERFECT WHEN</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">You're in a meeting</div>
+        <div class="case-body">Can't play the audio out loud. Read it instead.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">You're in a rush</div>
+        <div class="case-body">No time for a six-minute note. Skim the text in seconds.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">You're on a call</div>
+        <div class="case-body">Keep talking, read the note as it comes in.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">People around you</div>
+        <div class="case-body">Some notes aren't for the whole bus to hear.</div>
       </div>
     </div>
   </section>
@@ -224,29 +242,6 @@
     <div class="cta-hint">poi mandale semplicemente un vocale</div>
   </section>
 
-  <!-- Use cases -->
-  <section class="rule-section">
-    <div class="kicker">PERFETTA QUANDO</div>
-    <div class="cases">
-      <div class="case">
-        <div class="case-title">Sei in riunione</div>
-        <div class="case-body">Non puoi ascoltare l'audio. Leggilo invece.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">Vai di fretta</div>
-        <div class="case-body">Niente tempo per un vocale di sei minuti. Scorri il testo in pochi secondi.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">Sei al telefono</div>
-        <div class="case-body">Continua la chiamata e leggi il vocale mentre arriva.</div>
-      </div>
-      <div class="case">
-        <div class="case-title">Gente intorno</div>
-        <div class="case-body">Certi vocali non sono per tutto l'autobus.</div>
-      </div>
-    </div>
-  </section>
-
   <!-- WhatsApp demo -->
   <section class="demo-section">
     <div class="kicker">ECCO COME FUNZIONA</div>
@@ -267,8 +262,32 @@
           </div>
           <div class="voice-length">0:42</div>
         </div>
-        <div class="bubble-text">"Ciao! Sono in ritardo di 20 minuti, il treno si è fermato. Ordina il solito per me e ti ripago appena arrivo."</div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Trascrizione del messaggio vocale:</span><br>"Ciao! Sono in ritardo di 20 minuti, il treno si è fermato. Ordina il solito per me e ti ripago appena arrivo."</div>
         <div class="bubble-caption">trascritto da Josephine</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use cases -->
+  <section class="rule-section">
+    <div class="kicker">PERFETTA QUANDO</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">Sei in riunione</div>
+        <div class="case-body">Non puoi ascoltare l'audio. Leggilo invece.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Vai di fretta</div>
+        <div class="case-body">Niente tempo per un vocale di sei minuti. Scorri il testo in pochi secondi.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Sei al telefono</div>
+        <div class="case-body">Continua la chiamata e leggi il vocale mentre arriva.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Gente intorno</div>
+        <div class="case-body">Certi vocali non sono per tutto l'autobus.</div>
       </div>
     </div>
   </section>
@@ -314,6 +333,34 @@
     document.documentElement.setAttribute('data-lang', lang);
     document.documentElement.lang = lang;
   }
+
+  // Chat demo: you send a voice note → Josephine types for a couple of
+  // seconds → the transcription arrives. Loops forever.
+  (function () {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('.chat-body').forEach(function (body) {
+      var voice = body.querySelector('.bubble-voice');
+      var typing = body.querySelector('.typing-bubble');
+      var reply = body.querySelector('.bubble-text');
+      var caption = body.querySelector('.bubble-caption');
+      var all = [voice, typing, reply, caption];
+      if (reduced) { typing.style.display = 'none'; return; }
+      body.classList.add('anim');
+      function show(el) { el.classList.remove('gone'); void el.offsetWidth; el.classList.add('shown'); }
+      function hide(el) { el.classList.add('gone'); el.classList.remove('shown'); }
+      function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+      (async function loop() {
+        for (;;) {
+          all.forEach(hide);
+          await wait(700); show(voice);      // you send the voice note
+          await wait(900); show(typing);     // Josephine starts typing…
+          await wait(2300); hide(typing); show(reply);   // …the transcription lands
+          await wait(350); show(caption);
+          await wait(4500);                  // hold, then replay
+        }
+      })();
+    });
+  })();
 </script>
 
 </body>
