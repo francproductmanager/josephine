@@ -11,14 +11,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script>
-    // Pick the language before first paint (no flash): saved choice wins,
-    // otherwise browser language (Italian -> IT, everything else -> EN).
+    // Pick the page language before first paint: a ?lang=xx override
+    // wins, otherwise the browser language. Supported: en, it, es, pt,
+    // hi, id — everything else falls back to English. Indonesian may
+    // report the legacy "in" code.
     (function () {
       var lang = null;
-      try { lang = localStorage.getItem('josephine-lang'); } catch (e) {}
-      if (lang !== 'en' && lang !== 'it') {
-        lang = (navigator.language || 'en').toLowerCase().indexOf('it') === 0 ? 'it' : 'en';
-      }
+      try { lang = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+      lang = (lang || navigator.language || 'en').toLowerCase().slice(0, 2);
+      if (lang === 'in') lang = 'id';
+      if (['en', 'it', 'es', 'pt', 'hi', 'id'].indexOf(lang) === -1) lang = 'en';
       document.documentElement.setAttribute('data-lang', lang);
       document.documentElement.lang = lang;
     })();
@@ -28,23 +30,20 @@
     a { color: #2e2921; }
     a:hover { color: #8a5a3b; }
 
-    /* Language gating */
-    html[data-lang="en"] .page-it { display: none; }
-    html[data-lang="it"] .page-en { display: none; }
+    /* Language gating: only the browser-selected page is shown. Without
+       JS no data-lang is set and all pages render (graceful fallback). */
+    html[data-lang="en"] .page:not(.page-en),
+    html[data-lang="it"] .page:not(.page-it),
+    html[data-lang="es"] .page:not(.page-es),
+    html[data-lang="pt"] .page:not(.page-pt),
+    html[data-lang="hi"] .page:not(.page-hi),
+    html[data-lang="id"] .page:not(.page-id) { display: none; }
 
     .page { max-width: 520px; margin: 0 auto; padding: 28px 24px 48px; display: flex; flex-direction: column; gap: 34px; }
 
     header { display: flex; align-items: center; justify-content: space-between; }
     .monogram { width: 48px; height: 48px; border: 1.5px solid #2e2921; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-style: italic; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
     .est { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #8a5a3b; }
-
-    .lang-toggle { display: flex; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
-    .lang-toggle button { background: transparent; color: #2e2921; border: 1px solid #2e2921; padding: 4px 8px; font-family: inherit; font-size: inherit; cursor: pointer; }
-    .lang-toggle .btn-en { border-radius: 4px 0 0 4px; }
-    .lang-toggle .btn-it { border-radius: 0 4px 4px 0; border-left: none; }
-    html[data-lang="en"] .lang-toggle .btn-en,
-    html[data-lang="it"] .lang-toggle .btn-it { background: #2e2921; color: #f7f1e5; }
 
     .hero { display: flex; flex-direction: column; gap: 16px; }
     h1 { margin: 0; font-size: 40px; font-weight: 400; line-height: 1.12; letter-spacing: -0.01em; }
@@ -110,17 +109,11 @@
 <body>
 
 <!-- ═══════════════ ENGLISH ═══════════════ -->
-<div class="page page-en">
+<div class="page page-en" lang="en">
 
   <header>
     <div class="monogram">J</div>
-    <div class="header-right">
-      <div class="est">EST. 2025 · FREE</div>
-      <div class="lang-toggle">
-        <button class="btn-en" onclick="setLang('en')" aria-label="English">EN</button>
-        <button class="btn-it" onclick="setLang('it')" aria-label="Italiano">IT</button>
-      </div>
-    </div>
+    <div class="est">EST. 2025 · FREE</div>
   </header>
 
   <section class="hero">
@@ -130,10 +123,9 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Hi%20Josephine!">Add Josephine on WhatsApp</a>
-    <div class="cta-hint">then just forward her a voice note</div>
+    <div class="cta-hint">completely free to use</div>
   </section>
 
-  <!-- WhatsApp demo -->
   <section class="demo-section">
     <div class="kicker">WHAT IT LOOKS LIKE</div>
     <div class="chat">
@@ -160,7 +152,6 @@
     </div>
   </section>
 
-  <!-- Use cases -->
   <section class="rule-section">
     <div class="kicker">PERFECT WHEN</div>
     <div class="cases">
@@ -183,7 +174,6 @@
     </div>
   </section>
 
-  <!-- Patent figure steps -->
   <section class="rule-section">
     <div class="kicker">STEPS</div>
     <div class="figs">
@@ -206,10 +196,9 @@
     <div class="fig-note">Long note? You always get the <span style="font-weight: 700;">full transcription</span>, plus a short summary on top when it goes over 150 words. She speaks 29 languages and picks yours automatically.</div>
   </section>
 
-  <!-- Story + trust -->
   <section class="rule-section" style="gap: 14px;">
     <div class="story">Named for Josephine Cochrane, who in 1886 invented the dishwasher and gave millions their time back. Same idea, smaller machine.</div>
-    <div class="trust">FREE · NO ACCOUNT · NOTHING STORED · 29 LANGUAGES</div>
+    <div class="trust">FREE · NO ACCOUNT · 29 LANGUAGES</div>
   </section>
 
   <section class="cta-block">
@@ -223,13 +212,7 @@
 
   <header>
     <div class="monogram">J</div>
-    <div class="header-right">
-      <div class="est">DAL 2025 · GRATIS</div>
-      <div class="lang-toggle">
-        <button class="btn-en" onclick="setLang('en')" aria-label="English">EN</button>
-        <button class="btn-it" onclick="setLang('it')" aria-label="Italiano">IT</button>
-      </div>
-    </div>
+    <div class="est">DAL 2025 · GRATIS</div>
   </header>
 
   <section class="hero">
@@ -239,10 +222,9 @@
 
   <section class="cta-block">
     <a class="cta" href="https://wa.me/447450325919?text=Ciao%20Josephine!">Aggiungi Josephine su WhatsApp</a>
-    <div class="cta-hint">poi inoltrale semplicemente un vocale</div>
+    <div class="cta-hint">completamente gratuita</div>
   </section>
 
-  <!-- WhatsApp demo -->
   <section class="demo-section">
     <div class="kicker">ECCO COME FUNZIONA</div>
     <div class="chat">
@@ -269,7 +251,6 @@
     </div>
   </section>
 
-  <!-- Use cases -->
   <section class="rule-section">
     <div class="kicker">PERFETTA QUANDO</div>
     <div class="cases">
@@ -292,7 +273,6 @@
     </div>
   </section>
 
-  <!-- Patent figure steps -->
   <section class="rule-section">
     <div class="kicker">STEP</div>
     <div class="figs">
@@ -315,10 +295,9 @@
     <div class="fig-note">Vocale lungo? Ricevi sempre la <span style="font-weight: 700;">trascrizione completa</span>, più un breve riassunto in aggiunta quando supera le 150 parole. Parla 29 lingue e riconosce la tua automaticamente.</div>
   </section>
 
-  <!-- Story + trust -->
   <section class="rule-section" style="gap: 14px;">
     <div class="story">Il nome viene da Josephine Cochrane, che nel 1886 inventò la lavastoviglie e restituì tempo a milioni di persone. Stessa idea, macchina più piccola.</div>
-    <div class="trust">GRATIS · SENZA ACCOUNT · NIENTE VIENE SALVATO · 29 LINGUE</div>
+    <div class="trust">GRATIS · SENZA ACCOUNT · 29 LINGUE</div>
   </section>
 
   <section class="cta-block">
@@ -327,13 +306,403 @@
 
 </div>
 
-<script>
-  function setLang(lang) {
-    try { localStorage.setItem('josephine-lang', lang); } catch (e) {}
-    document.documentElement.setAttribute('data-lang', lang);
-    document.documentElement.lang = lang;
-  }
+<!-- ═══════════════ ESPAÑOL ═══════════════ -->
+<div class="page page-es" lang="es">
 
+  <header>
+    <div class="monogram">J</div>
+    <div class="est">DESDE 2025 · GRATIS</div>
+  </header>
+
+  <section class="hero">
+    <h1>Notas de voz, fielmente <span style="font-style: italic;">transcritas.</span></h1>
+    <p class="subtitle">¿Sin tiempo para escuchar? Reenvía la nota de voz a Josephine en WhatsApp. Ella la escucha por ti y te responde en segundos.</p>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Hola%20Josephine!">Añade a Josephine en WhatsApp</a>
+    <div class="cta-hint">completamente gratis</div>
+  </section>
+
+  <section class="demo-section">
+    <div class="kicker">ASÍ FUNCIONA</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">en línea</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">HOY</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Transcripción de tu nota de voz:</span><br>"¡Hola! Llego 20 minutos tarde, el tren se ha parado. Pídeme lo de siempre y te lo pago al llegar."</div>
+        <div class="bubble-caption">transcrito por Josephine</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">PERFECTA CUANDO</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">Estás en una reunión</div>
+        <div class="case-body">No puedes reproducir el audio. Léelo en su lugar.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Tienes prisa</div>
+        <div class="case-body">Sin tiempo para una nota de seis minutos. Ojea el texto en segundos.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Estás en una llamada</div>
+        <div class="case-body">Sigue hablando y lee la nota mientras llega.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Gente alrededor</div>
+        <div class="case-body">Algunas notas no son para que las oiga todo el autobús.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">PASOS</div>
+    <div class="figs">
+      <div class="fig">
+        <div class="fig-label">FIG. 1</div>
+        <div class="fig-icon">🎙</div>
+        <div class="fig-caption">Reenvías una nota de voz a Josephine</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 2</div>
+        <div class="fig-icon">✍️</div>
+        <div class="fig-caption">Josephine la transcribe</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 3</div>
+        <div class="fig-icon">💬</div>
+        <div class="fig-caption">El texto llega</div>
+      </div>
+    </div>
+    <div class="fig-note">¿Nota larga? Siempre recibes la <span style="font-weight: 700;">transcripción completa</span>, más un breve resumen encima cuando supera las 150 palabras. Habla 29 idiomas y reconoce el tuyo automáticamente.</div>
+  </section>
+
+  <section class="rule-section" style="gap: 14px;">
+    <div class="story">El nombre viene de Josephine Cochrane, que en 1886 inventó el lavavajillas y devolvió su tiempo a millones de personas. La misma idea, con una máquina más pequeña.</div>
+    <div class="trust">GRATIS · SIN CUENTA · 29 IDIOMAS</div>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Hola%20Josephine!">Añade a Josephine en WhatsApp</a>
+  </section>
+
+</div>
+
+<!-- ═══════════════ PORTUGUÊS ═══════════════ -->
+<div class="page page-pt" lang="pt">
+
+  <header>
+    <div class="monogram">J</div>
+    <div class="est">DESDE 2025 · GRÁTIS</div>
+  </header>
+
+  <section class="hero">
+    <h1>Mensagens de voz, fielmente <span style="font-style: italic;">transcritas.</span></h1>
+    <p class="subtitle">Sem tempo para ouvir? Encaminhe a mensagem de voz para a Josephine no WhatsApp. Ela ouve por você e responde em segundos.</p>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Oi%20Josephine!">Adicione a Josephine no WhatsApp</a>
+    <div class="cta-hint">totalmente grátis</div>
+  </section>
+
+  <section class="demo-section">
+    <div class="kicker">COMO FUNCIONA</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">HOJE</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Transcrição da sua mensagem de voz:</span><br>"Oi! Vou chegar 20 minutos atrasado, o trem parou. Pede o de sempre pra mim que eu te pago quando chegar."</div>
+        <div class="bubble-caption">transcrito pela Josephine</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">PERFEITA QUANDO</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">Você está numa reunião</div>
+        <div class="case-body">Não dá para tocar o áudio. Leia em vez disso.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Você está com pressa</div>
+        <div class="case-body">Sem tempo para um áudio de seis minutos. Leia o texto em segundos.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Você está numa ligação</div>
+        <div class="case-body">Continue falando e leia a mensagem enquanto chega.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Gente por perto</div>
+        <div class="case-body">Alguns áudios não são para o ônibus inteiro ouvir.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">PASSOS</div>
+    <div class="figs">
+      <div class="fig">
+        <div class="fig-label">FIG. 1</div>
+        <div class="fig-icon">🎙</div>
+        <div class="fig-caption">Você encaminha uma mensagem de voz para a Josephine</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 2</div>
+        <div class="fig-icon">✍️</div>
+        <div class="fig-caption">A Josephine transcreve</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 3</div>
+        <div class="fig-icon">💬</div>
+        <div class="fig-caption">O texto chega</div>
+      </div>
+    </div>
+    <div class="fig-note">Mensagem longa? Você sempre recebe a <span style="font-weight: 700;">transcrição completa</span>, mais um resumo curto por cima quando passa de 150 palavras. Ela fala 29 idiomas e reconhece o seu automaticamente.</div>
+  </section>
+
+  <section class="rule-section" style="gap: 14px;">
+    <div class="story">O nome vem de Josephine Cochrane, que em 1886 inventou a lava-louças e devolveu tempo a milhões de pessoas. A mesma ideia, numa máquina menor.</div>
+    <div class="trust">GRÁTIS · SEM CONTA · 29 IDIOMAS</div>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Oi%20Josephine!">Adicione a Josephine no WhatsApp</a>
+  </section>
+
+</div>
+
+<!-- ═══════════════ हिन्दी ═══════════════ -->
+<div class="page page-hi" lang="hi">
+
+  <header>
+    <div class="monogram">J</div>
+    <div class="est">2025 से · मुफ़्त</div>
+  </header>
+
+  <section class="hero">
+    <h1>वॉयस नोट्स, हूबहू <span style="font-style: italic;">लिखे हुए।</span></h1>
+    <p class="subtitle">सुनने का समय नहीं? वॉयस नोट Josephine को WhatsApp पर फ़ॉरवर्ड करें। वह आपके लिए सुनकर सेकंडों में टेक्स्ट भेज देती है।</p>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Namaste%20Josephine!">Josephine को WhatsApp पर जोड़ें</a>
+    <div class="cta-hint">पूरी तरह मुफ़्त</div>
+  </section>
+
+  <section class="demo-section">
+    <div class="kicker">ऐसा दिखता है</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">ऑनलाइन</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">आज</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">आपके वॉयस नोट की ट्रांसक्रिप्शन:</span><br>"अरे! ट्रेन रुक गई है, मुझे 20 मिनट की देरी होगी। मेरे लिए हमेशा वाला ऑर्डर कर देना, पहुँचकर पैसे दे दूँगा।"</div>
+        <div class="bubble-caption">Josephine द्वारा लिखित</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">बिलकुल सही जब</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">आप मीटिंग में हैं</div>
+        <div class="case-body">ऑडियो चला नहीं सकते। पढ़ लीजिए।</div>
+      </div>
+      <div class="case">
+        <div class="case-title">आप जल्दी में हैं</div>
+        <div class="case-body">छह मिनट का नोट सुनने का समय नहीं। सेकंडों में टेक्स्ट पढ़ें।</div>
+      </div>
+      <div class="case">
+        <div class="case-title">आप कॉल पर हैं</div>
+        <div class="case-body">बात करते रहिए, नोट आते ही पढ़ लीजिए।</div>
+      </div>
+      <div class="case">
+        <div class="case-title">आसपास लोग हैं</div>
+        <div class="case-body">कुछ नोट्स पूरी बस के सुनने के लिए नहीं होते।</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">स्टेप्स</div>
+    <div class="figs">
+      <div class="fig">
+        <div class="fig-label">FIG. 1</div>
+        <div class="fig-icon">🎙</div>
+        <div class="fig-caption">आप Josephine को वॉयस नोट फ़ॉरवर्ड करते हैं</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 2</div>
+        <div class="fig-icon">✍️</div>
+        <div class="fig-caption">Josephine उसे लिखती है</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 3</div>
+        <div class="fig-icon">💬</div>
+        <div class="fig-caption">टेक्स्ट आ जाता है</div>
+      </div>
+    </div>
+    <div class="fig-note">लंबा नोट? आपको हमेशा <span style="font-weight: 700;">पूरी ट्रांसक्रिप्शन</span> मिलती है, और 150 शब्दों से लंबा होने पर ऊपर एक छोटा सारांश भी। वह 29 भाषाएँ बोलती है और आपकी भाषा अपने आप पहचान लेती है।</div>
+  </section>
+
+  <section class="rule-section" style="gap: 14px;">
+    <div class="story">यह नाम Josephine Cochrane से आया है, जिन्होंने 1886 में डिशवॉशर का आविष्कार कर लाखों लोगों को उनका समय लौटाया। वही सोच, बस मशीन छोटी।</div>
+    <div class="trust">मुफ़्त · बिना अकाउंट · 29 भाषाएँ</div>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Namaste%20Josephine!">Josephine को WhatsApp पर जोड़ें</a>
+  </section>
+
+</div>
+
+<!-- ═══════════════ BAHASA INDONESIA ═══════════════ -->
+<div class="page page-id" lang="id">
+
+  <header>
+    <div class="monogram">J</div>
+    <div class="est">SEJAK 2025 · GRATIS</div>
+  </header>
+
+  <section class="hero">
+    <h1>Pesan suara, ditranskrip dengan <span style="font-style: italic;">setia.</span></h1>
+    <p class="subtitle">Tidak sempat mendengarkan? Teruskan pesan suara ke Josephine di WhatsApp. Dia mendengarkannya untukmu dan membalas dalam hitungan detik.</p>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Halo%20Josephine!">Tambahkan Josephine di WhatsApp</a>
+    <div class="cta-hint">sepenuhnya gratis</div>
+  </section>
+
+  <section class="demo-section">
+    <div class="kicker">SEPERTI INI JADINYA</div>
+    <div class="chat">
+      <div class="chat-header">
+        <div class="chat-avatar">J</div>
+        <div>
+          <div class="chat-name">Josephine</div>
+          <div class="chat-status">online</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-day">HARI INI</div>
+        <div class="bubble-voice">
+          <div class="play">▶</div>
+          <div class="waveform" aria-hidden="true">
+            <span style="height:8px"></span><span style="height:15px"></span><span style="height:10px"></span><span style="height:18px"></span><span style="height:7px"></span><span style="height:13px"></span><span style="height:9px"></span><span style="height:16px"></span><span style="height:6px"></span><span style="height:12px"></span>
+          </div>
+          <div class="voice-length">0:42</div>
+        </div>
+        <div class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="bubble-text"><span class="bubble-label">Transkripsi pesan suaramu:</span><br>"Hai! Aku telat 20 menit, keretanya berhenti. Pesankan yang biasa ya, nanti kuganti begitu sampai."</div>
+        <div class="bubble-caption">ditranskrip oleh Josephine</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">PAS BANGET SAAT</div>
+    <div class="cases">
+      <div class="case">
+        <div class="case-title">Kamu sedang rapat</div>
+        <div class="case-body">Tidak bisa memutar audionya. Baca saja.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Kamu sedang buru-buru</div>
+        <div class="case-body">Tidak ada waktu untuk pesan enam menit. Baca teksnya dalam hitungan detik.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Kamu sedang menelepon</div>
+        <div class="case-body">Lanjutkan teleponmu, baca pesannya begitu masuk.</div>
+      </div>
+      <div class="case">
+        <div class="case-title">Ada orang di sekitar</div>
+        <div class="case-body">Beberapa pesan bukan untuk didengar satu bus.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rule-section">
+    <div class="kicker">LANGKAH</div>
+    <div class="figs">
+      <div class="fig">
+        <div class="fig-label">FIG. 1</div>
+        <div class="fig-icon">🎙</div>
+        <div class="fig-caption">Kamu meneruskan pesan suara ke Josephine</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 2</div>
+        <div class="fig-icon">✍️</div>
+        <div class="fig-caption">Josephine mentranskripsinya</div>
+      </div>
+      <div class="fig">
+        <div class="fig-label">FIG. 3</div>
+        <div class="fig-icon">💬</div>
+        <div class="fig-caption">Teksnya tiba</div>
+      </div>
+    </div>
+    <div class="fig-note">Pesan panjang? Kamu selalu menerima <span style="font-weight: 700;">transkripsi lengkap</span>, plus ringkasan singkat di atasnya jika lebih dari 150 kata. Dia bisa 29 bahasa dan otomatis mengenali bahasamu.</div>
+  </section>
+
+  <section class="rule-section" style="gap: 14px;">
+    <div class="story">Namanya diambil dari Josephine Cochrane, yang pada 1886 menemukan mesin cuci piring dan mengembalikan waktu jutaan orang. Ide yang sama, mesinnya saja yang lebih kecil.</div>
+    <div class="trust">GRATIS · TANPA AKUN · 29 BAHASA</div>
+  </section>
+
+  <section class="cta-block">
+    <a class="cta" href="https://wa.me/447450325919?text=Halo%20Josephine!">Tambahkan Josephine di WhatsApp</a>
+  </section>
+
+</div>
+
+<script>
   // Chat demo: you send a voice note → Josephine types for a couple of
   // seconds → the transcription arrives. Plays three times, then rests
   // on the finished conversation (an endless loop gets annoying).
