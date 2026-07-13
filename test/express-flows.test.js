@@ -87,11 +87,24 @@ test('voice note: message starts with the transcription and ends with the cost f
   // open with the Revolut link anymore...
   assert.ok(!json.message.startsWith('💌'), 'message must not start with the footer');
   assert.ok(json.message.indexOf('Trascrizione') < json.message.indexOf('revolut.me'), 'transcription label must precede the support link');
-  // ...and the footer must close the message with a $ cost estimate.
+  // ...and the footer must close the message with the monthly figure and
+  // this note's share.
   const footer = json.message.split('\n').pop();
   assert.match(footer, /💌/, 'footer present at the end');
-  assert.match(footer, /\$\d+\.\d{2}/, 'footer contains a $X.XX cost estimate');
+  assert.match(footer, /\$12/, 'footer contains the monthly figure');
+  assert.match(footer, /\$0\.\d{2}/, 'footer contains a $0.XX note share');
   assert.match(footer, /revolut\.me\/magicfranci/, 'footer contains the support link');
+});
+
+test('longer transcriptions display a higher note share', async () => {
+  const shareOf = (message) => parseFloat(message.split('\n').pop().match(/\$(0\.\d{2})/)[1]);
+  const short = await post({ ...VOICE, MessageSid: 'SM-share-short' });
+  // longTranscription=true makes the mock text ~4x longer
+  const long = await post({ ...VOICE, longTranscription: 'true', MessageSid: 'SM-share-long' });
+  assert.ok(
+    shareOf(long.json.message) > shareOf(short.json.message),
+    `long note share (${shareOf(long.json.message)}) must exceed short note share (${shareOf(short.json.message)})`
+  );
 });
 
 test('voice note: long transcription generates summary', async () => {

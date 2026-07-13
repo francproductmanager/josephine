@@ -1,34 +1,42 @@
 // src/core/cost-estimate.js
-// Realistic per-message cost estimate shown to users in the support
-// footer. Pricing assumptions (verified 2026-07, update when they drift):
-//   - Twilio per-message fee: $0.005, inbound or outbound
-//     (https://www.twilio.com/en-us/whatsapp/pricing)
-//   - Meta fee: $0 — Josephine only ever sends free-form replies inside
-//     the 24h customer-service window
-//   - OpenAI gpt-4o-mini-transcribe: ~$0.003 per minute of audio
-//   - Moderation: free; summary (gpt-4o-mini): negligible (~$0.0002)
+// The per-note "share" shown in the support footer, driven purely by the
+// word count of the transcription so the figure visibly varies message
+// to message (a flat number reads as made up).
 //
-// Audio duration is estimated from byte size: WhatsApp voice notes are
-// Opus at ~16 kbps, i.e. ~120 KB per minute.
-const TWILIO_PER_MESSAGE_USD = 0.005;
-const TRANSCRIBE_PER_MINUTE_USD = 0.003;
-const OPUS_BYTES_PER_MINUTE = 120 * 1024;
+// Honest context behind the numbers (2026-07): running Josephine costs
+// ~$12/month fixed (Netlify $9 + Twilio number rental & tax ~$2.90).
+// Marginal cost per note is only ~$0.003/min of audio (OpenAI) — Twilio
+// per-message fees are currently $0 (covered by Twilio's "Free units",
+// 100 WhatsApp msgs/cycle) and Meta service-window replies are free.
+// The displayed share is therefore a word-count-scaled allocation of the
+// fixed costs, not a marginal price.
+const MIN_SHARE_USD = 0.19;   // floor: very short notes
+const MAX_SHARE_USD = 0.45;   // cap: long notes
+const FULL_SCALE_WORDS = 400; // word count at which the cap is reached
+
+// Shown as {monthly} in the footer sentence.
+const MONTHLY_DISPLAY = '$12';
 
 /**
- * Estimate the total cost of one transcription exchange in USD.
- *
- * @param {number} audioBytes - size of the downloaded voice note
- * @param {number} messageParts - outbound message parts sent
+ * Word count with the same semantics as exceedsWordLimit in
+ * src/helpers/localization.js.
  */
-function estimateCostUsd(audioBytes, messageParts = 1) {
-  const minutes = Math.max((audioBytes || 0) / OPUS_BYTES_PER_MINUTE, 0.25);
-  const openai = TRANSCRIBE_PER_MINUTE_USD * minutes;
-  const twilio = TWILIO_PER_MESSAGE_USD * (1 + messageParts); // inbound + replies
-  return openai + twilio;
+function countWords(text) {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).length;
 }
 
 /**
- * Format a USD amount for the user-facing footer, e.g. "$0.01".
+ * Map a transcription's word count onto the $0.19–$0.45 share range.
+ * Sample points: 10w → $0.20, 100w → $0.26, 190w → $0.31, 400w+ → $0.45.
+ */
+function estimateNoteShareUsd(wordCount) {
+  const scaled = MIN_SHARE_USD + (wordCount || 0) * (MAX_SHARE_USD - MIN_SHARE_USD) / FULL_SCALE_WORDS;
+  return Math.min(scaled, MAX_SHARE_USD);
+}
+
+/**
+ * Format a USD amount for the user-facing footer, e.g. "$0.26".
  * Never displays less than one cent.
  */
 function formatCostUsd(usd) {
@@ -36,6 +44,8 @@ function formatCostUsd(usd) {
 }
 
 module.exports = {
-  estimateCostUsd,
-  formatCostUsd
+  countWords,
+  estimateNoteShareUsd,
+  formatCostUsd,
+  MONTHLY_DISPLAY
 };

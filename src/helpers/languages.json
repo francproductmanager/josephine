@@ -11,7 +11,7 @@
     "rateLimited": "Our service is experiencing high demand. Please try again in a few minutes.",
     "apiError": "Sorry, there's a temporary issue with our service. Our team has been notified.",
     "contentViolation": "We're unable to process this voice note as it contains content that violates our usage policies. Please review our Terms of Service for more information on acceptable content.",
-    "supportFooter": "💌 This transcription cost about {cost} to run. Support Josephine: https://revolut.me/magicfranci or share her number with a friend!"
+    "supportFooter": "💌 Running Josephine costs about {monthly} per month — this note’s share is about {cost}. Support Josephine: https://revolut.me/magicfranci or share her number with a friend!"
   },
   "de": {
     "welcome": "Hallo! Ich bin Josephine, dein Transkriptionsassistent für Sprachnotizen. Schicke mir eine Sprachnotiz und ich transkribiere sie für dich!",
@@ -25,7 +25,7 @@
     "rateLimited": "Unser Service ist derzeit stark ausgelastet. Bitte versuche es in ein paar Minuten erneut.",
     "apiError": "Entschuldigung, es gibt ein temporäres Problem mit unserem Service. Unser Team wurde benachrichtigt.",
     "contentViolation": "Wir können diese Sprachnotiz nicht verarbeiten, da sie Inhalte enthält, die gegen unsere Nutzungsrichtlinien verstoßen. Bitte lesen Sie unsere Nutzungsbedingungen für weitere Informationen zu akzeptablen Inhalten.",
-    "supportFooter": "💌 Diese Transkription hat etwa {cost} gekostet. Unterstütze Josephine: https://revolut.me/magicfranci oder teile ihre Nummer mit einem Freund!"
+    "supportFooter": "💌 Der Betrieb von Josephine kostet etwa {monthly} pro Monat — der Anteil dieser Nachricht liegt bei etwa {cost}. Unterstütze Josephine: https://revolut.me/magicfranci oder teile ihre Nummer mit einem Freund!"
   },
   "fr": {
     "welcome": "Bonjour! Je suis Josephine, votre assistante de transcription de messages vocaux. Envoyez-moi un message vocal et je le transcrirai pour vous!",
@@ -39,7 +39,7 @@
     "rateLimited": "Notre service est fortement sollicité. Veuillez réessayer dans quelques minutes.",
     "apiError": "Désolé, il y a un problème temporaire avec notre service. Notre équipe a été alertée.",
     "contentViolation": "Nous ne pouvons pas traiter cette note vocale car elle contient du contenu qui viole nos politiques d'utilisation. Veuillez consulter nos Conditions d'utilisation pour plus d'informations sur le contenu acceptable.",
-    "supportFooter": "💌 Cette transcription a coûté environ {cost}. Soutenez Josephine : https://revolut.me/magicfranci ou partagez son numéro avec un ami !"
+    "supportFooter": "💌 Faire fonctionner Josephine coûte environ {monthly} par mois — la part de ce message est d’environ {cost}. Soutenez Josephine : https://revolut.me/magicfranci ou partagez son numéro avec un ami !"
   },
   "it": {
     "welcome": "Ciao! Sono Josephine, la tua assistente per la trascrizione di messaggi vocali. Inviami un messaggio vocale e lo trascriverò per te!",
@@ -53,7 +53,7 @@
     "rateLimited": "Il nostro servizio è molto richiesto. Riprova tra qualche minuto.",
     "apiError": "Spiacente, c'è un problema temporaneo con il nostro servizio. Il nostro team è stato avvisato.",
     "contentViolation": "Non possiamo elaborare questa nota vocale in quanto contiene contenuti che violano le nostre politiche di utilizzo. Si prega di consultare i nostri Termini di servizio per ulteriori informazioni sui contenuti accettabili.",
-    "supportFooter": "💌 Questa trascrizione è costata circa {cost}. Sostieni Josephine: https://revolut.me/magicfranci oppure condividi il suo numero con un amico!"
+    "supportFooter": "💌 Far funzionare Josephine costa circa {monthly} al mese — la quota di questo messaggio è di circa {cost}. Sostieni Josephine: https://revolut.me/magicfranci oppure condividi il suo numero con un amico!"
   },
   "es": {
     "welcome": "¡Hola! Soy Josephine, tu asistente de transcripción de notas de voz. Envíame una nota de voz y te la transcribiré.",
@@ -67,7 +67,7 @@
     "rateLimited": "Nuestro servicio está experimentando una alta demanda. Por favor, inténtalo de nuevo en unos minutos.",
     "apiError": "Lo siento, hay un problema temporal con nuestro servicio. Nuestro equipo ha sido notificado.",
     "contentViolation": "No podemos procesar esta nota de voz ya que contiene contenido que viola nuestras políticas de uso. Por favor, revisa nuestros Términos de Servicio para obtener más información sobre el contenido aceptable.",
-    "supportFooter": "💌 Esta transcripción ha costado aproximadamente {cost}. Apoya a Josephine: https://revolut.me/magicfranci o comparte su número con un amigo!"
+    "supportFooter": "💌 Mantener a Josephine cuesta aproximadamente {monthly} al mes — la parte de este mensaje es de unos {cost}. Apoya a Josephine: https://revolut.me/magicfranci o comparte su número con un amigo!"
   },
   "pl": {
     "welcome": "Cześć! Jestem Josephine, twoja asystentka do transkrypcji wiadomości głosowych. Wyślij mi wiadomość głosową, a ja ją przetranskrybuję!",
@@ -81,7 +81,7 @@
     "rateLimited": "Nasz serwis jest obecnie przeciążony. Spróbuj ponownie za kilka minut.",
     "apiError": "Przepraszam, wystąpił tymczasowy problem z naszym serwisem. Nasz zespół został powiadomiony.",
     "contentViolation": "Nie możemy przetworzyć tej wiadomości głosowej, ponieważ zawiera treści naruszające nasze zasady użytkowania. Zapoznaj się z naszym Regulaminem, aby uzyskać więcej informacji na temat akceptowalnych treści.",
-    "supportFooter": "💌 Ta transkrypcja kosztowała około {cost}. Wesprzyj Josephine: https://revolut.me/magicfranci lub udostępnij jej numer znajomemu!"
+    "supportFooter": "💌 Utrzymanie Josephine kosztuje około {monthly} miesięcznie — udział tej wiadomości to około {cost}. Wesprzyj Josephine: https://revolut.me/magicfranci lub udostępnij jej numer znajomemu!"
   },
   "uk": {
     "welcome": "Привіт! Я Джозефін, ваш асистент з транскрипції голосових повідомлень. Надішліть мені голосове повідомлення, і я його транскрибую для вас!",
@@ -95,7 +95,7 @@
     "rateLimited": "Наш сервіс зазнає великого навантаження. Будь ласка, спробуйте через кілька хвилин.",
     "apiError": "Вибачте, сталася тимчасова проблема з нашим сервісом. Наша команда повідомлена.",
     "contentViolation": "Ми не можемо обробити цю голосову нотатку, оскільки вона містить вміст, який порушує наші правила користування. Будь ласка, перегляньте наші Умови надання послуг для отримання додаткової інформації про прийнятний вміст.",
-    "supportFooter": "💌 Ця транскрипція коштувала близько {cost}. Підтримайте Джозефін: https://revolut.me/magicfranci або поділіться її номером з другом!"
+    "supportFooter": "💌 Робота Josephine коштує близько {monthly} на місяць — частка цього повідомлення становить приблизно {cost}. Підтримайте Джозефін: https://revolut.me/magicfranci або поділіться її номером з другом!"
   },
   "ro": {
     "welcome": "Bună! Sunt Josephine, asistentul tău de transcriere a notelor vocale. Trimite-mi o notă vocală și o voi transcrie pentru tine!",
@@ -109,7 +109,7 @@
     "rateLimited": "Serviciul nostru este foarte solicitat. Te rugăm să încerci din nou peste câteva minute.",
     "apiError": "Ne pare rău, există o problemă temporară cu serviciul nostru. Echipa noastră a fost notificată.",
     "contentViolation": "Nu putem procesa această notă vocală deoarece conține conținut care încalcă politicile noastre de utilizare. Vă rugăm să consultați Termenii noștri de serviciu pentru mai multe informații despre conținutul acceptabil.",
-    "supportFooter": "💌 Această transcriere a costat aproximativ {cost}. Susține-o pe Josephine: https://revolut.me/magicfranci sau împărtășește numărul ei cu un prieten!"
+    "supportFooter": "💌 Funcționarea lui Josephine costă aproximativ {monthly} pe lună — partea acestui mesaj este de circa {cost}. Susține-o pe Josephine: https://revolut.me/magicfranci sau împărtășește numărul ei cu un prieten!"
   },
   "nl": {
     "welcome": "Hallo! Ik ben Josephine, jouw assistent voor het transcriberen van spraakberichten. Stuur me een spraakbericht en ik zal het voor je transcriberen!",
@@ -123,7 +123,7 @@
     "rateLimited": "Onze service ervaart momenteel hoge belasting. Probeer het over een paar minuten opnieuw.",
     "apiError": "Sorry, er is een tijdelijk probleem met onze service. Ons team is geïnformeerd.",
     "contentViolation": "We kunnen dit spraakbericht niet verwerken omdat het inhoud bevat die in strijd is met ons gebruiksbeleid. Raadpleeg onze Servicevoorwaarden voor meer informatie over aanvaardbare inhoud.",
-    "supportFooter": "💌 Deze transcriptie kostte ongeveer {cost}. Steun Josephine: https://revolut.me/magicfranci of deel haar nummer met een vriend!"
+    "supportFooter": "💌 Josephine draaiende houden kost ongeveer {monthly} per maand — het aandeel van dit bericht is ongeveer {cost}. Steun Josephine: https://revolut.me/magicfranci of deel haar nummer met een vriend!"
   },
   "sh": {
     "welcome": "Pozdrav! Ja sam Josephine, tvoj asistent za transkripciju glasovnih poruka. Pošalji mi glasovnu poruku i ja ću je transkribovati za tebe!",
@@ -137,7 +137,7 @@
     "rateLimited": "Naša usluga je trenutno pod velikim opterećenjem. Pokušaj ponovno za nekoliko minuta.",
     "apiError": "Žao nam je, trenutno postoji privremeni problem s našom uslugom. Naš tim je obaviješten.",
     "contentViolation": "Ne možemo obraditi ovu glasovnu poruku jer sadrži sadržaj koji krši naše politike korištenja. Molimo pregledajte naše Uslove korištenja za više informacija o prihvatljivom sadržaju.",
-    "supportFooter": "💌 Ova transkripcija je koštala oko {cost}. Podrži Josephine: https://revolut.me/magicfranci ili podijeli njen broj s prijateljem!"
+    "supportFooter": "💌 Održavanje Josephine košta oko {monthly} mjesečno — udio ove poruke je oko {cost}. Podrži Josephine: https://revolut.me/magicfranci ili podijeli njen broj s prijateljem!"
   },
   "tr": {
     "welcome": "Merhaba! Ben Josephine, sesli not transkripsiyon asistanınızım. Bana bir sesli not gönderin, ben de sizin için transkribe olayım!",
@@ -151,7 +151,7 @@
     "rateLimited": "Servisimiz şu anda yoğun. Lütfen birkaç dakika sonra tekrar deneyin.",
     "apiError": "Üzgünüz, servisimizde geçici bir sorun var. Ekibimiz bilgilendirildi.",
     "contentViolation": "Bu sesli notu işleyemiyoruz çünkü kullanım politikalarımızı ihlal eden içerikler içeriyor. Kabul edilebilir içerik hakkında daha fazla bilgi için lütfen Hizmet Şartlarımızı inceleyin.",
-    "supportFooter": "💌 Bu transkripsiyon yaklaşık {cost} tuttu. Josephine'i destekleyin: https://revolut.me/magicfranci veya numarasını bir arkadaşınızla paylaşın!"
+    "supportFooter": "💌 Josephine’i çalıştırmak ayda yaklaşık {monthly} tutuyor — bu mesajın payı yaklaşık {cost}. Josephine'i destekleyin: https://revolut.me/magicfranci veya numarasını bir arkadaşınızla paylaşın!"
   },
   "bar": {
     "welcome": "Griaß di! I bin da Josephine, dei Transkription-Assistentin fia Sprachnotizen. Schick ma a Sprachnotiz und i schreib's fia di auf!",
@@ -165,7 +165,7 @@
     "rateLimited": "Unser Service is grad stark b'schäftigt. Versuch's in a paar Minutn wieder.",
     "apiError": "Entschuldigung, es gibt a temporäres Problem mit unserm Service. Unser Team is informiert.",
     "contentViolation": "Mia kennan de Sprachnotiz net verarbeitn, weil's Inhalt drin is, der gegn unsare Nutzungsrichtlinien verstoßt. Bitte schau da unsare Nutzungsbedingungen an für mehr Infos üba erlaubte Inhalte.",
-    "supportFooter": "💌 De Transkription hot ungefähr {cost} kost. Unterstütz d'Josephine: https://revolut.me/magicfranci oder teil ihre Nummer mit am Freund!"
+    "supportFooter": "💌 Da Betrieb vo da Josephine kost ungefähr {monthly} im Monat — da Anteil vo dera Nachricht is ca. {cost}. Unterstütz d'Josephine: https://revolut.me/magicfranci oder teil ihre Nummer mit am Freund!"
   },
   "el": {
     "welcome": "Γεια σου! Είμαι η Josephine, η βοηθός μεταγραφής των φωνητικών μηνυμάτων σου. Στείλε μου ένα φωνητικό μήνυμα και θα το μεταγράψω για σένα!",
@@ -179,7 +179,7 @@
     "rateLimited": "Η υπηρεσία μας αντιμετωπίζει υψηλό φόρτο. Παρακαλώ δοκίμασε ξανά σε λίγα λεπτά.",
     "apiError": "Συγγνώμη, υπάρχει προσωρινό πρόβλημα με την υπηρεσία μας. Η ομάδα μας έχει ενημερωθεί.",
     "contentViolation": "Δεν μπορούμε να επεξεργαστούμε αυτό το φωνητικό μήνυμα καθώς περιέχει περιεχόμενο που παραβιάζει τις πολιτικές χρήσης μας. Παρακαλούμε ανατρέξτε στους Όρους Υπηρεσίας μας για περισσότερες πληροφορίες σχετικά με το αποδεκτό περιεχόμενο.",
-    "supportFooter": "💌 Αυτή η μεταγραφή κόστισε περίπου {cost}. Υποστηρίξτε την Josephine: https://revolut.me/magicfranci ή μοιραστείτε τον αριθμό της με έναν φίλο!"
+    "supportFooter": "💌 Η λειτουργία της Josephine κοστίζει περίπου {monthly} τον μήνα — το μερίδιο αυτού του μηνύματος είναι περίπου {cost}. Υποστηρίξτε την Josephine: https://revolut.me/magicfranci ή μοιραστείτε τον αριθμό της με έναν φίλο!"
   },
   "hu": {
     "welcome": "Helló! Én vagyok Josephine, a hangüzenet-transzkripciós asszisztensed. Küldj egy hangüzenetet, és leírom neked!",
@@ -193,7 +193,7 @@
     "rateLimited": "A szolgáltatásunk jelenleg nagy terhelés alatt áll. Kérlek, próbáld meg néhány perc múlva.",
     "apiError": "Sajnálom, ideiglenes probléma adódott a szolgáltatásunkkal. A csapatunk értesítve lett.",
     "contentViolation": "Nem tudjuk feldolgozni ezt a hangüzenetet, mert olyan tartalmat tartalmaz, amely sérti a használati szabályzatunkat. Kérjük, tekintsd át a Szolgáltatási feltételeinket a megengedett tartalmakról szóló további információkért.",
-    "supportFooter": "💌 Ez az átirat körülbelül {cost} költséggel készült. Támogasd Josephine-t: https://revolut.me/magicfranci vagy oszd meg a számát egy baráttal!"
+    "supportFooter": "💌 Josephine működtetése havonta körülbelül {monthly}-ba kerül — ennek az üzenetnek a része körülbelül {cost}. Támogasd Josephine-t: https://revolut.me/magicfranci vagy oszd meg a számát egy baráttal!"
   },
   "sv": {
     "welcome": "Hej! Jag är Josephine, din assistent för transkribering av röstmeddelanden. Skicka ett röstmeddelande så transkriberar jag det åt dig!",
@@ -207,7 +207,7 @@
     "rateLimited": "Vår tjänst är mycket belastad. Försök igen om några minuter.",
     "apiError": "Förlåt, det är ett tillfälligt problem med vår tjänst. Vårt team har blivit underrättat.",
     "contentViolation": "Vi kan inte bearbeta detta röstmeddelande eftersom det innehåller innehåll som bryter mot våra användningsvillkor. Vänligen se våra Användarvillkor för mer information om godtagbart innehåll.",
-    "supportFooter": "💌 Den här transkriptionen kostade ungefär {cost}. Stöd Josephine: https://revolut.me/magicfranci eller dela hennes nummer med en vän!"
+    "supportFooter": "💌 Att driva Josephine kostar ungefär {monthly} i månaden — det här meddelandets andel är cirka {cost}. Stöd Josephine: https://revolut.me/magicfranci eller dela hennes nummer med en vän!"
   },
   "pt": {
     "welcome": "Olá! Sou a Josephine, a tua assistente de transcrição de mensagens de voz. Envia-me uma mensagem de voz e eu transcrevo-a para ti!",
@@ -221,7 +221,7 @@
     "rateLimited": "O nosso serviço está com muita procura. Por favor, tenta novamente dentro de alguns minutos.",
     "apiError": "Desculpa, há um problema temporário com o nosso serviço. A nossa equipa foi notificada.",
     "contentViolation": "Não podemos processar esta mensagem de voz porque contém conteúdo que viola as nossas políticas de utilização. Consulta os nossos Termos de Serviço para mais informações sobre conteúdo aceitável.",
-    "supportFooter": "💌 Esta transcrição custou cerca de {cost}. Apoia a Josephine: https://revolut.me/magicfranci ou partilha o número dela com um amigo!"
+    "supportFooter": "💌 Manter a Josephine custa cerca de {monthly} por mês — a parte desta mensagem é de cerca de {cost}. Apoia a Josephine: https://revolut.me/magicfranci ou partilha o número dela com um amigo!"
   },
   "bg": {
     "welcome": "Здравей! Аз съм Josephine, твоят асистент за транскрипция на гласови съобщения. Изпрати ми гласово съобщение и ще го транскрибирам за теб!",
@@ -235,7 +235,7 @@
     "rateLimited": "Услугата ни е под голямо натоварване. Моля, опитай отново след няколко минути.",
     "apiError": "Съжалявам, има временен проблем с нашата услуга. Екипът ни е уведомен.",
     "contentViolation": "Не можем да обработим това гласово съобщение, тъй като съдържа съдържание, което нарушава нашите правила за ползване. Моля, прегледай нашите Условия за ползване за повече информация относно допустимото съдържание.",
-    "supportFooter": "💌 Тази транскрипция струваше около {cost}. Подкрепи Josephine: https://revolut.me/magicfranci или сподели номера ѝ с приятел!"
+    "supportFooter": "💌 Поддръжката на Josephine струва около {monthly} на месец — делът на това съобщение е около {cost}. Подкрепи Josephine: https://revolut.me/magicfranci или сподели номера ѝ с приятел!"
   },
   "cs": {
     "welcome": "Ahoj! Jsem Josephine, tvoje asistentka pro přepis hlasových zpráv. Pošli mi hlasovou zprávu a já ti ji přepíšu!",
@@ -249,7 +249,7 @@
     "rateLimited": "Naše služba je momentálně přetížená. Zkus to prosím za pár minut.",
     "apiError": "Omlouvám se, s naší službou je dočasný problém. Náš tým byl informován.",
     "contentViolation": "Tuto hlasovou zprávu nemůžeme zpracovat, protože obsahuje obsah porušující naše zásady používání. Další informace o přijatelném obsahu najdeš v našich Podmínkách služby.",
-    "supportFooter": "💌 Tento přepis stál přibližně {cost}. Podpoř Josephine: https://revolut.me/magicfranci nebo sdílej její číslo s kamarádem!"
+    "supportFooter": "💌 Provoz Josephine stojí přibližně {monthly} měsíčně — podíl této zprávy je zhruba {cost}. Podpoř Josephine: https://revolut.me/magicfranci nebo sdílej její číslo s kamarádem!"
   },
   "da": {
     "welcome": "Hej! Jeg er Josephine, din assistent til transskription af talebeskeder. Send mig en talebesked, så transskriberer jeg den for dig!",
@@ -263,7 +263,7 @@
     "rateLimited": "Vores tjeneste oplever stor efterspørgsel. Prøv venligst igen om et par minutter.",
     "apiError": "Beklager, der er et midlertidigt problem med vores tjeneste. Vores team er blevet underrettet.",
     "contentViolation": "Vi kan ikke behandle denne talebesked, da den indeholder indhold, der overtræder vores brugspolitikker. Se venligst vores Servicevilkår for mere information om acceptabelt indhold.",
-    "supportFooter": "💌 Denne transskription kostede omkring {cost}. Støt Josephine: https://revolut.me/magicfranci eller del hendes nummer med en ven!"
+    "supportFooter": "💌 At drive Josephine koster omkring {monthly} om måneden — denne beskeds andel er cirka {cost}. Støt Josephine: https://revolut.me/magicfranci eller del hendes nummer med en ven!"
   },
   "et": {
     "welcome": "Tere! Mina olen Josephine, sinu häälsõnumite transkriptsiooni assistent. Saada mulle häälsõnum ja ma transkribeerin selle sinu jaoks!",
@@ -277,7 +277,7 @@
     "rateLimited": "Meie teenus on suure koormuse all. Palun proovi mõne minuti pärast uuesti.",
     "apiError": "Vabandust, meie teenusega on ajutine probleem. Meie meeskonda on teavitatud.",
     "contentViolation": "Me ei saa seda häälsõnumit töödelda, kuna see sisaldab sisu, mis rikub meie kasutuspoliitikat. Palun tutvu meie teenusetingimustega, et saada lisateavet vastuvõetava sisu kohta.",
-    "supportFooter": "💌 See transkriptsioon maksis umbes {cost}. Toeta Josephine'i: https://revolut.me/magicfranci või jaga tema numbrit sõbraga!"
+    "supportFooter": "💌 Josephine’i töös hoidmine maksab umbes {monthly} kuus — selle sõnumi osa on umbes {cost}. Toeta Josephine'i: https://revolut.me/magicfranci või jaga tema numbrit sõbraga!"
   },
   "fi": {
     "welcome": "Hei! Olen Josephine, ääniviestien litterointiavustajasi. Lähetä minulle ääniviesti, niin litteroin sen sinulle!",
@@ -291,7 +291,7 @@
     "rateLimited": "Palvelumme on juuri nyt ruuhkautunut. Yritä uudelleen muutaman minuutin kuluttua.",
     "apiError": "Anteeksi, palvelussamme on tilapäinen ongelma. Tiimillemme on ilmoitettu.",
     "contentViolation": "Emme voi käsitellä tätä ääniviestiä, koska se sisältää käyttökäytäntöjemme vastaista sisältöä. Katso käyttöehdoistamme lisätietoja hyväksyttävästä sisällöstä.",
-    "supportFooter": "💌 Tämä litterointi maksoi noin {cost}. Tue Josephinea: https://revolut.me/magicfranci tai jaa hänen numeronsa ystävälle!"
+    "supportFooter": "💌 Josephinen ylläpito maksaa noin {monthly} kuukaudessa — tämän viestin osuus on noin {cost}. Tue Josephinea: https://revolut.me/magicfranci tai jaa hänen numeronsa ystävälle!"
   },
   "lv": {
     "welcome": "Sveiki! Es esmu Josephine, tava balss ziņu transkripcijas asistente. Atsūti man balss ziņu, un es to tev transkribēšu!",
@@ -305,7 +305,7 @@
     "rateLimited": "Mūsu pakalpojumam pašlaik ir liels pieprasījums. Lūdzu, mēģini vēlreiz pēc dažām minūtēm.",
     "apiError": "Atvainojos, ar mūsu pakalpojumu ir īslaicīga problēma. Mūsu komanda ir informēta.",
     "contentViolation": "Mēs nevaram apstrādāt šo balss ziņu, jo tā satur saturu, kas pārkāpj mūsu lietošanas noteikumus. Lūdzu, iepazīsties ar mūsu Pakalpojuma noteikumiem, lai uzzinātu vairāk par pieņemamu saturu.",
-    "supportFooter": "💌 Šī transkripcija izmaksāja aptuveni {cost}. Atbalsti Josephine: https://revolut.me/magicfranci vai padalies ar viņas numuru ar draugu!"
+    "supportFooter": "💌 Josephine uzturēšana izmaksā aptuveni {monthly} mēnesī — šīs ziņas daļa ir aptuveni {cost}. Atbalsti Josephine: https://revolut.me/magicfranci vai padalies ar viņas numuru ar draugu!"
   },
   "lt": {
     "welcome": "Labas! Aš esu Josephine, tavo balso žinučių transkripcijos asistentė. Atsiųsk man balso žinutę ir aš ją tau transkribuosiu!",
@@ -319,7 +319,7 @@
     "rateLimited": "Mūsų paslauga šiuo metu labai apkrauta. Pabandyk dar kartą po kelių minučių.",
     "apiError": "Atsiprašau, su mūsų paslauga kilo laikina problema. Mūsų komanda informuota.",
     "contentViolation": "Negalime apdoroti šios balso žinutės, nes joje yra turinio, pažeidžiančio mūsų naudojimo taisykles. Daugiau informacijos apie priimtiną turinį rasi mūsų Paslaugų teikimo sąlygose.",
-    "supportFooter": "💌 Ši transkripcija kainavo apie {cost}. Paremk Josephine: https://revolut.me/magicfranci arba pasidalink jos numeriu su draugu!"
+    "supportFooter": "💌 Josephine išlaikymas kainuoja apie {monthly} per mėnesį — šios žinutės dalis yra apie {cost}. Paremk Josephine: https://revolut.me/magicfranci arba pasidalink jos numeriu su draugu!"
   },
   "mt": {
     "welcome": "Bongu! Jien Josephine, l-assistenta tiegħek għat-traskrizzjoni tal-messaġġi bil-vuċi. Ibgħatli messaġġ bil-vuċi u nittraskrivih għalik!",
@@ -333,7 +333,7 @@
     "rateLimited": "Is-servizz tagħna għandu domanda għolja bħalissa. Jekk jogħġbok erġa' pprova fi ftit minuti.",
     "apiError": "Jiddispjaċini, hemm problema temporanja bis-servizz tagħna. It-tim tagħna ġie nnotifikat.",
     "contentViolation": "Ma nistgħux nipproċessaw dan il-messaġġ bil-vuċi għax fih kontenut li jikser il-politiki tal-użu tagħna. Jekk jogħġbok ara t-Termini tas-Servizz tagħna għal aktar informazzjoni dwar kontenut aċċettabbli.",
-    "supportFooter": "💌 Din it-traskrizzjoni swiet madwar {cost}. Appoġġja lil Josephine: https://revolut.me/magicfranci jew aqsam in-numru tagħha ma' ħabib!"
+    "supportFooter": "💌 Biex Josephine tibqa’ taħdem tiswa madwar {monthly} fix-xahar — is-sehem ta’ dan il-messaġġ huwa madwar {cost}. Appoġġja lil Josephine: https://revolut.me/magicfranci jew aqsam in-numru tagħha ma' ħabib!"
   },
   "sk": {
     "welcome": "Ahoj! Som Josephine, tvoja asistentka na prepis hlasových správ. Pošli mi hlasovú správu a ja ti ju prepíšem!",
@@ -347,7 +347,7 @@
     "rateLimited": "Naša služba je momentálne preťažená. Skús to prosím o pár minút.",
     "apiError": "Prepáč, s našou službou je dočasný problém. Náš tím bol informovaný.",
     "contentViolation": "Túto hlasovú správu nemôžeme spracovať, pretože obsahuje obsah porušujúci naše zásady používania. Viac informácií o prijateľnom obsahu nájdeš v našich Podmienkach služby.",
-    "supportFooter": "💌 Tento prepis stál približne {cost}. Podpor Josephine: https://revolut.me/magicfranci alebo zdieľaj jej číslo s priateľom!"
+    "supportFooter": "💌 Prevádzka Josephine stojí približne {monthly} mesačne — podiel tejto správy je zhruba {cost}. Podpor Josephine: https://revolut.me/magicfranci alebo zdieľaj jej číslo s priateľom!"
   },
   "sl": {
     "welcome": "Živjo! Sem Josephine, tvoja asistentka za prepis glasovnih sporočil. Pošlji mi glasovno sporočilo in ti ga bom prepisala!",
@@ -361,7 +361,7 @@
     "rateLimited": "Naša storitev je trenutno zelo obremenjena. Poskusi znova čez nekaj minut.",
     "apiError": "Oprosti, z našo storitvijo je začasna težava. Naša ekipa je bila obveščena.",
     "contentViolation": "Tega glasovnega sporočila ne moremo obdelati, ker vsebuje vsebino, ki krši naše pravilnike o uporabi. Za več informacij o sprejemljivi vsebini si oglej naše Pogoje storitve.",
-    "supportFooter": "💌 Ta prepis je stal približno {cost}. Podpri Josephine: https://revolut.me/magicfranci ali deli njeno številko s prijateljem!"
+    "supportFooter": "💌 Delovanje Josephine stane približno {monthly} na mesec — delež tega sporočila je približno {cost}. Podpri Josephine: https://revolut.me/magicfranci ali deli njeno številko s prijateljem!"
   },
   "zh": {
     "welcome": "你好！我是 Josephine，你的语音消息转文字助手。发送一条语音消息给我，我会为你转成文字！",
@@ -375,7 +375,7 @@
     "rateLimited": "我们的服务目前需求量很大。请几分钟后再试。",
     "apiError": "抱歉，我们的服务出现了临时问题。我们的团队已收到通知。",
     "contentViolation": "我们无法处理这条语音消息，因为其中包含违反我们使用政策的内容。请查看我们的服务条款，了解有关可接受内容的更多信息。",
-    "supportFooter": "💌 这次转写的成本约为 {cost}。 支持 Josephine：https://revolut.me/magicfranci 或把她的号码分享给朋友！"
+    "supportFooter": "💌 维持 Josephine 运行每月约需 {monthly} — 这条消息的份额约为 {cost}。 支持 Josephine：https://revolut.me/magicfranci 或把她的号码分享给朋友！"
   },
   "hi": {
     "welcome": "नमस्ते! मैं Josephine हूँ, आपकी वॉयस नोट ट्रांसक्रिप्शन सहायक। मुझे एक वॉयस नोट भेजें और मैं उसे आपके लिए लिख दूँगी!",
@@ -389,7 +389,7 @@
     "rateLimited": "हमारी सेवा पर अभी बहुत अधिक मांग है। कृपया कुछ मिनटों में पुनः प्रयास करें।",
     "apiError": "क्षमा करें, हमारी सेवा में एक अस्थायी समस्या है। हमारी टीम को सूचित कर दिया गया है।",
     "contentViolation": "हम इस वॉयस नोट को प्रोसेस नहीं कर सकते क्योंकि इसमें ऐसी सामग्री है जो हमारी उपयोग नीतियों का उल्लंघन करती है। स्वीकार्य सामग्री के बारे में अधिक जानकारी के लिए कृपया हमारी सेवा की शर्तें देखें।",
-    "supportFooter": "💌 इस ट्रांसक्रिप्शन की लागत लगभग {cost} रही। Josephine का समर्थन करें: https://revolut.me/magicfranci या उसका नंबर किसी दोस्त के साथ साझा करें!"
+    "supportFooter": "💌 Josephine को चलाने में हर महीने लगभग {monthly} का खर्च आता है — इस संदेश का हिस्सा लगभग {cost} है। Josephine का समर्थन करें: https://revolut.me/magicfranci या उसका नंबर किसी दोस्त के साथ साझा करें!"
   },
   "ja": {
     "welcome": "こんにちは！私はJosephine、ボイスメッセージの文字起こしアシスタントです。ボイスメッセージを送っていただければ、文字に起こします！",
@@ -403,6 +403,6 @@
     "rateLimited": "現在サービスが混み合っています。数分後にもう一度お試しください。",
     "apiError": "申し訳ありません、サービスに一時的な問題が発生しています。チームに通知済みです。",
     "contentViolation": "このボイスメッセージには利用ポリシーに違反するコンテンツが含まれているため、処理できません。許容されるコンテンツの詳細については、利用規約をご確認ください。",
-    "supportFooter": "💌 この文字起こしには約 {cost} かかりました。 Josephineを応援する：https://revolut.me/magicfranci または彼女の番号を友達にシェアしてください！"
+    "supportFooter": "💌 Josephineの運営には月に約 {monthly} かかります — このメッセージの分担額は約 {cost} です。 Josephineを応援する：https://revolut.me/magicfranci または彼女の番号を友達にシェアしてください！"
   }
 }

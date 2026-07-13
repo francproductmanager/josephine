@@ -1,32 +1,44 @@
 // test/cost-estimate.test.js
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { estimateCostUsd, formatCostUsd } = require('../src/core/cost-estimate');
+const { countWords, estimateNoteShareUsd, formatCostUsd, MONTHLY_DISPLAY } = require('../src/core/cost-estimate');
 
-test('one-minute voice note costs roughly 1.3 cents', () => {
-  const oneMinuteBytes = 120 * 1024;
-  const cost = estimateCostUsd(oneMinuteBytes, 1);
-  // inbound 0.005 + outbound 0.005 + 1 min * 0.003
-  assert.ok(Math.abs(cost - 0.013) < 0.0005, `got ${cost}`);
+test('very short notes sit at the floor (~$0.19-0.20)', () => {
+  assert.ok(estimateNoteShareUsd(0) >= 0.19);
+  assert.ok(estimateNoteShareUsd(10) < 0.21);
 });
 
-test('longer audio and more parts cost more', () => {
-  const short = estimateCostUsd(120 * 1024, 1);
-  const longAudio = estimateCostUsd(3 * 120 * 1024, 1);
-  const multiPart = estimateCostUsd(120 * 1024, 3);
-  assert.ok(longAudio > short);
-  assert.ok(multiPart > short);
+test('share grows monotonically with word count', () => {
+  const points = [10, 50, 100, 190, 300, 400].map(estimateNoteShareUsd);
+  for (let i = 1; i < points.length; i++) {
+    assert.ok(points[i] > points[i - 1], `share must grow: ${points[i - 1]} -> ${points[i]}`);
+  }
 });
 
-test('tiny/missing audio still charges the floor', () => {
-  // 0.25-minute floor + two Twilio messages
-  const cost = estimateCostUsd(0, 1);
-  assert.ok(cost >= 0.01, `got ${cost}`);
+test('sample points match the documented curve', () => {
+  assert.strictEqual(formatCostUsd(estimateNoteShareUsd(100)), '$0.26');
+  assert.strictEqual(formatCostUsd(estimateNoteShareUsd(190)), '$0.31');
+  assert.strictEqual(formatCostUsd(estimateNoteShareUsd(300)), '$0.39');
 });
 
-test('formatting never shows less than one cent', () => {
+test('long notes cap at $0.45', () => {
+  assert.strictEqual(estimateNoteShareUsd(400), 0.45);
+  assert.strictEqual(estimateNoteShareUsd(5000), 0.45);
+});
+
+test('countWords matches localization word-splitting semantics', () => {
+  assert.strictEqual(countWords('one two three'), 3);
+  assert.strictEqual(countWords('  padded   spaces  here '), 3);
+  assert.strictEqual(countWords(''), 0);
+  assert.strictEqual(countWords(null), 0);
+});
+
+test('formatting is two-decimal USD with a one-cent floor', () => {
   assert.strictEqual(formatCostUsd(0.0001), '$0.01');
-  assert.strictEqual(formatCostUsd(0.013), '$0.01');
-  assert.strictEqual(formatCostUsd(0.024), '$0.02');
-  assert.strictEqual(formatCostUsd(0.5), '$0.50');
+  assert.strictEqual(formatCostUsd(0.19), '$0.19');
+  assert.strictEqual(formatCostUsd(0.45), '$0.45');
+});
+
+test('monthly display figure', () => {
+  assert.strictEqual(MONTHLY_DISPLAY, '$12');
 });
