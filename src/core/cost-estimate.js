@@ -10,8 +10,8 @@
 // 100 WhatsApp msgs/cycle) and Meta service-window replies are free.
 // The displayed share is therefore a word-count-scaled allocation of the
 // fixed costs, not a marginal price.
-const MIN_SHARE_USD = 0.19;   // floor: very short notes
-const MAX_SHARE_USD = 0.45;   // cap: long notes
+const MIN_SHARE_USD = 0.01;   // floor: very short notes
+const MAX_SHARE_USD = 0.39;   // cap: long notes
 const FULL_SCALE_WORDS = 400; // word count at which the cap is reached
 
 // Shown as {monthly} in the footer sentence.
@@ -27,8 +27,8 @@ function countWords(text) {
 }
 
 /**
- * Map a transcription's word count onto the $0.19–$0.45 share range.
- * Sample points: 10w → $0.20, 100w → $0.26, 190w → $0.31, 400w+ → $0.45.
+ * Map a transcription's word count onto the $0.01–$0.39 share range.
+ * Sample points: 10w → $0.02, 100w → $0.10, 190w → $0.19, 400w+ → $0.39.
  */
 function estimateNoteShareUsd(wordCount) {
   const scaled = MIN_SHARE_USD + (wordCount || 0) * (MAX_SHARE_USD - MIN_SHARE_USD) / FULL_SCALE_WORDS;
