@@ -190,17 +190,17 @@
       <div class="fig">
         <div class="fig-label">FIG. 1</div>
         <div class="fig-icon">🎙</div>
-        <div class="fig-caption">You record a voice note</div>
+        <div class="fig-caption">You forward a voice note to Josephine</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 2</div>
         <div class="fig-icon">✍️</div>
-        <div class="fig-caption">Josephine listens &amp; writes</div>
+        <div class="fig-caption">Josephine transcribes</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 3</div>
         <div class="fig-icon">💬</div>
-        <div class="fig-caption">The text arrives in chat</div>
+        <div class="fig-caption">The text arrives</div>
       </div>
     </div>
     <div class="fig-note">Long note? You always get the <span style="font-weight: 700;">full transcription</span>, plus a short summary on top when it goes over 150 words. She speaks 29 languages and picks yours automatically.</div>
@@ -299,17 +299,17 @@
       <div class="fig">
         <div class="fig-label">FIG. 1</div>
         <div class="fig-icon">🎙</div>
-        <div class="fig-caption">Registri un vocale</div>
+        <div class="fig-caption">Inoltri un vocale a Josephine</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 2</div>
         <div class="fig-icon">✍️</div>
-        <div class="fig-caption">Josephine ascolta e scrive</div>
+        <div class="fig-caption">Josephine trascrive</div>
       </div>
       <div class="fig">
         <div class="fig-label">FIG. 3</div>
         <div class="fig-icon">💬</div>
-        <div class="fig-caption">Il testo arriva in chat</div>
+        <div class="fig-caption">Il testo arriva</div>
       </div>
     </div>
     <div class="fig-note">Vocale lungo? Ricevi sempre la <span style="font-weight: 700;">trascrizione completa</span>, più un breve riassunto in aggiunta quando supera le 150 parole. Parla 29 lingue e riconosce la tua automaticamente.</div>
@@ -335,7 +335,8 @@
   }
 
   // Chat demo: you send a voice note → Josephine types for a couple of
-  // seconds → the transcription arrives. Loops forever.
+  // seconds → the transcription arrives. Plays three times, then rests
+  // on the finished conversation (an endless loop gets annoying).
   (function () {
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.querySelectorAll('.chat-body').forEach(function (body) {
@@ -350,13 +351,13 @@
       function hide(el) { el.classList.add('gone'); el.classList.remove('shown'); }
       function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
       (async function loop() {
-        for (;;) {
+        for (var run = 0; run < 3; run++) {
           all.forEach(hide);
           await wait(700); show(voice);      // you send the voice note
           await wait(900); show(typing);     // Josephine starts typing…
           await wait(2300); hide(typing); show(reply);   // …the transcription lands
           await wait(350); show(caption);
-          await wait(4500);                  // hold, then replay
+          await wait(4500);                  // hold, then replay (3x max)
         }
       })();
     });
