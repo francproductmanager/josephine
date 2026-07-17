@@ -52,6 +52,26 @@ async function getBuffer(url, { headers = {}, timeoutMs = 15000 } = {}) {
 }
 
 /**
+ * GET a URL and parse the JSON response. Used for lightweight Twilio
+ * resource reads (e.g. polling a message's delivery status).
+ */
+async function getJson(url, { headers = {}, timeoutMs = 15000 } = {}) {
+  let response;
+  try {
+    response = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(timeoutMs)
+    });
+  } catch (error) {
+    throw normalizeError(error, url);
+  }
+  if (!response.ok) {
+    throw await toHttpError(response);
+  }
+  return response.json();
+}
+
+/**
  * POST a body (JSON object, FormData, or URLSearchParams) and parse the
  * JSON response. Content-Type is set automatically: explicitly for JSON,
  * by fetch itself for FormData (multipart boundary) and URLSearchParams.
@@ -77,5 +97,6 @@ async function postJson(url, body, { headers = {}, timeoutMs = 30000 } = {}) {
 
 module.exports = {
   getBuffer,
+  getJson,
   postJson
 };

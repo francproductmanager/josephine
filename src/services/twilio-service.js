@@ -3,7 +3,7 @@
 // the twilio SDK was removed because its dynamic requires break Netlify's
 // v2 function bundling (production MODULE_NOT_FOUND, 2026-07-11), and the
 // SDK's only runtime use here was messages.create.
-const { postJson } = require('../utils/http-client');
+const { postJson, getJson } = require('../utils/http-client');
 const { logDetails } = require('../utils/logging-utils');
 
 // Twilio client wrapper
@@ -61,6 +61,33 @@ class TwilioClientWrapper {
       );
     } else {
       throw new Error('Twilio client not available');
+    }
+  }
+
+  // Fetch the current delivery status of a previously-sent message.
+  // Used to sequence multi-part sends: we only queue the next part once
+  // the previous one has left Twilio's outbound queue (see sendMessages),
+  // which is what actually guarantees WhatsApp shows them in order.
+  // Returns the Twilio status string (e.g. 'queued', 'sent', 'delivered')
+  // or null if it can't be read (fail-open — never block a send on this).
+  async getMessageStatus(sid) {
+    if (this.testMode || !this.hasCredentials || !sid) {
+      return null;
+    }
+    try {
+      const accountSid = process.env.ACCOUNT_SID;
+      const auth = Buffer.from(`${accountSid}:${process.env.AUTH_TOKEN}`).toString('base64');
+      const result = await getJson(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages/${sid}.json`,
+        {
+          headers: { Authorization: `Basic ${auth}` },
+          timeoutMs: 10000
+        }
+      );
+      return result.status || null;
+    } catch (error) {
+      logDetails('Could not read Twilio message status:', error.message);
+      return null;
     }
   }
 

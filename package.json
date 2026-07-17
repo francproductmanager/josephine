@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node --test test/localization.test.js test/express-flows.test.js test/netlify-functions.test.js test/cost-estimate.test.js"
+    "test": "node --test test/localization.test.js test/express-flows.test.js test/netlify-functions.test.js test/cost-estimate.test.js test/messaging-service.test.js"
   },
   "engines": {
     "node": ">=18"
