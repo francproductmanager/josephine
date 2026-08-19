@@ -25,7 +25,22 @@ async function toHttpError(response) {
   try {
     error.response.data = await response.json();
   } catch (e) { /* non-JSON error body */ }
+  // Surface the provider's own explanation (OpenAI: {error:{message}},
+  // Twilio: {message}) in error.message so logs and the operator alert say
+  // *why* -- "HTTP 400" alone is undiagnosable once logs have rotated.
+  const detail = extractErrorDetail(error.response.data);
+  if (detail) {
+    error.message += `: ${detail}`;
+  }
   return error;
+}
+
+function extractErrorDetail(data) {
+  if (!data || typeof data !== 'object') return null;
+  const candidate = (data.error && typeof data.error === 'object' && data.error.message)
+    || (typeof data.error === 'string' && data.error)
+    || data.message;
+  return typeof candidate === 'string' && candidate.trim() ? candidate.trim().slice(0, 300) : null;
 }
 
 /**
@@ -98,5 +113,6 @@ async function postJson(url, body, { headers = {}, timeoutMs = 30000 } = {}) {
 module.exports = {
   getBuffer,
   getJson,
-  postJson
+  postJson,
+  extractErrorDetail
 };
