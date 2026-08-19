@@ -88,7 +88,7 @@ npx @netlify/zip-it-and-ship-it netlify/functions <outdir> --config '{"*":{"node
 ## Environment variables
 
 Core: `OPENAI_API_KEY`, `ACCOUNT_SID`, `AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `PORT` (Express only).
-Netlify-only: `INTERNAL_API_SECRET` (webhook→background auth, required), `TWILIO_WEBHOOK_URL` (signature validation), `ADMIN_PHONE` (optional — WhatsApp alert to the operator on `processing_error`, debounced 1/hour via Blobs), `TWILIO_SIGNATURE_VALIDATION=off` (dev only). `URL` is auto-provided by Netlify.
+Netlify-only: `INTERNAL_API_SECRET` (webhook→background auth, required), `TWILIO_WEBHOOK_URL` (signature validation), `ADMIN_PHONE` (optional — WhatsApp alert to the operator on `processing_error`, debounced 1/hour via Blobs; `whatsapp:` prefix is added automatically, and the alert is sent from the sender the user messaged, not `TWILIO_PHONE_NUMBER`), `TWILIO_SIGNATURE_VALIDATION=off` (dev only). `URL` is auto-provided by Netlify.
 Changing an env var in Netlify requires a **redeploy** to take effect.
 
 ## Deployment & rollback
