@@ -158,3 +158,25 @@ test('background runs the pipeline and classifies download failure', async () =>
   assert.strictEqual(r.status, 200);
   assert.strictEqual(r.body, 'processing_error');
 });
+
+test('admin alert is always a WhatsApp message, sent from the sender the user messaged', async () => {
+  // Regression: from 2026-08-15 to 08-17 every operator alert failed with
+  // Twilio 21660 because env held a bare (SMS) number for a stale sandbox
+  // sender. The alert must use whatsapp: on both ends and prefer the live
+  // sender from the webhook over TWILIO_PHONE_NUMBER.
+  const { asWhatsApp, alertSender } = await import('../netlify/functions/transcribe-background.mjs');
+
+  assert.strictEqual(asWhatsApp('+447753980466'), 'whatsapp:+447753980466');
+  assert.strictEqual(asWhatsApp('whatsapp:+447753980466'), 'whatsapp:+447753980466');
+  assert.strictEqual(asWhatsApp(' +44 7753 980466 '), 'whatsapp:+44 7753 980466');
+  assert.strictEqual(asWhatsApp(undefined), '');
+
+  const prevEnv = process.env.TWILIO_PHONE_NUMBER;
+  process.env.TWILIO_PHONE_NUMBER = '+14155238886'; // stale sandbox number
+  try {
+    assert.strictEqual(alertSender({ To: 'whatsapp:+447450325919' }), 'whatsapp:+447450325919');
+    assert.strictEqual(alertSender({}), 'whatsapp:+14155238886');
+  } finally {
+    if (prevEnv === undefined) delete process.env.TWILIO_PHONE_NUMBER; else process.env.TWILIO_PHONE_NUMBER = prevEnv;
+  }
+});

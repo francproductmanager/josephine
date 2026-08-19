@@ -27,6 +27,25 @@ import { logDetails } from '../../src/utils/logging-utils.js';
 const ALERT_MARKER_KEY = '_admin-alert-last';
 const ALERT_MUTE_MS = 60 * 60 * 1000; // one alert per hour
 
+// Twilio treats a bare E.164 number as SMS. The alert must be a WhatsApp
+// message on both ends, or it fails with 21660 ("From number not owned by
+// account") -- which is exactly what silently ate every alert from
+// 2026-08-15 to 08-17 (env held the old sandbox number, un-prefixed).
+function asWhatsApp(phone) {
+  const p = String(phone || '').trim();
+  if (!p) return p;
+  return p.startsWith('whatsapp:') ? p : `whatsapp:${p}`;
+}
+
+// Send the alert from the sender the user just messaged (params.To): that
+// sender is provably live on this account, unlike TWILIO_PHONE_NUMBER,
+// which can go stale after a sender migration. Env is only a fallback.
+function alertSender(params) {
+  return asWhatsApp(params.To || process.env.TWILIO_PHONE_NUMBER);
+}
+
+export { asWhatsApp, alertSender };
+
 /**
  * Send a WhatsApp alert to the operator (ADMIN_PHONE), debounced via the
  * Blobs store. Best-effort on every level: if Blobs is down we alert
@@ -44,8 +63,8 @@ async function sendAdminAlert(store, twilioClient, result, params) {
     }
     await twilioClient.sendMessage({
       body: `⚠️ Josephine: transcription failed for ${params.From || 'unknown'} (${params.MessageSid}): ${result.error || 'unknown error'}. Alerts muted for 1h.`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: process.env.ADMIN_PHONE
+      from: alertSender(params),
+      to: asWhatsApp(process.env.ADMIN_PHONE)
     });
     logDetails('Admin alert sent');
   } catch (alertError) {
