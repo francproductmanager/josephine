@@ -66,16 +66,23 @@ const EXTENSION_BY_CONTENT_TYPE = {
   'video/webm': 'webm'
 };
 
+// Bare MIME type, parameters stripped: 'audio/ogg; codecs=opus' -> 'audio/ogg'.
+// OpenAI support's own workaround for gpt-4o-transcribe 400s on Opus
+// uploads was "don't pass ;codecs=opus" -- so never put it on the part.
+function baseMimeType(contentType) {
+  return String(contentType || '').split(';')[0].trim().toLowerCase();
+}
+
 function audioFilename(contentType) {
-  const base = String(contentType || '').split(';')[0].trim().toLowerCase();
-  return `audio.${EXTENSION_BY_CONTENT_TYPE[base] || 'ogg'}`;
+  return `audio.${EXTENSION_BY_CONTENT_TYPE[baseMimeType(contentType)] || 'ogg'}`;
 }
 
 function prepareFormData(audioData, contentType, model = 'gpt-4o-mini-transcribe') {
   // Native FormData/Blob (Node 18+); fetch sets the multipart boundary.
   const formData = new FormData();
 
-  formData.append('file', new Blob([Buffer.from(audioData)], { type: contentType }), audioFilename(contentType));
+  const mimeType = baseMimeType(contentType) || 'audio/ogg';
+  formData.append('file', new Blob([Buffer.from(audioData)], { type: mimeType }), audioFilename(contentType));
   formData.append('model', model);
   formData.append('response_format', 'json');
 

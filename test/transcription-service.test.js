@@ -57,8 +57,19 @@ test('audioFilename maps Twilio media content types to the extension OpenAI expe
 test('prepareFormData names the upload from the content type and sets the default model', () => {
   const form = prepareFormData(Buffer.from('abc'), 'audio/mpeg');
   assert.strictEqual(form.get('file').name, 'audio.mp3');
+  assert.strictEqual(form.get('file').type, 'audio/mpeg');
   assert.strictEqual(form.get('model'), 'gpt-4o-mini-transcribe');
   assert.strictEqual(form.get('response_format'), 'json');
+});
+
+test('prepareFormData strips MIME parameters (OpenAI chokes on ";codecs=opus") and defaults to audio/ogg', () => {
+  const opus = prepareFormData(Buffer.from('abc'), 'audio/ogg; codecs=opus');
+  assert.strictEqual(opus.get('file').type, 'audio/ogg');
+  assert.strictEqual(opus.get('file').name, 'audio.ogg');
+
+  const missing = prepareFormData(Buffer.from('abc'), undefined);
+  assert.strictEqual(missing.get('file').type, 'audio/ogg');
+  assert.strictEqual(missing.get('file').name, 'audio.ogg');
 });
 
 test('HTTP errors carry the provider error message (OpenAI and Twilio shapes)', async () => {
