@@ -75,28 +75,67 @@ async function transcribeAudio(formData, apiKey, req = null) {
   
   // Normal production code
   try {
-    logDetails('Sending request to OpenAI Whisper API...');
-
-    const data = await postJson(
-      'https://api.openai.com/v1/audio/transcriptions',
-      formData,
-      {
-        headers: { Authorization: `Bearer ${apiKey}` },
-        timeoutMs: 30000
-      }
-    );
-
-    logDetails('Received response from Whisper API', {
-      hasText: !!data.text
-    });
-
-    return data.text.trim();
+    return await requestTranscription(formData, apiKey);
   } catch (error) {
+    const status = error.response && error.response.status;
+    const model = formData.get('model');
+    // gpt-4o(-mini)-transcribe rejects input longer than 1500s (25 min)
+    // with HTTP 400; whisper-1 has no duration cap (only the 25MB upload
+    // limit, which our size guard already enforces). A 400 is also what
+    // an unsupported container yields, so one fallback attempt covers
+    // both without costing anything on the failure path (4xx are unbilled).
+    if (status === 400 && model && model !== FALLBACK_MODEL) {
+      logDetails(`Transcription rejected by ${model} (${error.message}) - retrying with ${FALLBACK_MODEL}`);
+      try {
+        return await requestTranscription(withModel(formData, FALLBACK_MODEL), apiKey);
+      } catch (fallbackError) {
+        logDetails('Error transcribing audio (fallback):', fallbackError);
+        throw fallbackError;
+      }
+    }
     logDetails('Error transcribing audio:', error);
     throw error;
   }
 }
 
+const FALLBACK_MODEL = 'whisper-1';
+
+async function requestTranscription(formData, apiKey) {
+  logDetails(`Sending request to OpenAI transcription API (${formData.get('model')})...`);
+
+  const data = await postJson(
+    'https://api.openai.com/v1/audio/transcriptions',
+    formData,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      timeoutMs: 30000
+    }
+  );
+
+  logDetails('Received response from transcription API', {
+    hasText: !!data.text
+  });
+
+  return data.text.trim();
+}
+
+// Copy a transcription FormData with a different model (FormData has no
+// clone; the File entry is shared by reference, not re-buffered).
+function withModel(formData, model) {
+  const copy = new FormData();
+  for (const [key, value] of formData.entries()) {
+    if (key === 'model') continue;
+    if (value instanceof Blob) {
+      copy.append(key, value, value.name || 'audio.ogg');
+    } else {
+      copy.append(key, value);
+    }
+  }
+  copy.append('model', model);
+  return copy;
+}
+
 module.exports = {
-  transcribeAudio
+  transcribeAudio,
+  FALLBACK_MODEL
 };

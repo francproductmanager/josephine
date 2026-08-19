@@ -81,7 +81,7 @@ npx @netlify/zip-it-and-ship-it netlify/functions <outdir> --config '{"*":{"node
 
 ## OpenAI models in use
 
-- Transcription: `gpt-4o-mini-transcribe` (default param in `prepareFormData`)
+- Transcription: `gpt-4o-mini-transcribe` (default param in `prepareFormData`), with a one-shot fallback to `whisper-1` on HTTP 400 — the 4o-transcribe models reject audio longer than 1500 s (25 min), whisper-1 has no duration cap (a >25-min voice note caused a production `processing_error` on 2026-08-18). Upload filename extension is derived from `MediaContentType0` (OpenAI sniffs format from the extension; forwarded mp3/m4a files used to be sent as `.ogg`).
 - Summaries (>150 words): `gpt-4o-mini`
 - Translation fallback: `gpt-4o-mini`
 
