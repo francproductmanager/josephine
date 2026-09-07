@@ -49,7 +49,7 @@ async function detectEmotion(audioData, mimeType, langObj, req = null) {
   const mime = String(mimeType || '').split(';')[0].trim().toLowerCase() || 'audio/ogg';
 
   try {
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const data = await postJson(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
