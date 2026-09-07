@@ -132,14 +132,32 @@ test('request without MessageSid returns API info', async () => {
   assert.ok(json.expected_params, 'should describe expected params');
 });
 
-test('voice note: localized mood sentence opens the message', async () => {
+test('voice note: localized tone block (mood + confidence) opens the message', async () => {
   const { json } = await post({ ...VOICE, MessageSid: 'SM-mood' });
-  assert.strictEqual(json.emotion, '😊 happy', 'emotion key carries the mock phrase');
-  // Italian sender -> the localized intro with the model phrase spliced in.
-  assert.ok(
-    json.message.startsWith('Dal tono e dalle emozioni di questo messaggio vocale, chi parla sembra provare: 😊 happy.\n\n'),
-    'message opens with the localized mood sentence, got: ' + json.message.split('\n')[0]
+  assert.strictEqual(json.emotion, '😊 happy', 'emotion carries the mock description');
+  assert.strictEqual(json.emotionConfidence, 95, 'emotionConfidence carries the mock confidence');
+  // Italian sender -> localized intro line, then localized confidence line.
+  const lines = json.message.split('\n');
+  assert.strictEqual(
+    lines[0],
+    'Dal tono e dalle emozioni di questo messaggio vocale, chi parla sembra provare: 😊 happy.',
+    'first line is the localized mood sentence'
   );
-  const moodEnd = json.message.indexOf('\n\n');
-  assert.ok(json.message.indexOf('Trascrizione') > moodEnd, 'transcription follows the mood sentence');
+  assert.strictEqual(
+    lines[1],
+    '(Quanto sono sicura di questa lettura del tono: 95%)',
+    'second line is the localized confidence line'
+  );
+  assert.strictEqual(lines[2], '', 'blank line separates the tone block');
+  assert.ok(json.message.indexOf('Trascrizione') > 0, 'transcription follows the tone block');
+});
+
+test('voice note: tone block precedes the summary on long notes', async () => {
+  const { json } = await post({ ...VOICE, MessageSid: 'SM-mood-long', longTranscription: 'true' });
+  assert.ok(json.summary, 'long note must have a summary');
+  const moodAt = json.message.indexOf('Dal tono e dalle emozioni');
+  const summaryAt = json.message.indexOf(json.summary);
+  const transcriptAt = json.message.indexOf('Trascrizione');
+  assert.ok(moodAt === 0, 'tone block opens the message');
+  assert.ok(moodAt < summaryAt && summaryAt < transcriptAt, 'order is tone, summary, transcription');
 });
