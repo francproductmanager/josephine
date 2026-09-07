@@ -1,7 +1,7 @@
 // test/transcription-service.test.js
 // Offline tests for the OpenAI transcription request path: content-type
 // aware upload filenames, the whisper-1 fallback on HTTP 400 (25-minute
-// cap on gpt-4o-mini-transcribe / unsupported containers), and provider
+// cap on the 4o-transcribe family / unsupported containers), and provider
 // error messages being surfaced on error.message for logs and alerts.
 // fetch is stubbed; nothing leaves the process.
 const { test, beforeEach, afterEach } = require('node:test');
@@ -58,7 +58,7 @@ test('prepareFormData names the upload from the content type and sets the defaul
   const form = prepareFormData(Buffer.from('abc'), 'audio/mpeg');
   assert.strictEqual(form.get('file').name, 'audio.mp3');
   assert.strictEqual(form.get('file').type, 'audio/mpeg');
-  assert.strictEqual(form.get('model'), 'gpt-4o-mini-transcribe');
+  assert.strictEqual(form.get('model'), 'gpt-transcribe');
   assert.strictEqual(form.get('response_format'), 'json');
 });
 
@@ -92,7 +92,7 @@ test('HTTP errors carry the provider error message (OpenAI and Twilio shapes)', 
   assert.strictEqual(extractErrorDetail('x'.repeat(5)), null);
 });
 
-test('a 400 from gpt-4o-mini-transcribe falls back to whisper-1 with the same file', async () => {
+test('a 400 from gpt-transcribe falls back to whisper-1 with the same file', async () => {
   stubFetch([
     jsonResponse(400, { error: { message: 'audio duration 1712 seconds is longer than 1500 seconds' } }),
     jsonResponse(200, { text: '  long note transcribed  ' })
@@ -102,12 +102,12 @@ test('a 400 from gpt-4o-mini-transcribe falls back to whisper-1 with the same fi
 
   assert.strictEqual(text, 'long note transcribed');
   assert.strictEqual(calls.length, 2);
-  assert.strictEqual(calls[0].model, 'gpt-4o-mini-transcribe');
+  assert.strictEqual(calls[0].model, 'gpt-transcribe');
   assert.strictEqual(calls[1].model, FALLBACK_MODEL);
   assert.strictEqual(calls[1].fileName, 'audio.ogg');
   assert.strictEqual(calls[1].fileSize, calls[0].fileSize);
   // The caller's FormData is not mutated.
-  assert.strictEqual(form.get('model'), 'gpt-4o-mini-transcribe');
+  assert.strictEqual(form.get('model'), 'gpt-transcribe');
 });
 
 test('a 400 from whisper-1 itself is not retried (no loop)', async () => {

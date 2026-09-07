@@ -77,7 +77,7 @@ function audioFilename(contentType) {
   return `audio.${EXTENSION_BY_CONTENT_TYPE[baseMimeType(contentType)] || 'ogg'}`;
 }
 
-function prepareFormData(audioData, contentType, model = 'gpt-4o-mini-transcribe') {
+function prepareFormData(audioData, contentType, model = 'gpt-transcribe') {
   // Native FormData/Blob (Node 18+); fetch sets the multipart boundary.
   const formData = new FormData();
 
