@@ -84,10 +84,11 @@ npx @netlify/zip-it-and-ship-it netlify/functions <outdir> --config '{"*":{"node
 - Transcription: `gpt-transcribe` (default param in `prepareFormData`; switched from the now-legacy `gpt-4o-mini-transcribe` on 2026-09-07), with a one-shot fallback to `whisper-1` on HTTP 400 — the 4o-transcribe models reject audio longer than 1500 s (25 min) and have rejected valid Opus uploads, whisper-1 has neither problem (a production `processing_error` on 2026-08-18 came from such a 400). Upload filename extension is derived from `MediaContentType0` (OpenAI sniffs format from the extension; forwarded mp3/m4a files used to be sent as `.ogg`).
 - Summaries (>150 words): `gpt-4o-mini`
 - Translation fallback: `gpt-4o-mini`
+- Vocal-tone emotion (Google Gemini, not OpenAI): `gemini-2.5-flash` (override via `GEMINI_MODEL`) in `src/services/emotion-service.js`. Gemini is used because it accepts WhatsApp's ogg/opus inline; OpenAI's audio-input chat models take only wav/mp3 and transcoding would need a dependency. Fail-open: no `GEMINI_API_KEY`, any error, or a `Neutral`/unparseable verdict → no mood line, transcription unaffected. The mood line is emoji + English word (`😤 Frustrated`) by design — avoids 29 new localization keys.
 
 ## Environment variables
 
-Core: `OPENAI_API_KEY`, `ACCOUNT_SID`, `AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `PORT` (Express only).
+Core: `OPENAI_API_KEY`, `ACCOUNT_SID`, `AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `PORT` (Express only), `GEMINI_API_KEY` (optional — enables the vocal-emotion mood line; absent = feature off), `GEMINI_MODEL` (optional override).
 Netlify-only: `INTERNAL_API_SECRET` (webhook→background auth, required), `TWILIO_WEBHOOK_URL` (signature validation), `ADMIN_PHONE` (optional — WhatsApp alert to the operator on `processing_error`, debounced 1/hour via Blobs; `whatsapp:` prefix is added automatically, and the alert is sent from the sender the user messaged, not `TWILIO_PHONE_NUMBER`), `TWILIO_SIGNATURE_VALIDATION=off` (dev only). `URL` is auto-provided by Netlify.
 Changing an env var in Netlify requires a **redeploy** to take effect.
 

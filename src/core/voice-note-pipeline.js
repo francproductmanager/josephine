@@ -12,6 +12,7 @@ const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
+const { detectEmotion, formatEmotionLine } = require('../services/emotion-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -66,6 +67,11 @@ async function processVoiceNote(context) {
       return { flow: 'file_too_big', twilioAvailable: false, statusCode: 413, message: fileTooBigMessage };
     }
 
+    // Vocal-tone emotion needs only the audio, so it starts here and runs
+    // through the whole transcribe/moderate/summarize stretch. detectEmotion
+    // never throws (fail-open: null = no mood line).
+    const emotionPromise = detectEmotion(audioData, mediaContentType, context);
+
     // Prepare form data for Whisper API
     const formData = prepareFormData(audioData, mediaContentType);
 
@@ -93,9 +99,10 @@ async function processVoiceNote(context) {
     })();
 
     // Check for prohibited content
-    const [moderationResult, summary] = await Promise.all([
+    const [moderationResult, summary, emotion] = await Promise.all([
       checkContentModeration(transcription, process.env.OPENAI_API_KEY, context),
-      summaryPromise
+      summaryPromise,
+      emotionPromise
     ]);
     if (moderationResult.flagged) {
       logDetails('Content moderation flagged this transcription', moderationResult);
@@ -133,8 +140,14 @@ async function processVoiceNote(context) {
       };
     }
 
-    // Prepare the final message
+    // Prepare the final message. Mood line first ('😤 Frustrated') —
+    // emoji + English word by design, so no localization keys are needed;
+    // Neutral (or unavailable) means no line at all.
     let finalMessage = '';
+    const emotionLine = formatEmotionLine(emotion);
+    if (emotionLine) {
+      finalMessage += `${emotionLine}\n\n`;
+    }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);
       finalMessage += `${summaryLabel.trim()} ${summary}\n\n`;
@@ -162,6 +175,7 @@ async function processVoiceNote(context) {
           flow: 'successful_transcription',
           twilioAvailable: true,
           summary: summary,
+          emotion: emotion,
           transcription: transcription,
           message: finalMessage
         };
@@ -182,6 +196,7 @@ async function processVoiceNote(context) {
       flow: 'successful_transcription',
       twilioAvailable: false,
       summary: summary,
+      emotion: emotion,
       transcription: transcription,
       message: finalMessage
     };

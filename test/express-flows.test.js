@@ -131,3 +131,9 @@ test('request without MessageSid returns API info', async () => {
   assert.strictEqual(status, 200);
   assert.ok(json.expected_params, 'should describe expected params');
 });
+
+test('voice note: mood line opens the message (emoji + English label, no localization)', async () => {
+  const { json } = await post({ ...VOICE, MessageSid: 'SM-mood' });
+  assert.strictEqual(json.emotion, 'Happy', 'emotion key carries the mock label');
+  assert.ok(json.message.startsWith('😊 Happy\n\n'), 'message opens with the mood line');
+});
