@@ -12,7 +12,7 @@ const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
-const { detectEmotion, emotionMessageKey, EMOTION_EMOJI } = require('../services/emotion-service');
+const { detectEmotion } = require('../services/emotion-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -69,8 +69,9 @@ async function processVoiceNote(context) {
 
     // Vocal-tone emotion needs only the audio, so it starts here and runs
     // through the whole transcribe/moderate/summarize stretch. detectEmotion
-    // never throws (fail-open: null = no mood line).
-    const emotionPromise = detectEmotion(audioData, mediaContentType, context);
+    // never throws (fail-open: null = no mood line). The model answers in
+    // the user's language directly, so no label translation is needed.
+    const emotionPromise = detectEmotion(audioData, mediaContentType, userLang, context);
 
     // Prepare form data for Whisper API
     const formData = prepareFormData(audioData, mediaContentType);
@@ -141,16 +142,15 @@ async function processVoiceNote(context) {
     }
 
     // Prepare the final message: mood sentence first, then summary (long
-    // notes), then transcription. The mood sentence is fully localized
-    // ('emotionIntro' + per-emotion label keys in languages.json), e.g.
+    // notes), then transcription. The localized 'emotionIntro' template
+    // gets the model-authored '<emoji> <emotion>' phrase (already in the
+    // user's language) spliced into its {emotion} placeholder, e.g.
     // "Based on the tone and emotions of the voice message, this person
-    // seems 😤 Frustrated." Neutral (or unavailable) means no line at all.
+    // seems 😤 frustrated." Neutral (or unavailable) means no line at all.
     let finalMessage = '';
-    const emotionKey = emotionMessageKey(emotion);
-    if (emotionKey) {
+    if (emotion) {
       const emotionIntro = await getLocalizedMessage('emotionIntro', userLang);
-      const emotionLabel = await getLocalizedMessage(emotionKey, userLang);
-      finalMessage += `${emotionIntro.trim().replace('{emotion}', `${EMOTION_EMOJI[emotion]} ${emotionLabel.trim()}`)}\n\n`;
+      finalMessage += `${emotionIntro.trim().replace('{emotion}', emotion)}\n\n`;
     }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);

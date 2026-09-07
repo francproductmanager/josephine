@@ -5,44 +5,39 @@
 // transcoding would need ffmpeg/WASM, which the zero-dependency rule
 // forbids. One REST call over native fetch, same as every other service.
 //
-// Fail-open by design: any error, timeout, missing key, or unexpected
-// reply returns null and the transcription goes out without a mood line.
+// The model chooses the emotion itself (open vocabulary, not a fixed
+// label set) and answers directly in the user's language as
+// '<one emoji> <one-to-three words>', e.g. '😤 frustrazione'. The reply
+// is spliced into the localized 'emotionIntro' sentence by the pipeline.
+// 'NEUTRAL' is the model's flat/indistinct verdict and suppresses the
+// mood line entirely.
+//
+// Fail-open by design: any error, timeout, missing key, or a reply that
+// fails the sanity checks returns null and the transcription goes out
+// without a mood line.
 const { postJson } = require('../utils/http-client');
 const { logDetails } = require('../utils/logging-utils');
 
-// Closed label set. The model is instructed to answer with exactly one of
-// these; anything else is discarded (LLMs drift — never trust free text).
-// 'Neutral' is valid model output but has no emoji: an ordinary calm note
-// should not carry a mood line at all.
-const EMOTION_EMOJI = {
-  Happy: '😊',
-  Excited: '🤩',
-  Calm: '😌',
-  Sad: '😢',
-  Frustrated: '😤',
-  Angry: '😠',
-  Anxious: '😰',
-  Surprised: '😮',
-  Tired: '😴'
-};
-const EMOTION_LABELS = ['Neutral', ...Object.keys(EMOTION_EMOJI)];
-
-const PROMPT =
-  'Listen to the speaker\'s tone of voice (not the words). ' +
-  `Classify the dominant emotion as exactly one of: ${EMOTION_LABELS.join(', ')}. ` +
-  'If in doubt, answer Neutral. Reply with only that single word.';
+function buildPrompt(languageName) {
+  return 'Listen to this audio (how it sounds, not what the words mean). ' +
+    'In 1-3 words, describe the speaker\'s emotional tone, vocal delivery, and energy level. ' +
+    `Reply with exactly one fitting emoji, a space, then those 1-3 words in ${languageName || 'English'} (lowercase). ` +
+    'Example format: "😤 tense, rushed". ' +
+    'If the tone is flat, unclear, or unremarkable, reply with exactly NEUTRAL instead.';
+}
 
 // Gemini inline requests cap at 20MB total; base64 inflates by ~4/3.
 const MAX_EMOTION_AUDIO_BYTES = 14 * 1024 * 1024;
 
 /**
- * Detect the speaker's vocal emotion. Returns a label from EMOTION_LABELS
- * or null (unavailable/uncertain/error). Never throws.
+ * Detect the speaker's vocal emotion. Returns a short model-authored
+ * phrase in the user's language ('😤 frustrazione') or null
+ * (neutral/unavailable/uncertain/error). Never throws.
  */
-async function detectEmotion(audioData, mimeType, req = null) {
+async function detectEmotion(audioData, mimeType, langObj, req = null) {
   if (req && req.isTestMode) {
     logDetails('[TEST MODE] Simulating emotion detection');
-    return 'Happy';
+    return '😊 happy';
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -61,7 +56,7 @@ async function detectEmotion(audioData, mimeType, req = null) {
         contents: [{
           parts: [
             { inline_data: { mime_type: mime, data: Buffer.from(audioData).toString('base64') } },
-            { text: PROMPT }
+            { text: buildPrompt(langObj && langObj.name) }
           ]
         }]
       },
@@ -75,33 +70,29 @@ async function detectEmotion(audioData, mimeType, req = null) {
       && data.candidates && data.candidates[0]
       && data.candidates[0].content && data.candidates[0].content.parts
       && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-    const label = normalizeEmotion(raw);
-    logDetails('Emotion detection result', { raw, label });
-    return label;
+    const phrase = sanitizeEmotion(raw);
+    logDetails('Emotion detection result', { raw, phrase });
+    return phrase;
   } catch (error) {
     logDetails('Emotion detection failed (continuing without):', error.message);
     return null;
   }
 }
 
-function normalizeEmotion(raw) {
+// The phrase lands verbatim in a user-facing message, so free-form model
+// output gets a tight gate: one line, short, no URLs/digits/markup, and
+// not the NEUTRAL sentinel. Anything suspicious -> null (no mood line).
+function sanitizeEmotion(raw) {
   if (typeof raw !== 'string') return null;
-  const word = raw.trim().replace(/[.!]/g, '');
-  return EMOTION_LABELS.find((l) => l.toLowerCase() === word.toLowerCase()) || null;
-}
-
-// languages.json key for a mood worth showing ('Frustrated' ->
-// 'emotionFrustrated'); null for Neutral/unknown, which suppresses the
-// line. The caller pairs the localized label with EMOTION_EMOJI and
-// splices both into the localized 'emotionIntro' sentence.
-function emotionMessageKey(label) {
-  return EMOTION_EMOJI[label] ? `emotion${label}` : null;
+  const phrase = raw.trim().replace(/["'.]/g, '');
+  if (!phrase || /neutral/i.test(phrase)) return null;
+  if (phrase.includes('\n') || phrase.length > 40) return null;
+  if (/[0-9<>{}[\]\\\/:;=_*#@&%$~^|`]/.test(phrase)) return null;
+  if (phrase.split(/\s+/).length > 5) return null;
+  return phrase;
 }
 
 module.exports = {
   detectEmotion,
-  emotionMessageKey,
-  normalizeEmotion,
-  EMOTION_EMOJI,
-  EMOTION_LABELS
+  sanitizeEmotion
 };
