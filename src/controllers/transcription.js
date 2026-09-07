@@ -87,6 +87,7 @@ async function handleVoiceNote(req, res) {
             flow: 'successful_transcription',
             summary: result.summary,
             emotion: result.emotion,
+            emotionConfidence: result.emotionConfidence,
             transcription: result.transcription,
             message: result.message,
             testResults: twilioClient.getTestResults()
@@ -98,6 +99,7 @@ async function handleVoiceNote(req, res) {
         flow: 'successful_transcription',
         summary: result.summary,
         emotion: result.emotion,
+        emotionConfidence: result.emotionConfidence,
         transcription: result.transcription,
         message: result.message
       });

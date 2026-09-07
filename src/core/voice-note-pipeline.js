@@ -141,16 +141,22 @@ async function processVoiceNote(context) {
       };
     }
 
-    // Prepare the final message: mood sentence first, then summary (long
-    // notes), then transcription. The localized 'emotionIntro' template
-    // gets the model-authored '<emoji> <emotion>' phrase (already in the
-    // user's language) spliced into its {emotion} placeholder, e.g.
-    // "Based on the tone and emotions of the voice message, this person
-    // seems 😤 frustrated." Neutral (or unavailable) means no line at all.
+    // Prepare the final message: tone block first (always, before summary
+    // and transcription), then summary (long notes), then transcription.
+    // The localized 'emotionIntro' template gets the model-authored
+    // '<emoji> <phrase>' (already in the user's language) spliced into
+    // its {emotion} placeholder, followed by the localized confidence
+    // line, e.g.:
+    //   "Based on the tone and emotions of the voice message, this
+    //    person seems 😤 frustrated and tired, speaking quickly.
+    //    (How sure I am of this tone reading: 82%)"
+    // Neutral, low-confidence, or unavailable means no tone block at all.
     let finalMessage = '';
     if (emotion) {
       const emotionIntro = await getLocalizedMessage('emotionIntro', userLang);
-      finalMessage += `${emotionIntro.trim().replace('{emotion}', emotion)}\n\n`;
+      const confidenceLine = await getLocalizedMessage('emotionConfidence', userLang);
+      finalMessage += `${emotionIntro.trim().replace('{emotion}', emotion.description)}\n`;
+      finalMessage += `${confidenceLine.trim().replace('{pct}', String(emotion.confidence))}\n\n`;
     }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);
@@ -179,7 +185,8 @@ async function processVoiceNote(context) {
           flow: 'successful_transcription',
           twilioAvailable: true,
           summary: summary,
-          emotion: emotion,
+          emotion: emotion ? emotion.description : null,
+          emotionConfidence: emotion ? emotion.confidence : null,
           transcription: transcription,
           message: finalMessage
         };
@@ -200,7 +207,8 @@ async function processVoiceNote(context) {
       flow: 'successful_transcription',
       twilioAvailable: false,
       summary: summary,
-      emotion: emotion,
+      emotion: emotion ? emotion.description : null,
+      emotionConfidence: emotion ? emotion.confidence : null,
       transcription: transcription,
       message: finalMessage
     };
