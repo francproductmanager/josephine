@@ -132,8 +132,14 @@ test('request without MessageSid returns API info', async () => {
   assert.ok(json.expected_params, 'should describe expected params');
 });
 
-test('voice note: mood line opens the message (emoji + English label, no localization)', async () => {
+test('voice note: localized mood sentence opens the message', async () => {
   const { json } = await post({ ...VOICE, MessageSid: 'SM-mood' });
   assert.strictEqual(json.emotion, 'Happy', 'emotion key carries the mock label');
-  assert.ok(json.message.startsWith('😊 Happy\n\n'), 'message opens with the mood line');
+  // Italian sender -> the localized intro with the localized label spliced in.
+  assert.ok(
+    json.message.startsWith('Dal tono e dalle emozioni di questo messaggio vocale, chi parla sembra provare: 😊 felicità.\n\n'),
+    'message opens with the localized mood sentence, got: ' + json.message.split('\n')[0]
+  );
+  const moodEnd = json.message.indexOf('\n\n');
+  assert.ok(json.message.indexOf('Trascrizione') > moodEnd, 'transcription follows the mood sentence');
 });

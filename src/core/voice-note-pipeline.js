@@ -12,7 +12,7 @@ const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
-const { detectEmotion, formatEmotionLine } = require('../services/emotion-service');
+const { detectEmotion, emotionMessageKey, EMOTION_EMOJI } = require('../services/emotion-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -140,13 +140,17 @@ async function processVoiceNote(context) {
       };
     }
 
-    // Prepare the final message. Mood line first ('😤 Frustrated') —
-    // emoji + English word by design, so no localization keys are needed;
-    // Neutral (or unavailable) means no line at all.
+    // Prepare the final message: mood sentence first, then summary (long
+    // notes), then transcription. The mood sentence is fully localized
+    // ('emotionIntro' + per-emotion label keys in languages.json), e.g.
+    // "Based on the tone and emotions of the voice message, this person
+    // seems 😤 Frustrated." Neutral (or unavailable) means no line at all.
     let finalMessage = '';
-    const emotionLine = formatEmotionLine(emotion);
-    if (emotionLine) {
-      finalMessage += `${emotionLine}\n\n`;
+    const emotionKey = emotionMessageKey(emotion);
+    if (emotionKey) {
+      const emotionIntro = await getLocalizedMessage('emotionIntro', userLang);
+      const emotionLabel = await getLocalizedMessage(emotionKey, userLang);
+      finalMessage += `${emotionIntro.trim().replace('{emotion}', `${EMOTION_EMOJI[emotion]} ${emotionLabel.trim()}`)}\n\n`;
     }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);

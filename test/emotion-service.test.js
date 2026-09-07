@@ -7,10 +7,11 @@ const assert = require('node:assert');
 
 const {
   detectEmotion,
-  formatEmotionLine,
+  emotionMessageKey,
   normalizeEmotion,
   EMOTION_LABELS
 } = require('../src/services/emotion-service');
+const translations = require('../src/helpers/languages.json');
 
 const realFetch = globalThis.fetch;
 let calls;
@@ -48,13 +49,20 @@ test('normalizeEmotion accepts only the closed label set', () => {
   assert.strictEqual(normalizeEmotion(undefined), null);
 });
 
-test('formatEmotionLine renders emoji + label, and suppresses Neutral/unknown', () => {
-  assert.strictEqual(formatEmotionLine('Frustrated'), '😤 Frustrated');
-  assert.strictEqual(formatEmotionLine('Happy'), '😊 Happy');
-  assert.strictEqual(formatEmotionLine('Neutral'), null);
-  assert.strictEqual(formatEmotionLine(null), null);
-  for (const label of EMOTION_LABELS) {
-    if (label !== 'Neutral') assert.ok(formatEmotionLine(label), `${label} must have an emoji`);
+test('emotionMessageKey maps labels to localization keys and suppresses Neutral/unknown', () => {
+  assert.strictEqual(emotionMessageKey('Frustrated'), 'emotionFrustrated');
+  assert.strictEqual(emotionMessageKey('Happy'), 'emotionHappy');
+  assert.strictEqual(emotionMessageKey('Neutral'), null);
+  assert.strictEqual(emotionMessageKey(null), null);
+  // Every showable label must have its key in every language, and the
+  // intro template must carry the {emotion} placeholder everywhere.
+  for (const [lang, block] of Object.entries(translations)) {
+    assert.match(block.emotionIntro, /\{emotion\}/, `${lang} emotionIntro must contain {emotion}`);
+    for (const label of EMOTION_LABELS) {
+      if (label === 'Neutral') continue;
+      const key = emotionMessageKey(label);
+      assert.ok(block[key] && block[key].trim(), `${lang} missing ${key}`);
+    }
   }
 });
 

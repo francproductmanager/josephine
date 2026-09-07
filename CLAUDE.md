@@ -66,7 +66,7 @@ Activated by `x-test-mode: true` header, `testMode=true` query, or `testMode=tru
 
 ## Localization
 
-`getLocalizedMessage(key, langObj)` in `src/helpers/localization.js`: phone prefix → `countryLanguageMap` → `languages.json` (29 languages × 11 keys) → English fallback → live `gpt-4o-mini` translation as last resort. **Invariant (test-enforced): every prefix in `countryLanguageMap` must resolve to a language present in `languages.json`** — otherwise every message to those users silently fires a live translation call (~1s + cost, uncached). When adding a language: add both the prefix map entry and the full translation block (key parity with `en` is also test-enforced). All translated strings must preserve the Revolut support link and any URLs.
+`getLocalizedMessage(key, langObj)` in `src/helpers/localization.js`: phone prefix → `countryLanguageMap` → `languages.json` (29 languages × 22 keys) → English fallback → live `gpt-4o-mini` translation as last resort. **Invariant (test-enforced): every prefix in `countryLanguageMap` must resolve to a language present in `languages.json`** — otherwise every message to those users silently fires a live translation call (~1s + cost, uncached). When adding a language: add both the prefix map entry and the full translation block (key parity with `en` is also test-enforced). All translated strings must preserve the Revolut support link and any URLs.
 
 ## Zero runtime dependencies in the pipeline — do not add npm deps
 
@@ -84,7 +84,7 @@ npx @netlify/zip-it-and-ship-it netlify/functions <outdir> --config '{"*":{"node
 - Transcription: `gpt-transcribe` (default param in `prepareFormData`; switched from the now-legacy `gpt-4o-mini-transcribe` on 2026-09-07), with a one-shot fallback to `whisper-1` on HTTP 400 — the 4o-transcribe models reject audio longer than 1500 s (25 min) and have rejected valid Opus uploads, whisper-1 has neither problem (a production `processing_error` on 2026-08-18 came from such a 400). Upload filename extension is derived from `MediaContentType0` (OpenAI sniffs format from the extension; forwarded mp3/m4a files used to be sent as `.ogg`).
 - Summaries (>150 words): `gpt-4o-mini`
 - Translation fallback: `gpt-4o-mini`
-- Vocal-tone emotion (Google Gemini, not OpenAI): `gemini-2.5-flash` (override via `GEMINI_MODEL`) in `src/services/emotion-service.js`. Gemini is used because it accepts WhatsApp's ogg/opus inline; OpenAI's audio-input chat models take only wav/mp3 and transcoding would need a dependency. Fail-open: no `GEMINI_API_KEY`, any error, or a `Neutral`/unparseable verdict → no mood line, transcription unaffected. The mood line is emoji + English word (`😤 Frustrated`) by design — avoids 29 new localization keys.
+- Vocal-tone emotion (Google Gemini, not OpenAI): `gemini-2.5-flash` (override via `GEMINI_MODEL`) in `src/services/emotion-service.js`. Gemini is used because it accepts WhatsApp's ogg/opus inline; OpenAI's audio-input chat models take only wav/mp3 and transcoding would need a dependency. Fail-open: no `GEMINI_API_KEY`, any error, or a `Neutral`/unparseable verdict → no mood line, transcription unaffected. The reply opens with a fully localized mood sentence (`emotionIntro` + `emotion<Label>` keys in languages.json, `{emotion}` placeholder filled with emoji + localized label), then summary (long notes), then transcription.
 
 ## Environment variables
 
@@ -101,4 +101,4 @@ Merging to `main` auto-deploys to Netlify. Verify against the live URL with test
 - Keep-warm scheduled ping (cold starts ~0.5–1.5s on first message after idle)
 - Long notes: send transcription immediately, summary as a follow-up message (UX decision pending)
 - Users are never shown Terms & Conditions (the consent flow was removed with the database; product/legal decision pending)
-- Machine-drafted translations for bg/cs/da/et/fi/lv/lt/mt/pt/sk/sl/zh/hi/ja await native-speaker review
+- Machine-drafted translations for bg/cs/da/et/fi/lv/lt/mt/pt/sk/sl/zh/hi/ja await native-speaker review (likewise the `emotionIntro`/`emotion*` keys in every non-English language, added 2026-09-07)

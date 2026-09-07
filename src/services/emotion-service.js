@@ -90,17 +90,17 @@ function normalizeEmotion(raw) {
   return EMOTION_LABELS.find((l) => l.toLowerCase() === word.toLowerCase()) || null;
 }
 
-// '😤 Frustrated' for a mood worth showing; null for Neutral/unknown.
-// Emoji + English word keeps the line language-neutral enough to skip
-// adding 29 translations to languages.json (key-parity is test-enforced).
-function formatEmotionLine(label) {
-  const emoji = EMOTION_EMOJI[label];
-  return emoji ? `${emoji} ${label}` : null;
+// languages.json key for a mood worth showing ('Frustrated' ->
+// 'emotionFrustrated'); null for Neutral/unknown, which suppresses the
+// line. The caller pairs the localized label with EMOTION_EMOJI and
+// splices both into the localized 'emotionIntro' sentence.
+function emotionMessageKey(label) {
+  return EMOTION_EMOJI[label] ? `emotion${label}` : null;
 }
 
 module.exports = {
   detectEmotion,
-  formatEmotionLine,
+  emotionMessageKey,
   normalizeEmotion,
   EMOTION_EMOJI,
   EMOTION_LABELS
