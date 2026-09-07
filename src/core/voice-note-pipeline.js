@@ -12,6 +12,7 @@ const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
+const { detectEmotion } = require('../services/emotion-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -66,6 +67,12 @@ async function processVoiceNote(context) {
       return { flow: 'file_too_big', twilioAvailable: false, statusCode: 413, message: fileTooBigMessage };
     }
 
+    // Vocal-tone emotion needs only the audio, so it starts here and runs
+    // through the whole transcribe/moderate/summarize stretch. detectEmotion
+    // never throws (fail-open: null = no mood line). The model answers in
+    // the user's language directly, so no label translation is needed.
+    const emotionPromise = detectEmotion(audioData, mediaContentType, userLang, context);
+
     // Prepare form data for Whisper API
     const formData = prepareFormData(audioData, mediaContentType);
 
@@ -93,9 +100,10 @@ async function processVoiceNote(context) {
     })();
 
     // Check for prohibited content
-    const [moderationResult, summary] = await Promise.all([
+    const [moderationResult, summary, emotion] = await Promise.all([
       checkContentModeration(transcription, process.env.OPENAI_API_KEY, context),
-      summaryPromise
+      summaryPromise,
+      emotionPromise
     ]);
     if (moderationResult.flagged) {
       logDetails('Content moderation flagged this transcription', moderationResult);
@@ -133,8 +141,17 @@ async function processVoiceNote(context) {
       };
     }
 
-    // Prepare the final message
+    // Prepare the final message: mood sentence first, then summary (long
+    // notes), then transcription. The localized 'emotionIntro' template
+    // gets the model-authored '<emoji> <emotion>' phrase (already in the
+    // user's language) spliced into its {emotion} placeholder, e.g.
+    // "Based on the tone and emotions of the voice message, this person
+    // seems 😤 frustrated." Neutral (or unavailable) means no line at all.
     let finalMessage = '';
+    if (emotion) {
+      const emotionIntro = await getLocalizedMessage('emotionIntro', userLang);
+      finalMessage += `${emotionIntro.trim().replace('{emotion}', emotion)}\n\n`;
+    }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);
       finalMessage += `${summaryLabel.trim()} ${summary}\n\n`;
@@ -162,6 +179,7 @@ async function processVoiceNote(context) {
           flow: 'successful_transcription',
           twilioAvailable: true,
           summary: summary,
+          emotion: emotion,
           transcription: transcription,
           message: finalMessage
         };
@@ -182,6 +200,7 @@ async function processVoiceNote(context) {
       flow: 'successful_transcription',
       twilioAvailable: false,
       summary: summary,
+      emotion: emotion,
       transcription: transcription,
       message: finalMessage
     };
