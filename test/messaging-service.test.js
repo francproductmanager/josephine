@@ -4,14 +4,15 @@ const assert = require('node:assert');
 const {
   splitLongMessage,
   sendMessages,
-  waitUntilDispatched
+  waitUntilDelivered
 } = require('../src/services/messaging-service');
 
 // A fake TwilioClientWrapper that records the order parts are submitted in
-// and simulates Twilio's status lifecycle: a message starts 'queued' and
-// only advances to 'sent' after `dispatchAfter` status polls. This lets us
-// prove sendMessages waits for part N to leave the queue before part N+1.
-function makeFakeWrapper({ testMode = false, dispatchAfter = 1, statusOverride } = {}) {
+// and simulates Twilio's status lifecycle: a message starts 'queued',
+// shows 'sent' while in flight, and reaches 'delivered' after
+// `deliverAfter` status polls. This lets us prove sendMessages waits for
+// part N to reach the device before part N+1 goes out.
+function makeFakeWrapper({ testMode = false, deliverAfter = 1, statusOverride } = {}) {
   const sent = [];       // bodies in submission order
   const statusPolls = []; // sids polled, in order
   const pollCounts = new Map();
@@ -33,43 +34,67 @@ function makeFakeWrapper({ testMode = false, dispatchAfter = 1, statusOverride }
       if (statusOverride !== undefined) return statusOverride;
       const n = (pollCounts.get(sid) || 0) + 1;
       pollCounts.set(sid, n);
-      return n >= dispatchAfter ? 'sent' : 'queued';
+      return n >= deliverAfter ? 'delivered' : 'sent';
     }
   };
 }
 
-test('splitLongMessage keeps short messages as a single part', () => {
+test('splitLongMessage keeps short messages as a single unprefixed part', () => {
   assert.deepStrictEqual(splitLongMessage('hello'), ['hello']);
   assert.deepStrictEqual(splitLongMessage(''), ['']);
+  const exactly = 'x'.repeat(1500);
+  assert.deepStrictEqual(splitLongMessage(exactly), [exactly]);
 });
 
-test('splitLongMessage splits long messages into ordered contiguous parts', () => {
-  const msg = 'abcdefghij'.repeat(400); // 4000 chars
+test('splitLongMessage numbers parts and splits on word boundaries', () => {
+  const msg = 'word '.repeat(800).trim(); // 3999 chars of words
   const parts = splitLongMessage(msg, 1500);
-  assert.strictEqual(parts.length, 3);
-  // Parts must reconstruct the original in order (no reordering/loss).
-  assert.strictEqual(parts.join(''), msg);
-  assert.ok(parts[0].length === 1500 && parts[1].length === 1500);
+  assert.ok(parts.length >= 3, `expected >=3 parts, got ${parts.length}`);
+  parts.forEach((part, i) => {
+    assert.ok(part.startsWith(`[${i + 1}/${parts.length}] `), `part ${i} carries its [i/n] prefix: ${part.slice(0, 12)}`);
+    assert.ok(part.length <= 1500, `part ${i} within the WhatsApp budget`);
+    // Word-boundary split: no part starts or ends mid-word.
+    const body = part.replace(/^\[\d+\/\d+\] /, '');
+    assert.ok(/^word/.test(body), `part ${i} starts at a word boundary`);
+  });
+  // Stripping prefixes and joining reconstructs the original exactly.
+  const rejoined = parts.map((p) => p.replace(/^\[\d+\/\d+\] /, '')).join('');
+  assert.strictEqual(rejoined, msg);
 });
 
-test('waitUntilDispatched returns once status leaves the queue', async () => {
-  const wrapper = makeFakeWrapper({ dispatchAfter: 3 });
-  const status = await waitUntilDispatched(wrapper, 'SM-x', { attempts: 8, intervalMs: 0 });
-  assert.strictEqual(status, 'sent');
-  // Polled exactly until it flipped to 'sent' (queued, queued, sent).
+test('splitLongMessage hard-cuts a single unbroken token rather than exceeding the budget', () => {
+  const msg = 'x'.repeat(4000);
+  const parts = splitLongMessage(msg, 1500);
+  parts.forEach((part) => assert.ok(part.length <= 1500));
+  const rejoined = parts.map((p) => p.replace(/^\[\d+\/\d+\] /, '')).join('');
+  assert.strictEqual(rejoined, msg);
+});
+
+test('waitUntilDelivered returns once the part reaches the device', async () => {
+  const wrapper = makeFakeWrapper({ deliverAfter: 3 });
+  const status = await waitUntilDelivered(wrapper, 'SM-x', { attempts: 10, intervalMs: 0 });
+  assert.strictEqual(status, 'delivered');
+  // Polled exactly until delivery (sent, sent, delivered).
   assert.strictEqual(wrapper.statusPolls.length, 3);
 });
 
-test('waitUntilDispatched fails open when status never advances', async () => {
-  const wrapper = makeFakeWrapper({ statusOverride: 'queued' });
-  const status = await waitUntilDispatched(wrapper, 'SM-x', { attempts: 4, intervalMs: 0 });
-  assert.strictEqual(status, null);       // gave up rather than blocking forever
+test('waitUntilDelivered is NOT satisfied by mere sent (handed to Meta)', async () => {
+  const wrapper = makeFakeWrapper({ statusOverride: 'sent' });
+  const status = await waitUntilDelivered(wrapper, 'SM-x', { attempts: 4, intervalMs: 0 });
+  assert.strictEqual(status, null);       // budget expired, fail-open
   assert.strictEqual(wrapper.statusPolls.length, 4);
 });
 
-test('waitUntilDispatched fails open when status is unreadable', async () => {
+test('waitUntilDelivered stops early on terminal failure states', async () => {
+  const wrapper = makeFakeWrapper({ statusOverride: 'undelivered' });
+  const status = await waitUntilDelivered(wrapper, 'SM-x', { attempts: 4, intervalMs: 0 });
+  assert.strictEqual(status, 'undelivered'); // waiting longer cannot help
+  assert.strictEqual(wrapper.statusPolls.length, 1);
+});
+
+test('waitUntilDelivered fails open when status is unreadable', async () => {
   const wrapper = makeFakeWrapper({ statusOverride: null });
-  const status = await waitUntilDispatched(wrapper, 'SM-x', { attempts: 4, intervalMs: 0 });
+  const status = await waitUntilDelivered(wrapper, 'SM-x', { attempts: 4, intervalMs: 0 });
   assert.strictEqual(status, null);
   assert.strictEqual(wrapper.statusPolls.length, 1); // null short-circuits immediately
 });
@@ -80,8 +105,8 @@ test('sendMessages submits parts in order', async () => {
   assert.deepStrictEqual(wrapper.sent, ['part-1', 'part-2', 'part-3']);
 });
 
-test('sendMessages waits for each part to be dispatched before sending the next', async () => {
-  const wrapper = makeFakeWrapper({ dispatchAfter: 1 });
+test('sendMessages waits for each part to be delivered before sending the next', async () => {
+  const wrapper = makeFakeWrapper({ deliverAfter: 1 });
   await sendMessages(wrapper, ['a', 'b', 'c'], '+to', '+from');
   // Two boundaries (after a, after b) => at least one poll each; last part
   // is never polled (nothing follows it).
