@@ -77,3 +77,40 @@ test('a normal-size note passes the guard (and then fails later on the missing A
   assert.notStrictEqual(result.flow, 'audio_too_short');
   assert.ok(fetchCalls.length > 1, 'pipeline proceeded past the download');
 });
+
+test('an over-floor clip that transcribes to empty text gets the localized noSpeech reply', async () => {
+  // 2.5KB of "audio" passes the size guard; stub OpenAI to return empty
+  // text (silence/breath clip, as seen in production on 2026-09-08).
+  fetchCalls = [];
+  globalThis.fetch = async (url, init) => {
+    fetchCalls.push(String(url));
+    if (String(url).includes('media.test')) {
+      return new Response(Buffer.alloc(2562, 1), {
+        status: 200,
+        headers: { 'Content-Type': 'audio/ogg', 'Content-Length': '2562' }
+      });
+    }
+    if (String(url).includes('api.openai.com')) {
+      return new Response(JSON.stringify({ text: '  ' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    throw new Error('unexpected call to ' + url);
+  };
+  process.env.OPENAI_API_KEY = 'sk-test';
+  try {
+    const result = await processVoiceNote(buildContext('whatsapp:+393201471346'));
+    assert.strictEqual(result.flow, 'no_speech');
+    assert.strictEqual(result.statusCode, 400);
+    assert.strictEqual(result.message, translations.it.noSpeech, 'Italian sender gets the Italian message');
+  } finally {
+    delete process.env.OPENAI_API_KEY;
+  }
+});
+
+test('every language has a noSpeech message', () => {
+  for (const [lang, block] of Object.entries(translations)) {
+    assert.ok(block.noSpeech && block.noSpeech.trim(), `${lang} missing noSpeech`);
+  }
+});

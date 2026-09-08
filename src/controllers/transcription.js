@@ -119,6 +119,21 @@ async function handleVoiceNote(req, res) {
         flow: 'file_too_big'
       });
 
+    case 'no_speech':
+      if (result.twilioAvailable) {
+        if (req.isTestMode) {
+          return formatTestResponse(res, {
+            flow: 'no_speech',
+            message: result.message,
+            testResults: twilioClient.getTestResults()
+          });
+        }
+        return sendXML();
+      }
+      return formatErrorResponse(res, 400, result.message, {
+        flow: 'no_speech'
+      });
+
     case 'audio_too_short':
       if (result.twilioAvailable) {
         if (req.isTestMode) {

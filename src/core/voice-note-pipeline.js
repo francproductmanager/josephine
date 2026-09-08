@@ -25,7 +25,7 @@ const { logDetails } = require('../utils/logging-utils');
  *     moderation?, error?, statusCode? }
  * where flow is one of:
  *   'successful_transcription' | 'content_violation' | 'processing_error' |
- *   'twilio_error' | 'file_too_big' | 'audio_too_short'
+ *   'twilio_error' | 'file_too_big' | 'audio_too_short' | 'no_speech'
  */
 async function processVoiceNote(context) {
   const event = context.body || {};
@@ -98,6 +98,25 @@ async function processVoiceNote(context) {
 
     // Transcribe the audio
     const transcription = await transcribeAudio(formData, process.env.OPENAI_API_KEY, context);
+
+    // Silence/breath clips transcribe to empty text (a 2.5KB clip did in
+    // production, 2026-09-08). Sending the reply scaffold around an empty
+    // transcription helps nobody: tell the user nothing was heard instead.
+    // (The already-started emotion promise is left to resolve; it never
+    // throws and its result is simply unused.)
+    if (!transcription || !transcription.trim()) {
+      logDetails('Empty transcription (no speech detected)');
+      const noSpeechMessage = await getLocalizedMessage('noSpeech', userLang);
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: noSpeechMessage,
+          from: toPhone,
+          to: userPhone
+        });
+        return { flow: 'no_speech', twilioAvailable: true, message: noSpeechMessage };
+      }
+      return { flow: 'no_speech', twilioAvailable: false, statusCode: 400, message: noSpeechMessage };
+    }
 
     // Moderation and summary generation both depend only on the
     // transcript, so run them concurrently (saves the moderation time
