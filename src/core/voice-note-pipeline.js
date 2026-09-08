@@ -139,11 +139,31 @@ async function processVoiceNote(context) {
     })();
 
     // Check for prohibited content
-    const [moderationResult, summary, emotion] = await Promise.all([
+    const [moderationResult, summary] = await Promise.all([
       checkContentModeration(transcription, process.env.OPENAI_API_KEY, context),
-      summaryPromise,
-      emotionPromise
+      summaryPromise
     ]);
+
+    // The tone verdict gets however long the rest of the pipeline took
+    // (it has been running in parallel since the download) plus a short
+    // grace period, then loses its slot. This spends waiting time only
+    // when it is cheap: long notes, where Gemini is slowest, naturally
+    // grant the longest budget, and the reply is never delayed more than
+    // the grace beyond ready. (A fixed 10s cap dropped a verdict on
+    // 2026-09-08 that this design would likely have saved; the fetch
+    // itself still has a 20s inner cap so nothing dangles forever.)
+    const EMOTION_GRACE_MS = 4000;
+    const GRACE_EXPIRED = Symbol('emotion-grace-expired');
+    let graceTimer;
+    const raced = await Promise.race([
+      emotionPromise,
+      new Promise((resolve) => { graceTimer = setTimeout(() => resolve(GRACE_EXPIRED), EMOTION_GRACE_MS); })
+    ]);
+    clearTimeout(graceTimer);
+    if (raced === GRACE_EXPIRED) {
+      logDetails('Emotion verdict not ready within grace period, sending without');
+    }
+    const emotion = raced === GRACE_EXPIRED ? null : raced;
     if (moderationResult.flagged) {
       logDetails('Content moderation flagged this transcription', moderationResult);
 

@@ -114,11 +114,13 @@ async function detectEmotion(audioData, mimeType, langObj, req = null) {
       },
       {
         headers: { 'x-goog-api-key': apiKey },
-        // The reply waits for this verdict, so the timeout is a direct
-        // hit on user latency: a Gemini hang cost a 25s-delayed reply in
-        // production (2026-09-08). Verdicts normally land in 1-7s; past
-        // 10s the tone line loses its slot rather than holding the reply.
-        timeoutMs: 10000
+        // Inner cap only: the PIPELINE decides how long the reply
+        // actually waits (until transcription+summary are done plus a
+        // short grace, see voice-note-pipeline.js). This just stops a
+        // truly hung connection from living forever. Verdicts normally
+        // land in 1-8s; a 10s hard cap dropped a saveable verdict in
+        // production (2026-09-08 17:21).
+        timeoutMs: 20000
       }
     );
 
