@@ -136,19 +136,16 @@ test('voice note: localized tone block (mood + confidence) opens the message', a
   const { json } = await post({ ...VOICE, MessageSid: 'SM-mood' });
   assert.strictEqual(json.emotion, '😊 happy', 'emotion carries the mock description');
   assert.strictEqual(json.emotionConfidence, 95, 'emotionConfidence carries the mock confidence');
-  // Italian sender -> localized intro line, then localized confidence line.
+  // Italian sender -> localized intro line. Mock confidence is 95, so no
+  // hedge line appears: confident readings stand alone.
   const lines = json.message.split('\n');
   assert.strictEqual(
     lines[0],
     'Dal tono e dalle emozioni di questo messaggio vocale, chi parla sembra provare: 😊 happy.',
     'first line is the localized mood sentence'
   );
-  assert.strictEqual(
-    lines[1],
-    '(Quanto sono sicura di questa lettura del tono: 95%)',
-    'second line is the localized confidence line'
-  );
-  assert.strictEqual(lines[2], '', 'blank line separates the tone block');
+  assert.strictEqual(lines[1], '', 'no hedge line at high confidence, blank separator follows');
+  assert.ok(!json.message.includes('sicura di questa lettura'), 'no confidence wording at high confidence');
   assert.ok(json.message.indexOf('Trascrizione') > 0, 'transcription follows the tone block');
 });
 

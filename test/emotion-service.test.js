@@ -11,6 +11,7 @@ const {
   detectEmotion,
   parseInteraction,
   sanitizeDescription,
+  confidenceHedgeKey,
   MIN_CONFIDENCE
 } = require('../src/services/emotion-service');
 const translations = require('../src/helpers/languages.json');
@@ -60,12 +61,25 @@ test('sanitizeDescription passes short phrases, converts em dashes to commas, re
   assert.strictEqual(sanitizeDescription('x'.repeat(150)), null);
 });
 
-test('every language has emotionIntro and emotionConfidence templates with placeholders', () => {
+test('every language has emotionIntro plus both confidence hedge lines', () => {
   for (const [lang, block] of Object.entries(translations)) {
     assert.match(block.emotionIntro, /\{emotion\}/, `${lang} emotionIntro must contain {emotion}`);
-    assert.match(block.emotionConfidence, /\{pct\}/, `${lang} emotionConfidence must contain {pct}`);
-    assert.ok(!/[—]/.test(block.emotionIntro + block.emotionConfidence), `${lang} templates must not contain em dashes`);
+    assert.ok(block.emotionConfidenceLow && block.emotionConfidenceLow.trim(), `${lang} missing emotionConfidenceLow`);
+    assert.ok(block.emotionConfidenceModerate && block.emotionConfidenceModerate.trim(), `${lang} missing emotionConfidenceModerate`);
+    assert.ok(!('emotionConfidence' in block), `${lang} still has the retired emotionConfidence key`);
+    const all = block.emotionIntro + block.emotionConfidenceLow + block.emotionConfidenceModerate;
+    assert.ok(!/[—]/.test(all), `${lang} templates must not contain em dashes`);
   }
+});
+
+test('confidenceHedgeKey bands: <60 low, 60-79 moderate, 80+ none', () => {
+  assert.strictEqual(confidenceHedgeKey(MIN_CONFIDENCE), 'emotionConfidenceLow');
+  assert.strictEqual(confidenceHedgeKey(59), 'emotionConfidenceLow');
+  assert.strictEqual(confidenceHedgeKey(60), 'emotionConfidenceModerate');
+  assert.strictEqual(confidenceHedgeKey(79), 'emotionConfidenceModerate');
+  assert.strictEqual(confidenceHedgeKey(80), null);
+  assert.strictEqual(confidenceHedgeKey(95), null);
+  assert.strictEqual(confidenceHedgeKey(undefined), null);
 });
 
 test('detectEmotion posts to the Interactions API with inline audio, schema, and language', async () => {

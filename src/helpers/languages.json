@@ -13,9 +13,10 @@
     "contentViolation": "We're unable to process this voice note as it contains content that violates our usage policies. Please review our Terms of Service for more information on acceptable content.",
     "supportFooter": "💌 Enjoying Josephine? Help her grow!\nRunning this service costs about {monthly} per month (this message cost about {cost}).\nYou can make a micro-donation here: https://revolut.me/magicfranci or simply recommend her to a friend!",
     "emotionIntro": "Based on the tone and emotions of the voice message, this person seems {emotion}.",
-    "emotionConfidence": "(How sure I am of this tone reading: {pct}%)",
     "tooShort": "This voice note is too short to transcribe. Please try again with a slightly longer recording!",
-    "noSpeech": "I couldn't detect any speech in this voice note. Please try recording again!"
+    "noSpeech": "I couldn't detect any speech in this voice note. Please try recording again!",
+    "emotionConfidenceLow": "I'm not fully sure of this tone reading though.",
+    "emotionConfidenceModerate": "I'm moderately confident in this tone reading."
   },
   "de": {
     "welcome": "Hallo! Ich bin Josephine, dein Transkriptionsassistent für Sprachnotizen. Schicke mir eine Sprachnotiz und ich transkribiere sie für dich!",
@@ -31,9 +32,10 @@
     "contentViolation": "Wir können diese Sprachnotiz nicht verarbeiten, da sie Inhalte enthält, die gegen unsere Nutzungsrichtlinien verstoßen. Bitte lesen Sie unsere Nutzungsbedingungen für weitere Informationen zu akzeptablen Inhalten.",
     "supportFooter": "💌 Gefällt dir Josephine? Hilf ihr zu wachsen!\nDer Betrieb dieses Dienstes kostet etwa {monthly} pro Monat (diese Nachricht hat etwa {cost} gekostet).\nDu kannst hier eine Mikro-Spende machen: https://revolut.me/magicfranci oder sie einfach einem Freund weiterempfehlen!",
     "emotionIntro": "Nach Tonfall und Stimmung dieser Sprachnachricht wirkt die Person {emotion}.",
-    "emotionConfidence": "(Wie sicher ich mir bei dieser Einschätzung bin: {pct}%)",
     "tooShort": "Diese Sprachnachricht ist zu kurz zum Transkribieren. Bitte versuche es mit einer etwas längeren Aufnahme!",
-    "noSpeech": "Ich konnte in dieser Sprachnachricht keine Sprache erkennen. Bitte versuche es noch einmal!"
+    "noSpeech": "Ich konnte in dieser Sprachnachricht keine Sprache erkennen. Bitte versuche es noch einmal!",
+    "emotionConfidenceLow": "Ganz sicher bin ich mir bei dieser Einschätzung aber nicht.",
+    "emotionConfidenceModerate": "Bei dieser Einschätzung bin ich mir einigermaßen sicher."
   },
   "fr": {
     "welcome": "Bonjour! Je suis Josephine, votre assistante de transcription de messages vocaux. Envoyez-moi un message vocal et je le transcrirai pour vous!",
@@ -49,9 +51,10 @@
     "contentViolation": "Nous ne pouvons pas traiter cette note vocale car elle contient du contenu qui viole nos politiques d'utilisation. Veuillez consulter nos Conditions d'utilisation pour plus d'informations sur le contenu acceptable.",
     "supportFooter": "💌 Josephine te plaît ? Aide-la à grandir !\nFaire fonctionner ce service coûte environ {monthly} par mois (ce message a coûté environ {cost}).\nTu peux faire un micro-don ici : https://revolut.me/magicfranci ou simplement la recommander à un ami !",
     "emotionIntro": "D'après le ton de ce message vocal, la personne semble éprouver : {emotion}.",
-    "emotionConfidence": "(À quel point je suis sûre de cette lecture du ton : {pct}%)",
     "tooShort": "Ce message vocal est trop court pour être transcrit. Réessaie avec un enregistrement un peu plus long !",
-    "noSpeech": "Je n'ai détecté aucune parole dans ce message vocal. Réessaie d'enregistrer !"
+    "noSpeech": "Je n'ai détecté aucune parole dans ce message vocal. Réessaie d'enregistrer !",
+    "emotionConfidenceLow": "Je ne suis toutefois pas tout à fait sûre de cette lecture du ton.",
+    "emotionConfidenceModerate": "Je suis moyennement sûre de cette lecture du ton."
   },
   "it": {
     "welcome": "Ciao! Sono Josephine, la tua assistente per la trascrizione di messaggi vocali. Inviami un messaggio vocale e lo trascriverò per te!",
@@ -67,9 +70,10 @@
     "contentViolation": "Non possiamo elaborare questa nota vocale in quanto contiene contenuti che violano le nostre politiche di utilizzo. Si prega di consultare i nostri Termini di servizio per ulteriori informazioni sui contenuti accettabili.",
     "supportFooter": "💌 Ti piace Josephine? Aiutala a crescere!\nGestire questo servizio costa circa {monthly} al mese (questo messaggio è costato circa {cost}).\nPuoi fare una micro-donazione qui: https://revolut.me/magicfranci o semplicemente consigliarla ad un amico!",
     "emotionIntro": "Dal tono e dalle emozioni di questo messaggio vocale, chi parla sembra provare: {emotion}.",
-    "emotionConfidence": "(Quanto sono sicura di questa lettura del tono: {pct}%)",
     "tooShort": "Questo messaggio vocale è troppo breve per essere trascritto. Riprova con una registrazione un po' più lunga!",
-    "noSpeech": "Non ho rilevato alcun parlato in questo messaggio vocale. Prova a registrarlo di nuovo!"
+    "noSpeech": "Non ho rilevato alcun parlato in questo messaggio vocale. Prova a registrarlo di nuovo!",
+    "emotionConfidenceLow": "Però non sono del tutto sicura di questa lettura del tono.",
+    "emotionConfidenceModerate": "Sono moderatamente sicura di questa lettura del tono."
   },
   "es": {
     "welcome": "¡Hola! Soy Josephine, tu asistente de transcripción de notas de voz. Envíame una nota de voz y te la transcribiré.",
@@ -85,9 +89,10 @@
     "contentViolation": "No podemos procesar esta nota de voz ya que contiene contenido que viola nuestras políticas de uso. Por favor, revisa nuestros Términos de Servicio para obtener más información sobre el contenido aceptable.",
     "supportFooter": "💌 ¿Te gusta Josephine? ¡Ayúdala a crecer!\nMantener este servicio cuesta aproximadamente {monthly} al mes (este mensaje ha costado unos {cost}).\nPuedes hacer una microdonación aquí: https://revolut.me/magicfranci ¡o simplemente recomendársela a un amigo!",
     "emotionIntro": "Por el tono y las emociones de este mensaje de voz, la persona parece sentir: {emotion}.",
-    "emotionConfidence": "(Mi seguridad sobre esta lectura del tono: {pct}%)",
     "tooShort": "Este mensaje de voz es demasiado corto para transcribirlo. ¡Inténtalo de nuevo con una grabación un poco más larga!",
-    "noSpeech": "No he detectado voz en este mensaje. ¡Intenta grabarlo de nuevo!"
+    "noSpeech": "No he detectado voz en este mensaje. ¡Intenta grabarlo de nuevo!",
+    "emotionConfidenceLow": "Aunque no estoy del todo segura de esta lectura del tono.",
+    "emotionConfidenceModerate": "Estoy moderadamente segura de esta lectura del tono."
   },
   "pl": {
     "welcome": "Cześć! Jestem Josephine, twoja asystentka do transkrypcji wiadomości głosowych. Wyślij mi wiadomość głosową, a ja ją przetranskrybuję!",
@@ -103,9 +108,10 @@
     "contentViolation": "Nie możemy przetworzyć tej wiadomości głosowej, ponieważ zawiera treści naruszające nasze zasady użytkowania. Zapoznaj się z naszym Regulaminem, aby uzyskać więcej informacji na temat akceptowalnych treści.",
     "supportFooter": "💌 Podoba ci się Josephine? Pomóż jej się rozwijać!\nUtrzymanie tej usługi kosztuje około {monthly} miesięcznie (ta wiadomość kosztowała około {cost}).\nMożesz przekazać mikro-darowiznę tutaj: https://revolut.me/magicfranci albo po prostu polecić ją znajomemu!",
     "emotionIntro": "Sądząc po tonie tej wiadomości głosowej, osoba zdaje się odczuwać: {emotion}.",
-    "emotionConfidence": "(Na ile jestem pewna tego odczytu tonu: {pct}%)",
     "tooShort": "Ta wiadomość głosowa jest zbyt krótka, aby ją przepisać. Spróbuj ponownie z nieco dłuższym nagraniem!",
-    "noSpeech": "Nie wykryłam mowy w tej wiadomości głosowej. Spróbuj nagrać ją ponownie!"
+    "noSpeech": "Nie wykryłam mowy w tej wiadomości głosowej. Spróbuj nagrać ją ponownie!",
+    "emotionConfidenceLow": "Nie jestem jednak w pełni pewna tego odczytu tonu.",
+    "emotionConfidenceModerate": "Jestem umiarkowanie pewna tego odczytu tonu."
   },
   "uk": {
     "welcome": "Привіт! Я Джозефін, ваш асистент з транскрипції голосових повідомлень. Надішліть мені голосове повідомлення, і я його транскрибую для вас!",
@@ -121,9 +127,10 @@
     "contentViolation": "Ми не можемо обробити цю голосову нотатку, оскільки вона містить вміст, який порушує наші правила користування. Будь ласка, перегляньте наші Умови надання послуг для отримання додаткової інформації про прийнятний вміст.",
     "supportFooter": "💌 Подобається Josephine? Допоможи їй рости!\nРобота цього сервісу коштує близько {monthly} на місяць (це повідомлення коштувало близько {cost}).\nТи можеш зробити мікро-донат тут: https://revolut.me/magicfranci або просто порадити її другові!",
     "emotionIntro": "Судячи з тону цього голосового повідомлення, людина, схоже, відчуває: {emotion}.",
-    "emotionConfidence": "(Наскільки я впевнена в цьому прочитанні тону: {pct}%)",
     "tooShort": "Це голосове повідомлення занадто коротке для розшифрування. Спробуйте ще раз із трохи довшим записом!",
-    "noSpeech": "Я не виявила мовлення в цьому голосовому повідомленні. Спробуйте записати ще раз!"
+    "noSpeech": "Я не виявила мовлення в цьому голосовому повідомленні. Спробуйте записати ще раз!",
+    "emotionConfidenceLow": "Втім, я не зовсім впевнена в цьому прочитанні тону.",
+    "emotionConfidenceModerate": "Я помірно впевнена в цьому прочитанні тону."
   },
   "ro": {
     "welcome": "Bună! Sunt Josephine, asistentul tău de transcriere a notelor vocale. Trimite-mi o notă vocală și o voi transcrie pentru tine!",
@@ -139,9 +146,10 @@
     "contentViolation": "Nu putem procesa această notă vocală deoarece conține conținut care încalcă politicile noastre de utilizare. Vă rugăm să consultați Termenii noștri de serviciu pentru mai multe informații despre conținutul acceptabil.",
     "supportFooter": "💌 Îți place Josephine? Ajut-o să crească!\nFuncționarea acestui serviciu costă aproximativ {monthly} pe lună (acest mesaj a costat circa {cost}).\nPoți face o micro-donație aici: https://revolut.me/magicfranci sau pur și simplu să o recomanzi unui prieten!",
     "emotionIntro": "Judecând după tonul acestui mesaj vocal, persoana pare să simtă: {emotion}.",
-    "emotionConfidence": "(Cât de sigură sunt de această interpretare a tonului: {pct}%)",
     "tooShort": "Acest mesaj vocal este prea scurt pentru a fi transcris. Încearcă din nou cu o înregistrare puțin mai lungă!",
-    "noSpeech": "Nu am detectat vorbire în acest mesaj vocal. Încearcă să îl înregistrezi din nou!"
+    "noSpeech": "Nu am detectat vorbire în acest mesaj vocal. Încearcă să îl înregistrezi din nou!",
+    "emotionConfidenceLow": "Totuși, nu sunt pe deplin sigură de această interpretare a tonului.",
+    "emotionConfidenceModerate": "Sunt moderat de sigură de această interpretare a tonului."
   },
   "nl": {
     "welcome": "Hallo! Ik ben Josephine, jouw assistent voor het transcriberen van spraakberichten. Stuur me een spraakbericht en ik zal het voor je transcriberen!",
@@ -157,9 +165,10 @@
     "contentViolation": "We kunnen dit spraakbericht niet verwerken omdat het inhoud bevat die in strijd is met ons gebruiksbeleid. Raadpleeg onze Servicevoorwaarden voor meer informatie over aanvaardbare inhoud.",
     "supportFooter": "💌 Vind je Josephine leuk? Help haar groeien!\nHet draaien van deze dienst kost ongeveer {monthly} per maand (dit bericht kostte ongeveer {cost}).\nJe kunt hier een microdonatie doen: https://revolut.me/magicfranci of haar gewoon aan een vriend aanraden!",
     "emotionIntro": "Afgaand op de toon van dit spraakbericht lijkt deze persoon {emotion} te zijn.",
-    "emotionConfidence": "(Hoe zeker ik ben van deze inschatting van de toon: {pct}%)",
     "tooShort": "Dit spraakbericht is te kort om uit te schrijven. Probeer het opnieuw met een iets langere opname!",
-    "noSpeech": "Ik heb geen spraak gedetecteerd in dit spraakbericht. Probeer het opnieuw op te nemen!"
+    "noSpeech": "Ik heb geen spraak gedetecteerd in dit spraakbericht. Probeer het opnieuw op te nemen!",
+    "emotionConfidenceLow": "Ik ben echter niet helemaal zeker van deze inschatting van de toon.",
+    "emotionConfidenceModerate": "Ik ben redelijk zeker van deze inschatting van de toon."
   },
   "sh": {
     "welcome": "Pozdrav! Ja sam Josephine, tvoj asistent za transkripciju glasovnih poruka. Pošalji mi glasovnu poruku i ja ću je transkribovati za tebe!",
@@ -175,9 +184,10 @@
     "contentViolation": "Ne možemo obraditi ovu glasovnu poruku jer sadrži sadržaj koji krši naše politike korištenja. Molimo pregledajte naše Uslove korištenja za više informacija o prihvatljivom sadržaju.",
     "supportFooter": "💌 Sviđa ti se Josephine? Pomozi joj da raste!\nOdržavanje ove usluge košta oko {monthly} mjesečno (ova poruka je koštala oko {cost}).\nMožeš dati mikro-donaciju ovdje: https://revolut.me/magicfranci ili je jednostavno preporučiti prijatelju!",
     "emotionIntro": "Sudeći po tonu ove glasovne poruke, čini se da osoba oseća: {emotion}.",
-    "emotionConfidence": "(Koliko sam sigurna u ovo tumačenje tona: {pct}%)",
     "tooShort": "Ova glasovna poruka je prekratka za transkripciju. Pokušaj ponovo sa malo dužim snimkom!",
-    "noSpeech": "Nisam otkrila govor u ovoj glasovnoj poruci. Pokušaj da je snimiš ponovo!"
+    "noSpeech": "Nisam otkrila govor u ovoj glasovnoj poruci. Pokušaj da je snimiš ponovo!",
+    "emotionConfidenceLow": "Ipak, nisam sasvim sigurna u ovo tumačenje tona.",
+    "emotionConfidenceModerate": "Umereno sam sigurna u ovo tumačenje tona."
   },
   "tr": {
     "welcome": "Merhaba! Ben Josephine, sesli not transkripsiyon asistanınızım. Bana bir sesli not gönderin, ben de sizin için transkribe olayım!",
@@ -193,9 +203,10 @@
     "contentViolation": "Bu sesli notu işleyemiyoruz çünkü kullanım politikalarımızı ihlal eden içerikler içeriyor. Kabul edilebilir içerik hakkında daha fazla bilgi için lütfen Hizmet Şartlarımızı inceleyin.",
     "supportFooter": "💌 Josephine'i beğendin mi? Büyümesine yardım et!\nBu hizmeti çalıştırmak ayda yaklaşık {monthly} tutuyor (bu mesaj yaklaşık {cost} tuttu).\nBuradan mikro bağış yapabilirsin: https://revolut.me/magicfranci ya da onu bir arkadaşına önerebilirsin!",
     "emotionIntro": "Bu sesli mesajın tonuna bakılırsa, kişi şunu hissediyor gibi: {emotion}.",
-    "emotionConfidence": "(Bu ton okumasından ne kadar eminim: %{pct})",
     "tooShort": "Bu sesli mesaj yazıya dökülemeyecek kadar kısa. Lütfen biraz daha uzun bir kayıtla tekrar dene!",
-    "noSpeech": "Bu sesli mesajda konuşma algılayamadım. Lütfen tekrar kaydetmeyi dene!"
+    "noSpeech": "Bu sesli mesajda konuşma algılayamadım. Lütfen tekrar kaydetmeyi dene!",
+    "emotionConfidenceLow": "Yine de bu ton okumasından tam olarak emin değilim.",
+    "emotionConfidenceModerate": "Bu ton okumasından orta düzeyde eminim."
   },
   "bar": {
     "welcome": "Griaß di! I bin da Josephine, dei Transkription-Assistentin fia Sprachnotizen. Schick ma a Sprachnotiz und i schreib's fia di auf!",
@@ -211,9 +222,10 @@
     "contentViolation": "Mia kennan de Sprachnotiz net verarbeitn, weil's Inhalt drin is, der gegn unsare Nutzungsrichtlinien verstoßt. Bitte schau da unsare Nutzungsbedingungen an für mehr Infos üba erlaubte Inhalte.",
     "supportFooter": "💌 Gfoit da d'Josephine? Hüf ihr beim Wachsn!\nDen Dienst zum Laffa bringa kost ungefähr {monthly} im Monat (de Nachricht hot ca. {cost} kost).\nDo kannst a Mikro-Spende macha: https://revolut.me/magicfranci oder empfehl s'oafach am Freind weida!",
     "emotionIntro": "Nach'm Ton vo dera Sprachnochricht wirkt de Person {emotion}.",
-    "emotionConfidence": "(Wia sicha i ma bei dera Einschätzung bin: {pct}%)",
     "tooShort": "De Sprachnochricht is z'kurz zum Transkribiern. Probier's no amoi mit a bissl a längern Aufnahm!",
-    "noSpeech": "I hob in dera Sprachnochricht koa Gred ghert. Probier's no amoi aufznehma!"
+    "noSpeech": "I hob in dera Sprachnochricht koa Gred ghert. Probier's no amoi aufznehma!",
+    "emotionConfidenceLow": "Ganz sicha bin i ma bei dera Einschätzung aba ned.",
+    "emotionConfidenceModerate": "Bei dera Einschätzung bin i ma hoibwegs sicha."
   },
   "el": {
     "welcome": "Γεια σου! Είμαι η Josephine, η βοηθός μεταγραφής των φωνητικών μηνυμάτων σου. Στείλε μου ένα φωνητικό μήνυμα και θα το μεταγράψω για σένα!",
@@ -229,9 +241,10 @@
     "contentViolation": "Δεν μπορούμε να επεξεργαστούμε αυτό το φωνητικό μήνυμα καθώς περιέχει περιεχόμενο που παραβιάζει τις πολιτικές χρήσης μας. Παρακαλούμε ανατρέξτε στους Όρους Υπηρεσίας μας για περισσότερες πληροφορίες σχετικά με το αποδεκτό περιεχόμενο.",
     "supportFooter": "💌 Σου αρέσει η Josephine; Βοήθησέ την να μεγαλώσει!\nΗ λειτουργία αυτής της υπηρεσίας κοστίζει περίπου {monthly} τον μήνα (αυτό το μήνυμα κόστισε περίπου {cost}).\nΜπορείς να κάνεις μια μικρο-δωρεά εδώ: https://revolut.me/magicfranci ή απλώς να τη συστήσεις σε έναν φίλο!",
     "emotionIntro": "Κρίνοντας από τον τόνο αυτού του φωνητικού μηνύματος, το άτομο φαίνεται να νιώθει: {emotion}.",
-    "emotionConfidence": "(Πόσο σίγουρη είμαι για αυτήν την εκτίμηση του τόνου: {pct}%)",
     "tooShort": "Αυτό το φωνητικό μήνυμα είναι πολύ σύντομο για απομαγνητοφώνηση. Δοκίμασε ξανά με λίγο μεγαλύτερη ηχογράφηση!",
-    "noSpeech": "Δεν εντόπισα ομιλία σε αυτό το φωνητικό μήνυμα. Δοκίμασε να το ηχογραφήσεις ξανά!"
+    "noSpeech": "Δεν εντόπισα ομιλία σε αυτό το φωνητικό μήνυμα. Δοκίμασε να το ηχογραφήσεις ξανά!",
+    "emotionConfidenceLow": "Ωστόσο, δεν είμαι απόλυτα σίγουρη για αυτήν την εκτίμηση του τόνου.",
+    "emotionConfidenceModerate": "Είμαι μέτρια σίγουρη για αυτήν την εκτίμηση του τόνου."
   },
   "hu": {
     "welcome": "Helló! Én vagyok Josephine, a hangüzenet-transzkripciós asszisztensed. Küldj egy hangüzenetet, és leírom neked!",
@@ -247,9 +260,10 @@
     "contentViolation": "Nem tudjuk feldolgozni ezt a hangüzenetet, mert olyan tartalmat tartalmaz, amely sérti a használati szabályzatunkat. Kérjük, tekintsd át a Szolgáltatási feltételeinket a megengedett tartalmakról szóló további információkért.",
     "supportFooter": "💌 Tetszik Josephine? Segíts neki növekedni!\nEnnek a szolgáltatásnak a működtetése havonta körülbelül {monthly}-ba kerül (ez az üzenet körülbelül {cost}-ba került).\nItt adhatsz mikro-adományt: https://revolut.me/magicfranci vagy egyszerűen ajánld egy barátodnak!",
     "emotionIntro": "A hangüzenet hangneme alapján a beszélő ezt érezheti: {emotion}.",
-    "emotionConfidence": "(Mennyire vagyok biztos ebben a hangnem-értelmezésben: {pct}%)",
     "tooShort": "Ez a hangüzenet túl rövid az átíráshoz. Próbáld újra egy kicsit hosszabb felvétellel!",
-    "noSpeech": "Nem érzékeltem beszédet ebben a hangüzenetben. Próbáld meg újra felvenni!"
+    "noSpeech": "Nem érzékeltem beszédet ebben a hangüzenetben. Próbáld meg újra felvenni!",
+    "emotionConfidenceLow": "Ebben a hangnem-értelmezésben azonban nem vagyok teljesen biztos.",
+    "emotionConfidenceModerate": "Közepesen biztos vagyok ebben a hangnem-értelmezésben."
   },
   "sv": {
     "welcome": "Hej! Jag är Josephine, din assistent för transkribering av röstmeddelanden. Skicka ett röstmeddelande så transkriberar jag det åt dig!",
@@ -265,9 +279,10 @@
     "contentViolation": "Vi kan inte bearbeta detta röstmeddelande eftersom det innehåller innehåll som bryter mot våra användningsvillkor. Vänligen se våra Användarvillkor för mer information om godtagbart innehåll.",
     "supportFooter": "💌 Gillar du Josephine? Hjälp henne att växa!\nAtt driva den här tjänsten kostar ungefär {monthly} i månaden (det här meddelandet kostade cirka {cost}).\nDu kan ge en mikrodonation här: https://revolut.me/magicfranci eller helt enkelt rekommendera henne till en vän!",
     "emotionIntro": "Att döma av tonen i röstmeddelandet verkar personen {emotion}.",
-    "emotionConfidence": "(Hur säker jag är på den här tolkningen av tonen: {pct}%)",
     "tooShort": "Det här röstmeddelandet är för kort för att transkriberas. Försök igen med en lite längre inspelning!",
-    "noSpeech": "Jag kunde inte upptäcka något tal i det här röstmeddelandet. Försök spela in igen!"
+    "noSpeech": "Jag kunde inte upptäcka något tal i det här röstmeddelandet. Försök spela in igen!",
+    "emotionConfidenceLow": "Jag är dock inte helt säker på den här tolkningen av tonen.",
+    "emotionConfidenceModerate": "Jag är måttligt säker på den här tolkningen av tonen."
   },
   "pt": {
     "welcome": "Olá! Sou a Josephine, a tua assistente de transcrição de mensagens de voz. Envia-me uma mensagem de voz e eu transcrevo-a para ti!",
@@ -283,9 +298,10 @@
     "contentViolation": "Não podemos processar esta mensagem de voz porque contém conteúdo que viola as nossas políticas de utilização. Consulta os nossos Termos de Serviço para mais informações sobre conteúdo aceitável.",
     "supportFooter": "💌 Gostas da Josephine? Ajuda-a a crescer!\nManter este serviço custa cerca de {monthly} por mês (esta mensagem custou cerca de {cost}).\nPodes fazer uma micro-doação aqui: https://revolut.me/magicfranci ou simplesmente recomendá-la a um amigo!",
     "emotionIntro": "Pelo tom e pelas emoções desta mensagem de voz, a pessoa parece sentir: {emotion}.",
-    "emotionConfidence": "(Quão segura estou desta leitura do tom: {pct}%)",
     "tooShort": "Esta mensagem de voz é curta demais para ser transcrita. Tenta novamente com uma gravação um pouco mais longa!",
-    "noSpeech": "Não detetei fala nesta mensagem de voz. Tenta gravar novamente!"
+    "noSpeech": "Não detetei fala nesta mensagem de voz. Tenta gravar novamente!",
+    "emotionConfidenceLow": "No entanto, não estou totalmente segura desta leitura do tom.",
+    "emotionConfidenceModerate": "Estou moderadamente segura desta leitura do tom."
   },
   "bg": {
     "welcome": "Здравей! Аз съм Josephine, твоят асистент за транскрипция на гласови съобщения. Изпрати ми гласово съобщение и ще го транскрибирам за теб!",
@@ -301,9 +317,10 @@
     "contentViolation": "Не можем да обработим това гласово съобщение, тъй като съдържа съдържание, което нарушава нашите правила за ползване. Моля, прегледай нашите Условия за ползване за повече информация относно допустимото съдържание.",
     "supportFooter": "💌 Харесва ли ти Josephine? Помогни ѝ да расте!\nПоддръжката на тази услуга струва около {monthly} на месец (това съобщение струваше около {cost}).\nМожеш да направиш микро-дарение тук: https://revolut.me/magicfranci или просто да я препоръчаш на приятел!",
     "emotionIntro": "Съдейки по тона на това гласово съобщение, човекът изглежда изпитва: {emotion}.",
-    "emotionConfidence": "(Колко съм сигурна в това разчитане на тона: {pct}%)",
     "tooShort": "Това гласово съобщение е твърде кратко за транскрибиране. Опитай отново с малко по-дълъг запис!",
-    "noSpeech": "Не открих реч в това гласово съобщение. Опитай да го запишеш отново!"
+    "noSpeech": "Не открих реч в това гласово съобщение. Опитай да го запишеш отново!",
+    "emotionConfidenceLow": "Все пак не съм напълно сигурна в това разчитане на тона.",
+    "emotionConfidenceModerate": "Умерено съм сигурна в това разчитане на тона."
   },
   "cs": {
     "welcome": "Ahoj! Jsem Josephine, tvoje asistentka pro přepis hlasových zpráv. Pošli mi hlasovou zprávu a já ti ji přepíšu!",
@@ -319,9 +336,10 @@
     "contentViolation": "Tuto hlasovou zprávu nemůžeme zpracovat, protože obsahuje obsah porušující naše zásady používání. Další informace o přijatelném obsahu najdeš v našich Podmínkách služby.",
     "supportFooter": "💌 Líbí se ti Josephine? Pomoz jí růst!\nProvoz této služby stojí přibližně {monthly} měsíčně (tato zpráva stála zhruba {cost}).\nMůžeš přispět mikro-darem zde: https://revolut.me/magicfranci nebo ji prostě doporučit kamarádovi!",
     "emotionIntro": "Soudě podle tónu této hlasové zprávy se zdá, že mluvčí cítí: {emotion}.",
-    "emotionConfidence": "(Jak jistá jsem si tímto čtením tónu: {pct}%)",
     "tooShort": "Tato hlasová zpráva je příliš krátká na přepis. Zkus to znovu s trochu delší nahrávkou!",
-    "noSpeech": "V této hlasové zprávě jsem nezachytila žádnou řeč. Zkus ji nahrát znovu!"
+    "noSpeech": "V této hlasové zprávě jsem nezachytila žádnou řeč. Zkus ji nahrát znovu!",
+    "emotionConfidenceLow": "Tímto čtením tónu si ale nejsem úplně jistá.",
+    "emotionConfidenceModerate": "Tímto čtením tónu si jsem středně jistá."
   },
   "da": {
     "welcome": "Hej! Jeg er Josephine, din assistent til transskription af talebeskeder. Send mig en talebesked, så transskriberer jeg den for dig!",
@@ -337,9 +355,10 @@
     "contentViolation": "Vi kan ikke behandle denne talebesked, da den indeholder indhold, der overtræder vores brugspolitikker. Se venligst vores Servicevilkår for mere information om acceptabelt indhold.",
     "supportFooter": "💌 Kan du lide Josephine? Hjælp hende med at vokse!\nAt drive denne tjeneste koster omkring {monthly} om måneden (denne besked kostede cirka {cost}).\nDu kan give en mikrodonation her: https://revolut.me/magicfranci eller blot anbefale hende til en ven!",
     "emotionIntro": "Ud fra tonen i denne talebesked virker personen {emotion}.",
-    "emotionConfidence": "(Hvor sikker jeg er på denne tolkning af tonen: {pct}%)",
     "tooShort": "Denne talebesked er for kort til at blive transskriberet. Prøv igen med en lidt længere optagelse!",
-    "noSpeech": "Jeg kunne ikke registrere tale i denne talebesked. Prøv at optage igen!"
+    "noSpeech": "Jeg kunne ikke registrere tale i denne talebesked. Prøv at optage igen!",
+    "emotionConfidenceLow": "Jeg er dog ikke helt sikker på denne tolkning af tonen.",
+    "emotionConfidenceModerate": "Jeg er moderat sikker på denne tolkning af tonen."
   },
   "et": {
     "welcome": "Tere! Mina olen Josephine, sinu häälsõnumite transkriptsiooni assistent. Saada mulle häälsõnum ja ma transkribeerin selle sinu jaoks!",
@@ -355,9 +374,10 @@
     "contentViolation": "Me ei saa seda häälsõnumit töödelda, kuna see sisaldab sisu, mis rikub meie kasutuspoliitikat. Palun tutvu meie teenusetingimustega, et saada lisateavet vastuvõetava sisu kohta.",
     "supportFooter": "💌 Kas Josephine meeldib sulle? Aita tal kasvada!\nSelle teenuse töös hoidmine maksab umbes {monthly} kuus (see sõnum maksis umbes {cost}).\nSaad teha mikroannetuse siin: https://revolut.me/magicfranci või lihtsalt soovitada teda sõbrale!",
     "emotionIntro": "Selle häälsõnumi tooni järgi tundub, et inimene tunneb: {emotion}.",
-    "emotionConfidence": "(Kui kindel ma selles toonitõlgenduses olen: {pct}%)",
     "tooShort": "See häälsõnum on transkribeerimiseks liiga lühike. Proovi uuesti veidi pikema salvestusega!",
-    "noSpeech": "Ma ei tuvastanud selles häälsõnumis kõnet. Proovi uuesti salvestada!"
+    "noSpeech": "Ma ei tuvastanud selles häälsõnumis kõnet. Proovi uuesti salvestada!",
+    "emotionConfidenceLow": "Selles toonitõlgenduses ma siiski päris kindel ei ole.",
+    "emotionConfidenceModerate": "Olen selles toonitõlgenduses mõõdukalt kindel."
   },
   "fi": {
     "welcome": "Hei! Olen Josephine, ääniviestien litterointiavustajasi. Lähetä minulle ääniviesti, niin litteroin sen sinulle!",
@@ -373,9 +393,10 @@
     "contentViolation": "Emme voi käsitellä tätä ääniviestiä, koska se sisältää käyttökäytäntöjemme vastaista sisältöä. Katso käyttöehdoistamme lisätietoja hyväksyttävästä sisällöstä.",
     "supportFooter": "💌 Pidätkö Josephinesta? Auta häntä kasvamaan!\nTämän palvelun ylläpito maksaa noin {monthly} kuukaudessa (tämä viesti maksoi noin {cost}).\nVoit antaa mikrolahjoituksen täällä: https://revolut.me/magicfranci tai suositella häntä ystävälle!",
     "emotionIntro": "Tämän ääniviestin sävyn perusteella henkilö vaikuttaa tuntevan: {emotion}.",
-    "emotionConfidence": "(Kuinka varma olen tästä sävytulkinnasta: {pct}%)",
     "tooShort": "Tämä ääniviesti on liian lyhyt puhtaaksikirjoitettavaksi. Yritä uudelleen hieman pidemmällä äänitteellä!",
-    "noSpeech": "En havainnut puhetta tässä ääniviestissä. Yritä äänittää uudelleen!"
+    "noSpeech": "En havainnut puhetta tässä ääniviestissä. Yritä äänittää uudelleen!",
+    "emotionConfidenceLow": "En ole kuitenkaan täysin varma tästä sävytulkinnasta.",
+    "emotionConfidenceModerate": "Olen kohtalaisen varma tästä sävytulkinnasta."
   },
   "lv": {
     "welcome": "Sveiki! Es esmu Josephine, tava balss ziņu transkripcijas asistente. Atsūti man balss ziņu, un es to tev transkribēšu!",
@@ -391,9 +412,10 @@
     "contentViolation": "Mēs nevaram apstrādāt šo balss ziņu, jo tā satur saturu, kas pārkāpj mūsu lietošanas noteikumus. Lūdzu, iepazīsties ar mūsu Pakalpojuma noteikumiem, lai uzzinātu vairāk par pieņemamu saturu.",
     "supportFooter": "💌 Vai tev patīk Josephine? Palīdzi viņai augt!\nŠī pakalpojuma uzturēšana izmaksā aptuveni {monthly} mēnesī (šī ziņa izmaksāja aptuveni {cost}).\nTu vari veikt mikroziedojumu šeit: https://revolut.me/magicfranci vai vienkārši ieteikt viņu draugam!",
     "emotionIntro": "Spriežot pēc šīs balss ziņas toņa, šķiet, ka cilvēks izjūt: {emotion}.",
-    "emotionConfidence": "(Cik pārliecināta esmu par šo toņa nolasījumu: {pct}%)",
     "tooShort": "Šī balss ziņa ir pārāk īsa, lai to transkribētu. Mēģini vēlreiz ar nedaudz garāku ierakstu!",
-    "noSpeech": "Šajā balss ziņā es nekonstatēju runu. Mēģini ierakstīt vēlreiz!"
+    "noSpeech": "Šajā balss ziņā es nekonstatēju runu. Mēģini ierakstīt vēlreiz!",
+    "emotionConfidenceLow": "Tomēr neesmu pilnīgi pārliecināta par šo toņa nolasījumu.",
+    "emotionConfidenceModerate": "Esmu mēreni pārliecināta par šo toņa nolasījumu."
   },
   "lt": {
     "welcome": "Labas! Aš esu Josephine, tavo balso žinučių transkripcijos asistentė. Atsiųsk man balso žinutę ir aš ją tau transkribuosiu!",
@@ -409,9 +431,10 @@
     "contentViolation": "Negalime apdoroti šios balso žinutės, nes joje yra turinio, pažeidžiančio mūsų naudojimo taisykles. Daugiau informacijos apie priimtiną turinį rasi mūsų Paslaugų teikimo sąlygose.",
     "supportFooter": "💌 Ar tau patinka Josephine? Padėk jai augti!\nŠios paslaugos išlaikymas kainuoja apie {monthly} per mėnesį (ši žinutė kainavo apie {cost}).\nGali skirti mikro paramą čia: https://revolut.me/magicfranci arba tiesiog rekomenduoti ją draugui!",
     "emotionIntro": "Sprendžiant iš šios balso žinutės tono, atrodo, kad žmogus jaučia: {emotion}.",
-    "emotionConfidence": "(Kiek esu tikra dėl šio tono perskaitymo: {pct}%)",
     "tooShort": "Ši balso žinutė per trumpa transkribuoti. Pabandyk dar kartą su šiek tiek ilgesniu įrašu!",
-    "noSpeech": "Šioje balso žinutėje neaptikau kalbos. Pabandyk įrašyti dar kartą!"
+    "noSpeech": "Šioje balso žinutėje neaptikau kalbos. Pabandyk įrašyti dar kartą!",
+    "emotionConfidenceLow": "Vis dėlto nesu visiškai tikra dėl šio tono perskaitymo.",
+    "emotionConfidenceModerate": "Esu vidutiniškai tikra dėl šio tono perskaitymo."
   },
   "mt": {
     "welcome": "Bongu! Jien Josephine, l-assistenta tiegħek għat-traskrizzjoni tal-messaġġi bil-vuċi. Ibgħatli messaġġ bil-vuċi u nittraskrivih għalik!",
@@ -427,9 +450,10 @@
     "contentViolation": "Ma nistgħux nipproċessaw dan il-messaġġ bil-vuċi għax fih kontenut li jikser il-politiki tal-użu tagħna. Jekk jogħġbok ara t-Termini tas-Servizz tagħna għal aktar informazzjoni dwar kontenut aċċettabbli.",
     "supportFooter": "💌 Togħġbok Josephine? Għinha tikber!\nBiex dan is-servizz jibqa' jaħdem jiswa madwar {monthly} fix-xahar (dan il-messaġġ sewa madwar {cost}).\nTista' tagħmel mikro-donazzjoni hawn: https://revolut.me/magicfranci jew sempliċement tirrakkomandaha lil ħabib!",
     "emotionIntro": "Mit-ton ta' dan il-messaġġ bil-vuċi, il-persuna tidher li qed tħoss: {emotion}.",
-    "emotionConfidence": "(Kemm jien ċerta minn dan il-qari tat-ton: {pct}%)",
     "tooShort": "Dan il-messaġġ bil-vuċi qasir wisq biex jiġi traskritt. Erġa' pprova b'reġistrazzjoni ftit itwal!",
-    "noSpeech": "Ma sibtx diskors f'dan il-messaġġ bil-vuċi. Erġa' pprova rrekordjah!"
+    "noSpeech": "Ma sibtx diskors f'dan il-messaġġ bil-vuċi. Erġa' pprova rrekordjah!",
+    "emotionConfidenceLow": "Madankollu, m'iniex ċerta għalkollox minn dan il-qari tat-ton.",
+    "emotionConfidenceModerate": "Jien moderatament ċerta minn dan il-qari tat-ton."
   },
   "sk": {
     "welcome": "Ahoj! Som Josephine, tvoja asistentka na prepis hlasových správ. Pošli mi hlasovú správu a ja ti ju prepíšem!",
@@ -445,9 +469,10 @@
     "contentViolation": "Túto hlasovú správu nemôžeme spracovať, pretože obsahuje obsah porušujúci naše zásady používania. Viac informácií o prijateľnom obsahu nájdeš v našich Podmienkach služby.",
     "supportFooter": "💌 Páči sa ti Josephine? Pomôž jej rásť!\nPrevádzka tejto služby stojí približne {monthly} mesačne (táto správa stála zhruba {cost}).\nMôžeš prispieť mikro-darom tu: https://revolut.me/magicfranci alebo ju jednoducho odporučiť kamarátovi!",
     "emotionIntro": "Súdiac podľa tónu tejto hlasovej správy sa zdá, že hovoriaci cíti: {emotion}.",
-    "emotionConfidence": "(Aká istá som si týmto čítaním tónu: {pct}%)",
     "tooShort": "Táto hlasová správa je príliš krátka na prepis. Skús to znova s trochu dlhšou nahrávkou!",
-    "noSpeech": "V tejto hlasovej správe som nezachytila žiadnu reč. Skús ju nahrať znova!"
+    "noSpeech": "V tejto hlasovej správe som nezachytila žiadnu reč. Skús ju nahrať znova!",
+    "emotionConfidenceLow": "Týmto čítaním tónu si však nie som úplne istá.",
+    "emotionConfidenceModerate": "Týmto čítaním tónu som si stredne istá."
   },
   "sl": {
     "welcome": "Živjo! Sem Josephine, tvoja asistentka za prepis glasovnih sporočil. Pošlji mi glasovno sporočilo in ti ga bom prepisala!",
@@ -463,9 +488,10 @@
     "contentViolation": "Tega glasovnega sporočila ne moremo obdelati, ker vsebuje vsebino, ki krši naše pravilnike o uporabi. Za več informacij o sprejemljivi vsebini si oglej naše Pogoje storitve.",
     "supportFooter": "💌 Ti je Josephine všeč? Pomagaj ji rasti!\nDelovanje te storitve stane približno {monthly} na mesec (to sporočilo je stalo približno {cost}).\nMikro-donacijo lahko narediš tukaj: https://revolut.me/magicfranci ali pa jo preprosto priporoči prijatelju!",
     "emotionIntro": "Sodeč po tonu tega glasovnega sporočila je videti, da oseba čuti: {emotion}.",
-    "emotionConfidence": "(Kako prepričana sem v to branje tona: {pct}%)",
     "tooShort": "To glasovno sporočilo je prekratko za prepis. Poskusi znova z nekoliko daljšim posnetkom!",
-    "noSpeech": "V tem glasovnem sporočilu nisem zaznala govora. Poskusi ga posneti znova!"
+    "noSpeech": "V tem glasovnem sporočilu nisem zaznala govora. Poskusi ga posneti znova!",
+    "emotionConfidenceLow": "Vendar v to branje tona nisem povsem prepričana.",
+    "emotionConfidenceModerate": "V to branje tona sem zmerno prepričana."
   },
   "zh": {
     "welcome": "你好！我是 Josephine，你的语音消息转文字助手。发送一条语音消息给我，我会为你转成文字！",
@@ -481,9 +507,10 @@
     "contentViolation": "我们无法处理这条语音消息，因为其中包含违反我们使用政策的内容。请查看我们的服务条款，了解有关可接受内容的更多信息。",
     "supportFooter": "💌 喜欢 Josephine 吗？帮助她成长吧！\n维持这项服务每月约需 {monthly}（这条消息的成本约为 {cost}）。\n你可以在这里进行小额捐助：https://revolut.me/magicfranci 或者直接把她推荐给朋友！",
     "emotionIntro": "从这条语音消息的语气来听，这个人似乎感到：{emotion}。",
-    "emotionConfidence": "（我对这次语气判断的把握：{pct}%）",
     "tooShort": "这条语音消息太短，无法转写。请录制稍长一点的语音再试一次！",
-    "noSpeech": "我没有在这条语音消息中检测到语音。请重新录制试试！"
+    "noSpeech": "我没有在这条语音消息中检测到语音。请重新录制试试！",
+    "emotionConfidenceLow": "不过我对这次语气判断不太有把握。",
+    "emotionConfidenceModerate": "我对这次语气判断有一定的把握。"
   },
   "hi": {
     "welcome": "नमस्ते! मैं Josephine हूँ, आपकी वॉयस नोट ट्रांसक्रिप्शन सहायक। मुझे एक वॉयस नोट भेजें और मैं उसे आपके लिए लिख दूँगी!",
@@ -499,9 +526,10 @@
     "contentViolation": "हम इस वॉयस नोट को प्रोसेस नहीं कर सकते क्योंकि इसमें ऐसी सामग्री है जो हमारी उपयोग नीतियों का उल्लंघन करती है। स्वीकार्य सामग्री के बारे में अधिक जानकारी के लिए कृपया हमारी सेवा की शर्तें देखें।",
     "supportFooter": "💌 Josephine पसंद आई? उसे आगे बढ़ने में मदद करें!\nइस सेवा को चलाने में हर महीने लगभग {monthly} का खर्च आता है (इस संदेश की लागत लगभग {cost} रही)।\nआप यहाँ एक छोटा-सा दान कर सकते हैं: https://revolut.me/magicfranci या बस इसे किसी दोस्त को सुझाएँ!",
     "emotionIntro": "इस वॉयस मैसेज की आवाज़ के लहजे से लगता है कि यह व्यक्ति {emotion} महसूस कर रहा है।",
-    "emotionConfidence": "(इस लहजे के आकलन पर मुझे कितना भरोसा है: {pct}%)",
     "tooShort": "यह वॉयस मैसेज ट्रांसक्राइब करने के लिए बहुत छोटा है। कृपया थोड़ी लंबी रिकॉर्डिंग के साथ फिर से कोशिश करें!",
-    "noSpeech": "मुझे इस वॉयस मैसेज में कोई आवाज़ नहीं मिली। कृपया दोबारा रिकॉर्ड करके भेजें!"
+    "noSpeech": "मुझे इस वॉयस मैसेज में कोई आवाज़ नहीं मिली। कृपया दोबारा रिकॉर्ड करके भेजें!",
+    "emotionConfidenceLow": "हालांकि, मुझे इस लहजे के आकलन पर पूरा भरोसा नहीं है।",
+    "emotionConfidenceModerate": "मुझे इस लहजे के आकलन पर ठीक-ठाक भरोसा है।"
   },
   "ja": {
     "welcome": "こんにちは！私はJosephine、ボイスメッセージの文字起こしアシスタントです。ボイスメッセージを送っていただければ、文字に起こします！",
@@ -517,8 +545,9 @@
     "contentViolation": "このボイスメッセージには利用ポリシーに違反するコンテンツが含まれているため、処理できません。許容されるコンテンツの詳細については、利用規約をご確認ください。",
     "supportFooter": "💌 Josephineは気に入りましたか？成長を手伝ってください！\nこのサービスの運営には月に約 {monthly} かかります（このメッセージのコストは約 {cost} でした）。\nこちらからマイクロ寄付ができます：https://revolut.me/magicfranci または友達に勧めるだけでもOKです！",
     "emotionIntro": "このボイスメッセージの声のトーンから、この方は次のように感じているようです：{emotion}",
-    "emotionConfidence": "（このトーン判定の確信度：{pct}%）",
     "tooShort": "このボイスメッセージは短すぎて文字起こしできません。もう少し長い録音でもう一度お試しください！",
-    "noSpeech": "このボイスメッセージから音声を検出できませんでした。もう一度録音してみてください！"
+    "noSpeech": "このボイスメッセージから音声を検出できませんでした。もう一度録音してみてください！",
+    "emotionConfidenceLow": "ただ、このトーン判定にはあまり自信がありません。",
+    "emotionConfidenceModerate": "このトーン判定にはある程度自信があります。"
   }
 }

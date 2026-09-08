@@ -24,6 +24,21 @@ const { logDetails } = require('../utils/logging-utils');
 // attached helps nobody, so the whole block is suppressed.
 const MIN_CONFIDENCE = 40;
 
+// Confidence hedge bands (ours, not Google's: the number is the model's
+// self-assessment, for which no documented calibration exists; observed
+// values cluster at 85). 40-59 gets the "not fully sure" hedge, 60-79
+// "moderately confident", 80+ no hedge line at all: a hedge that appears
+// on every message is wallpaper, silence means confident.
+const CONFIDENCE_HEDGE_LOW = 60;
+const CONFIDENCE_HEDGE_NONE = 80;
+
+// languages.json key for the hedge line to show under the tone sentence,
+// or null when the reading is confident enough to stand alone.
+function confidenceHedgeKey(confidence) {
+  if (!Number.isInteger(confidence) || confidence >= CONFIDENCE_HEDGE_NONE) return null;
+  return confidence < CONFIDENCE_HEDGE_LOW ? 'emotionConfidenceLow' : 'emotionConfidenceModerate';
+}
+
 // Gemini inline requests cap at 20MB total; base64 inflates by ~4/3.
 const MAX_EMOTION_AUDIO_BYTES = 14 * 1024 * 1024;
 
@@ -183,5 +198,8 @@ module.exports = {
   detectEmotion,
   parseInteraction,
   sanitizeDescription,
-  MIN_CONFIDENCE
+  confidenceHedgeKey,
+  MIN_CONFIDENCE,
+  CONFIDENCE_HEDGE_LOW,
+  CONFIDENCE_HEDGE_NONE
 };
