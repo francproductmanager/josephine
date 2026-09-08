@@ -24,8 +24,8 @@ const { logDetails } = require('../utils/logging-utils');
  *   { flow, twilioAvailable, message, transcription?, summary?,
  *     moderation?, error?, statusCode? }
  * where flow is one of:
- *   'successful_transcription' | 'content_violation' |
- *   'processing_error' | 'twilio_error'
+ *   'successful_transcription' | 'content_violation' | 'processing_error' |
+ *   'twilio_error' | 'file_too_big' | 'audio_too_short'
  */
 async function processVoiceNote(context) {
   const event = context.body || {};
@@ -65,6 +65,26 @@ async function processVoiceNote(context) {
         return { flow: 'file_too_big', twilioAvailable: true, message: fileTooBigMessage };
       }
       return { flow: 'file_too_big', twilioAvailable: false, statusCode: 413, message: fileTooBigMessage };
+    }
+
+    // Guard against accidental-tap notes: a sub-second opus clip is a few
+    // hundred bytes, transcribes to empty text, and (observed 2026-09-07)
+    // tricks the tone model into inventing a mood from ~0.3s of audio.
+    // Real notes are >=~2KB, so 1KB is a safe floor. Skipped in test mode:
+    // the mocked download is a tiny text buffer by design.
+    const MIN_AUDIO_BYTES = 1024;
+    if (!context.isTestMode && audioData && audioData.length < MIN_AUDIO_BYTES) {
+      logDetails('Audio file too short to transcribe', { size: audioData.length, floor: MIN_AUDIO_BYTES });
+      const tooShortMessage = await getLocalizedMessage('tooShort', userLang);
+      if (twilioClient.isAvailable()) {
+        await twilioClient.sendMessage({
+          body: tooShortMessage,
+          from: toPhone,
+          to: userPhone
+        });
+        return { flow: 'audio_too_short', twilioAvailable: true, message: tooShortMessage };
+      }
+      return { flow: 'audio_too_short', twilioAvailable: false, statusCode: 400, message: tooShortMessage };
     }
 
     // Vocal-tone emotion needs only the audio, so it starts here and runs

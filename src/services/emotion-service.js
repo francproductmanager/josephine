@@ -110,27 +110,38 @@ async function detectEmotion(audioData, mimeType, langObj, req = null) {
 }
 
 // Pull the structured verdict out of an Interaction resource: the output
-// JSON lives as a string in the model_output step's text content.
+// JSON lives as a string in the model_output step's text content. A null
+// return always logs WHY plus the raw verdict, so a missing tone line in
+// production is diagnosable from the log alone (a bare "result: null"
+// cost a debugging session on 2026-09-07).
 function parseInteraction(data) {
-  if (!data || !Array.isArray(data.steps)) return null;
+  const suppressed = (reason, verdict) => {
+    logDetails('Emotion suppressed', { reason, verdict: verdict || null });
+    return null;
+  };
+
+  if (!data || !Array.isArray(data.steps)) return suppressed('no_steps');
   const output = data.steps.filter((s) => s && s.type === 'model_output').pop();
   const textPart = output && Array.isArray(output.content)
     && output.content.find((c) => c && c.type === 'text' && typeof c.text === 'string');
-  if (!textPart) return null;
+  if (!textPart) return suppressed('no_model_output');
 
   let verdict;
   try {
     verdict = JSON.parse(textPart.text);
   } catch (e) {
-    return null;
+    return suppressed('unparseable_json', textPart.text.slice(0, 200));
   }
-  if (!verdict || verdict.neutral === true) return null;
+  if (!verdict) return suppressed('empty_verdict');
+  if (verdict.neutral === true) return suppressed('neutral', verdict);
 
   const description = sanitizeDescription(verdict.description);
   const confidence = Number.isInteger(verdict.confidence)
     ? Math.max(0, Math.min(100, verdict.confidence))
     : null;
-  if (!description || confidence === null || confidence < MIN_CONFIDENCE) return null;
+  if (!description) return suppressed('gated_description', verdict);
+  if (confidence === null) return suppressed('invalid_confidence', verdict);
+  if (confidence < MIN_CONFIDENCE) return suppressed('low_confidence', verdict);
 
   return { description, confidence };
 }
