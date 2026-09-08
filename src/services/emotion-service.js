@@ -99,7 +99,11 @@ async function detectEmotion(audioData, mimeType, langObj, req = null) {
       },
       {
         headers: { 'x-goog-api-key': apiKey },
-        timeoutMs: 25000
+        // The reply waits for this verdict, so the timeout is a direct
+        // hit on user latency: a Gemini hang cost a 25s-delayed reply in
+        // production (2026-09-08). Verdicts normally land in 1-7s; past
+        // 10s the tone line loses its slot rather than holding the reply.
+        timeoutMs: 10000
       }
     );
 
