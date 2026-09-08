@@ -92,7 +92,10 @@ async function detectEmotion(audioData, mimeType, langObj, req = null) {
         },
         // One-shot classification; no reason to store server-side state.
         store: false,
-        generation_config: { max_output_tokens: 256 }
+        // Generous budget: on thinking models the internal reasoning
+        // counts against this, and a starved budget truncated the JSON
+        // to prose mid-sentence in production (2026-09-08).
+        generation_config: { max_output_tokens: 2048, thinking_level: 'low' }
       },
       {
         headers: { 'x-goog-api-key': apiKey },
@@ -122,15 +125,27 @@ function parseInteraction(data) {
 
   if (!data || !Array.isArray(data.steps)) return suppressed('no_steps');
   const output = data.steps.filter((s) => s && s.type === 'model_output').pop();
-  const textPart = output && Array.isArray(output.content)
-    && output.content.find((c) => c && c.type === 'text' && typeof c.text === 'string');
-  if (!textPart) return suppressed('no_model_output');
+  // The output text can arrive split across several content parts, and
+  // (seen in production 2026-09-08: a bare "Here is the") the model can
+  // wrap or truncate the JSON despite the schema. Join every text part,
+  // then parse the outermost {...} substring rather than the raw string.
+  const text = output && Array.isArray(output.content)
+    ? output.content
+      .filter((c) => c && c.type === 'text' && typeof c.text === 'string')
+      .map((c) => c.text)
+      .join('')
+    : '';
+  if (!text) return suppressed('no_model_output');
+
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end <= start) return suppressed('no_json_in_output', text.slice(0, 200));
 
   let verdict;
   try {
-    verdict = JSON.parse(textPart.text);
+    verdict = JSON.parse(text.slice(start, end + 1));
   } catch (e) {
-    return suppressed('unparseable_json', textPart.text.slice(0, 200));
+    return suppressed('unparseable_json', text.slice(0, 200));
   }
   if (!verdict) return suppressed('empty_verdict');
   if (verdict.neutral === true) return suppressed('neutral', verdict);

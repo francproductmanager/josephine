@@ -108,6 +108,26 @@ test('parseInteraction suppresses neutral, low-confidence, and malformed verdict
   assert.strictEqual(parseInteraction(null), null);
 });
 
+test('parseInteraction survives split text parts and prose-wrapped JSON (2026-09-08 truncation incident)', () => {
+  // Output split across multiple text parts, with prose around the JSON.
+  const split = {
+    steps: [{
+      type: 'model_output',
+      content: [
+        { type: 'text', text: 'Here is the JSON you asked for: {"neutral": false, ' },
+        { type: 'text', text: '"description": "😤 tense and rushed", "confidence": 82} hope that helps!' }
+      ]
+    }]
+  };
+  assert.deepStrictEqual(parseInteraction(split), { description: '😤 tense and rushed', confidence: 82 });
+
+  // Pure prose with no JSON at all (the truncated "Here is the" case).
+  const truncated = {
+    steps: [{ type: 'model_output', content: [{ type: 'text', text: 'Here is the' }] }]
+  };
+  assert.strictEqual(parseInteraction(truncated), null);
+});
+
 test('detectEmotion returns null on API errors and network failure', async () => {
   stubFetch(new Response('{"error":{"message":"quota"}}', { status: 429 }));
   assert.strictEqual(await detectEmotion(Buffer.from('a'), 'audio/ogg', { name: 'English' }), null);
