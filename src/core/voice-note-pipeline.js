@@ -12,7 +12,7 @@ const { generateSummary } = require('../helpers/transcription');
 const { downloadAudio, prepareFormData } = require('../services/audio-service');
 const { transcribeAudio } = require('../services/transcription-service');
 const { checkContentModeration } = require('../services/moderation-service');
-const { detectEmotion } = require('../services/emotion-service');
+const { detectEmotion, confidenceHedgeKey } = require('../services/emotion-service');
 const { splitLongMessage, sendMessages } = require('../services/messaging-service');
 const { logDetails } = require('../utils/logging-utils');
 
@@ -184,18 +184,23 @@ async function processVoiceNote(context) {
     // and transcription), then summary (long notes), then transcription.
     // The localized 'emotionIntro' template gets the model-authored
     // '<emoji> <phrase>' (already in the user's language) spliced into
-    // its {emotion} placeholder, followed by the localized confidence
-    // line, e.g.:
+    // its {emotion} placeholder. A hedge line follows ONLY when the
+    // model's self-reported confidence is middling (40-79); confident
+    // readings (80+) stand alone, e.g.:
     //   "Based on the tone and emotions of the voice message, this
     //    person seems 😤 frustrated and tired, speaking quickly.
-    //    (How sure I am of this tone reading: 82%)"
-    // Neutral, low-confidence, or unavailable means no tone block at all.
+    //    I'm moderately confident in this tone reading."
+    // Neutral, sub-40 confidence, or unavailable means no tone block.
     let finalMessage = '';
     if (emotion) {
       const emotionIntro = await getLocalizedMessage('emotionIntro', userLang);
-      const confidenceLine = await getLocalizedMessage('emotionConfidence', userLang);
       finalMessage += `${emotionIntro.trim().replace('{emotion}', emotion.description)}\n`;
-      finalMessage += `${confidenceLine.trim().replace('{pct}', String(emotion.confidence))}\n\n`;
+      const hedgeKey = confidenceHedgeKey(emotion.confidence);
+      if (hedgeKey) {
+        const hedgeLine = await getLocalizedMessage(hedgeKey, userLang);
+        finalMessage += `${hedgeLine.trim()}\n`;
+      }
+      finalMessage += '\n';
     }
     if (summary) {
       const summaryLabel = await getLocalizedMessage('longMessage', userLang);
