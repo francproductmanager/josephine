@@ -128,7 +128,7 @@ export default async (req) => {
   // automatic retry.
   const status = result.flow === 'twilio_error'
     ? 'retrying'
-    : (result.flow === 'processing_error' || result.flow === 'file_too_big' ? 'failed' : 'done');
+    : (result.flow === 'processing_error' || result.flow === 'file_too_big' || result.flow === 'audio_too_short' ? 'failed' : 'done');
 
   if (store) {
     try {
