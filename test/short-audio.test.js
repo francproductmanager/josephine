@@ -114,3 +114,50 @@ test('every language has a noSpeech message', () => {
     assert.ok(block.noSpeech && block.noSpeech.trim(), `${lang} missing noSpeech`);
   }
 });
+
+test('a hanging tone verdict delays the reply by at most the grace period', async () => {
+  // Gemini never answers; transcription and moderation are instant. The
+  // pipeline must send without a tone block roughly EMOTION_GRACE_MS
+  // after the rest is ready, not wait out the 20s inner fetch cap.
+  fetchCalls = [];
+  globalThis.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    const u = String(url);
+    if (u.includes('media.test')) {
+      return new Response(Buffer.alloc(25000, 1), {
+        status: 200,
+        headers: { 'Content-Type': 'audio/ogg', 'Content-Length': '25000' }
+      });
+    }
+    if (u.includes('audio/transcriptions')) {
+      return new Response(JSON.stringify({ text: 'ciao, tutto bene' }), {
+        status: 200, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (u.includes('moderations')) {
+      return new Response(JSON.stringify({ results: [{ flagged: false, categories: {}, category_scores: {} }] }), {
+        status: 200, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (u.includes('generativelanguage')) {
+      return new Promise(() => {}); // hangs forever
+    }
+    throw new Error('unexpected call to ' + url);
+  };
+  process.env.OPENAI_API_KEY = 'sk-test';
+  process.env.GEMINI_API_KEY = 'g-test';
+  try {
+    const started = Date.now();
+    const result = await processVoiceNote(buildContext('whatsapp:+393201471346'));
+    const elapsed = Date.now() - started;
+
+    assert.strictEqual(result.flow, 'successful_transcription');
+    assert.strictEqual(result.emotion, null, 'no tone when the verdict missed the grace window');
+    assert.ok(!result.message.includes('Dal tono'), 'message carries no tone sentence');
+    assert.ok(elapsed >= 3900, `waited out the grace period (${elapsed}ms)`);
+    assert.ok(elapsed < 10000, `did not wait for the inner fetch cap (${elapsed}ms)`);
+  } finally {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+  }
+});
