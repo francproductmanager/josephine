@@ -81,31 +81,19 @@ test('voice note: successful transcription with summary:null contract', async ()
   assert.strictEqual(json.testResults.messages.length, 1);
 });
 
-test('voice note: message starts with the transcription and ends with the cost footer', async () => {
+test('voice note: message starts with the transcription and ends with the support footer', async () => {
   const { json } = await post({ ...VOICE, MessageSid: 'SM-footer' });
   // The support line moved to the end (2026-07): the message must NOT
   // open with the Revolut link anymore...
   assert.ok(!json.message.startsWith('💌'), 'message must not start with the footer');
   assert.ok(json.message.indexOf('Trascrizione') < json.message.indexOf('revolut.me'), 'transcription label must precede the support link');
-  // ...and the three-line footer must close the message: hook line,
-  // monthly + share line, donation-link line.
+  // ...and the two-line footer must close the message: hook line,
+  // donation-link line. The running-cost sentence was removed (2026-11).
   const lines = json.message.split('\n');
-  const footer = lines.slice(-3).join('\n');
+  const footer = lines.slice(-2).join('\n');
   assert.match(footer, /^💌/, 'footer block starts with the hook line');
-  assert.match(footer, /\$12/, 'footer contains the monthly figure');
-  assert.match(footer, /\$0\.\d{2}\)/, 'footer contains a ($0.XX) note share');
+  assert.ok(!/\$\d|\{cost\}|\{monthly\}/.test(json.message), 'message must not mention costs');
   assert.match(lines[lines.length - 1], /revolut\.me\/magicfranci/, 'last line contains the donation link');
-});
-
-test('longer transcriptions display a higher note share', async () => {
-  const shareOf = (message) => parseFloat(message.match(/\$(0\.\d{2})\)/)[1]);
-  const short = await post({ ...VOICE, MessageSid: 'SM-share-short' });
-  // longTranscription=true makes the mock text ~4x longer
-  const long = await post({ ...VOICE, longTranscription: 'true', MessageSid: 'SM-share-long' });
-  assert.ok(
-    shareOf(long.json.message) > shareOf(short.json.message),
-    `long note share (${shareOf(long.json.message)}) must exceed short note share (${shareOf(short.json.message)})`
-  );
 });
 
 test('voice note: long transcription generates summary', async () => {
