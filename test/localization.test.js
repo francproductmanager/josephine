@@ -28,10 +28,10 @@ test('no message string is empty', () => {
   }
 });
 
-test('supportFooter carries both cost placeholders in every language', () => {
+test('supportFooter carries no cost figures or placeholders in any language', () => {
   for (const [lang, block] of Object.entries(translations)) {
-    assert.ok(block.supportFooter.includes('{cost}'), `${lang}.supportFooter missing {cost}`);
-    assert.ok(block.supportFooter.includes('{monthly}'), `${lang}.supportFooter missing {monthly}`);
+    assert.ok(!/[{}$]/.test(block.supportFooter), `${lang}.supportFooter must not mention costs`);
+    assert.strictEqual(block.supportFooter.split('\n').length, 2, `${lang}.supportFooter must be two lines`);
   }
 });
 
